@@ -1,0 +1,207 @@
+from django.db import transaction
+
+from apps.investigacion_formal.models import Proyecto
+from apps.investigacion_formal.selectors.proyecto_selector import ProyectoSelector
+from apps.investigacion_formal.validators.proyecto_validator import ProyectoValidator
+from apps.common.services.historial_service import HistorialService
+
+
+class ProyectoService:
+
+    @staticmethod
+    def listar():
+        return ProyectoSelector.listar()
+
+    @staticmethod
+    def listar_activos():
+        return ProyectoSelector.listar_activos()
+
+    @staticmethod
+    def obtener(proyecto_id):
+        return ProyectoSelector.obtener(proyecto_id)
+
+    @staticmethod
+    def listar_por_usuario(usuario_id):
+        return ProyectoSelector.listar_por_usuario(usuario_id)
+
+    @staticmethod
+    def listar_por_facultad(facultad_id):
+        return ProyectoSelector.listar_por_facultad(facultad_id)
+
+    @staticmethod
+    def listar_por_grupo(grupo_id):
+        return ProyectoSelector.listar_por_grupo(grupo_id)
+
+    @staticmethod
+    def listar_por_estado_aprobado(estado_aprobado):
+        return ProyectoSelector.listar_por_estado_aprobado(estado_aprobado)
+
+    @staticmethod
+    @transaction.atomic
+    def crear(usuario_id, gerente_id, titulo, interno, alianza, financiado,
+            unidad_ejecutora, linea_investigacion, ejecutor, codigo=None,
+            estado_aprobado='SIN_CALIFICAR', fecha_inicio=None, fecha_fin=None):
+        """
+        codigo=None            -> proyecto NUEVO: el código se genera automáticamente
+                                la primera vez que se llame a asignar_timeline().
+        codigo='ING2019-I03'   -> carga de REPOSITORIO histórico: se respeta el
+                                código ya existente y nunca se regenera.
+        """
+        ProyectoValidator.validar_creacion(
+            usuario_id, gerente_id, titulo, interno, alianza, financiado,
+            unidad_ejecutora, linea_investigacion,
+            estado_aprobado=estado_aprobado, codigo=codigo,
+        )
+        proyecto = Proyecto.objects.create(
+            usuario_id=usuario_id,
+            gerente_id=gerente_id,
+            titulo=titulo.strip(),
+            interno=interno,
+            registro_acta_cierre=False,
+            alianza=alianza,
+            estado=True,
+            estado_aprobado=estado_aprobado,
+            financiado=financiado,
+            unidad_ejecutora=unidad_ejecutora.strip(),
+            linea_investigacion=linea_investigacion.strip(),
+            fecha_inicio=fecha_inicio,
+            fecha_fin=fecha_fin,
+            codigo=(codigo or '').strip(),
+            gruplac=False,
+        )
+        if codigo:
+            HistorialService.registrar(
+                ejecutor,
+                f"Se importó al repositorio el proyecto '{proyecto.titulo}' "
+                f"con código histórico '{proyecto.codigo}' (id={proyecto.pk}).",
+                objeto=proyecto,
+            )
+        else:
+            HistorialService.registrar(
+                ejecutor,
+                f"Se creó el proyecto '{proyecto.titulo}' (id={proyecto.pk}).",
+                objeto=proyecto,
+            )
+        return proyecto
+
+    @staticmethod
+    @transaction.atomic
+    def actualizar(proyecto_id, titulo, unidad_ejecutora, linea_investigacion, ejecutor):
+        """Exclusivo de CINTERNO/CEXTERNO."""
+        proyecto = ProyectoSelector.obtener(proyecto_id)
+        ProyectoValidator.validar_actualizacion(
+            proyecto_id, titulo, unidad_ejecutora, linea_investigacion
+        )
+        proyecto.titulo = titulo.strip()
+        proyecto.unidad_ejecutora = unidad_ejecutora.strip()
+        proyecto.linea_investigacion = linea_investigacion.strip()
+        proyecto.save(update_fields=['titulo', 'unidad_ejecutora', 'linea_investigacion'])
+        HistorialService.registrar(
+            ejecutor,
+            f"Se actualizó el proyecto '{proyecto.titulo}' (id={proyecto.pk}).",
+            objeto=proyecto,
+        )
+        return proyecto
+
+    @staticmethod
+    @transaction.atomic
+    def asignar_timeline(proyecto_id, fecha_inicio, fecha_fin, ejecutor):
+        proyecto = ProyectoSelector.obtener(proyecto_id)
+        ProyectoValidator.validar_asignacion_timeline(fecha_inicio, fecha_fin)
+        proyecto.fecha_inicio = fecha_inicio
+        proyecto.fecha_fin = fecha_fin
+        campos_a_guardar = ['fecha_inicio', 'fecha_fin']
+
+        # Regla de repositorio: si el proyecto YA tiene código (carga histórica,
+        # o ya se le generó antes), nunca se regenera ni se sobreescribe.
+        if not proyecto.codigo:
+            anio = fecha_inicio.year
+            prefijo = f"{proyecto.unidad_ejecutora}{anio}-{'I' if proyecto.interno else 'E'}"
+            cantidad = ProyectoSelector.contar_aprobados_por_prefijo(prefijo)
+            proyecto.codigo = f"{prefijo}{cantidad + 1:02d}"
+            campos_a_guardar.append('codigo')
+
+        proyecto.save(update_fields=campos_a_guardar)
+        HistorialService.registrar(
+            ejecutor,
+            f"Se asignó el tiempo de ejecución al proyecto '{proyecto.titulo}' "
+            f"(código={proyecto.codigo}).",
+            objeto=proyecto,
+        )
+        return proyecto
+
+    @staticmethod
+    @transaction.atomic
+    def editar_fecha_cierre(proyecto_id, nueva_fecha_fin, ejecutor):
+        """Réplica de editarFechaCierre."""
+        proyecto = ProyectoSelector.obtener(proyecto_id)
+        ProyectoValidator.validar_edicion_fecha_cierre(proyecto, nueva_fecha_fin)
+        proyecto.fecha_fin = nueva_fecha_fin
+        proyecto.save(update_fields=['fecha_fin'])
+        HistorialService.registrar(
+            ejecutor,
+            f"Se cambió la fecha de cierre del proyecto '{proyecto.titulo}' "
+            f"a {nueva_fecha_fin}.",
+            objeto=proyecto,
+        )
+        return proyecto
+
+    @staticmethod
+    @transaction.atomic
+    def cambiar_estado_aprobado(proyecto_id, nuevo_estado_aprobado, ejecutor):
+        proyecto = ProyectoSelector.obtener(proyecto_id)
+        ProyectoValidator.validar_cambio_estado_aprobado(nuevo_estado_aprobado)
+        proyecto.estado_aprobado = nuevo_estado_aprobado
+        proyecto.save(update_fields=['estado_aprobado'])
+        HistorialService.registrar(
+            ejecutor,
+            f"Se cambió el estado de aprobación del proyecto '{proyecto.titulo}' "
+            f"a {nuevo_estado_aprobado}.",
+            objeto=proyecto,
+        )
+        return proyecto
+
+    @staticmethod
+    @transaction.atomic
+    def subir_a_gruplac(proyecto_id, ejecutor):
+        proyecto = ProyectoSelector.obtener(proyecto_id)
+        ProyectoValidator.validar_subida_gruplac(proyecto)
+        proyecto.gruplac = True
+        proyecto.save(update_fields=['gruplac'])
+        HistorialService.registrar(
+            ejecutor,
+            f"Se cargó el proyecto '{proyecto.titulo}' al GrupLAC.",
+            objeto=proyecto,
+        )
+        return proyecto
+
+    @staticmethod
+    @transaction.atomic
+    def registrar_acta_cierre(proyecto_id, ejecutor):
+        proyecto = ProyectoSelector.obtener(proyecto_id)
+        ProyectoValidator.validar_registro_acta_cierre(proyecto)
+        proyecto.registro_acta_cierre = True
+        proyecto.estado = False
+        proyecto.save(update_fields=['registro_acta_cierre', 'estado'])
+        HistorialService.registrar(
+            ejecutor,
+            f"Se registró el acta de cierre del proyecto '{proyecto.titulo}' "
+            f"y se cerró definitivamente.",
+            objeto=proyecto,
+        )
+        return proyecto
+
+    @staticmethod
+    @transaction.atomic
+    def eliminar(proyecto_id, ejecutor):
+        """Soft-delete; exclusivo de CINTERNO/CEXTERNO."""
+        proyecto = ProyectoSelector.obtener(proyecto_id)
+        ProyectoValidator.validar_eliminacion(proyecto)
+        proyecto.estado = False
+        proyecto.save(update_fields=['estado'])
+        HistorialService.registrar(
+            ejecutor,
+            f"Se desactivó el proyecto '{proyecto.titulo}' (id={proyecto.pk}).",
+            objeto=proyecto,
+        )
+        return proyecto

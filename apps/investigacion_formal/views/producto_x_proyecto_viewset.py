@@ -1,0 +1,97 @@
+from apps.investigacion_formal.pagination import InvestigacionFormalPageNumberPagination
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+from apps.investigacion_formal.serializers.producto_x_proyecto_serializer import (
+    ProductoXProyectoSerializer,
+)
+from apps.investigacion_formal.services.producto_x_proyecto_service import (
+    ProductoXProyectoService,
+)
+from apps.usuarios.permissions import (
+    EsFacultad, EsGrupo, EsCInterno, EsCExterno,
+    EsAsesor, EsSupervisor, EsDecano, EsGerente,
+)
+
+
+class ProductoXProyectoViewSet(viewsets.ViewSet):
+    serializer_class = ProductoXProyectoSerializer
+    pagination_class = InvestigacionFormalPageNumberPagination
+
+    def get_permissions(self):
+        if self.action == "create":
+            permission_classes = [EsFacultad | EsGrupo | EsCInterno | EsCExterno]
+        elif self.action in ["update", "destroy", "registrar_entrega", "subir_a_gruplac"]:
+            permission_classes = [EsCInterno | EsCExterno]
+        else: #list, retrieve, por_proyecto, pendientes, entregados
+            permission_classes = [
+                EsFacultad | EsGrupo | EsCInterno | EsCExterno
+                | EsAsesor | EsSupervisor | EsDecano | EsGerente
+            ]
+        return [permission() for permission in permission_classes]
+
+    def list(self, request):
+        productos = ProductoXProyectoService.listar()
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(productos, request, view=self)
+        serializer = self.serializer_class(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        producto = ProductoXProyectoService.obtener(pk)
+        return Response(self.serializer_class(producto).data)
+
+    def create(self, request):
+        producto = ProductoXProyectoService.crear(
+            producto_x_grupo_id=request.data.get("producto_x_grupo"),
+            proyecto_id=request.data.get("proyecto"),
+            categoria=request.data.get("categoria"),
+            puntaje=request.data.get("puntaje"),
+            ejecutor=request.user,
+        )
+        return Response(self.serializer_class(producto).data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, pk=None):
+        producto = ProductoXProyectoService.actualizar(
+            producto_x_proyecto_id=pk,
+            ejecutor=request.user,
+            categoria=request.data.get("categoria"),
+            puntaje=request.data.get("puntaje"),
+        )
+        return Response(self.serializer_class(producto).data)
+
+    def destroy(self, request, pk=None):
+        ProductoXProyectoService.eliminar(pk, ejecutor=request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=["patch"], url_path="registrar-entrega")
+    def registrar_entrega(self, request, pk=None):
+        producto = ProductoXProyectoService.registrar_entrega(
+            producto_x_proyecto_id=pk,
+            documento=request.data.get("documento"),
+            tipo_documento_id=request.data.get("tipo_documento"),
+            ejecutor=request.user,
+        )
+        return Response(self.serializer_class(producto).data)
+
+    @action(detail=True, methods=["patch"], url_path="subir-gruplac")
+    def subir_a_gruplac(self, request, pk=None):
+        producto = ProductoXProyectoService.subir_a_gruplac(pk, ejecutor=request.user)
+        return Response(self.serializer_class(producto).data)
+
+    @action(detail=False, methods=["get"], url_path="por-proyecto/(?P<proyecto_id>[^/.]+)")
+    def por_proyecto(self, request, proyecto_id=None):
+        solo_activos = request.query_params.get("solo_activos", "true").lower() != "false"
+        productos = ProductoXProyectoService.listar_por_proyecto(proyecto_id, solo_activos=solo_activos)
+        return Response(self.serializer_class(productos, many=True).data)
+
+    @action(detail=False, methods=["get"], url_path="pendientes/(?P<proyecto_id>[^/.]+)")
+    def pendientes(self, request, proyecto_id=None):
+        productos = ProductoXProyectoService.listar_pendientes_por_proyecto(proyecto_id)
+        return Response(self.serializer_class(productos, many=True).data)
+
+    @action(detail=False, methods=["get"], url_path="entregados/(?P<proyecto_id>[^/.]+)")
+    def entregados(self, request, proyecto_id=None):
+        productos = ProductoXProyectoService.listar_entregados_por_proyecto(proyecto_id)
+        return Response(self.serializer_class(productos, many=True).data)

@@ -1,0 +1,85 @@
+from apps.usuarios.models.usuario_x_persona import UsuarioXPersona
+from apps.usuarios.pagination import UsuariosPageNumberPagination
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from django.contrib.auth import get_user_model
+from ..permissions.es_soporte import EsSoporte
+from django.shortcuts import get_object_or_404
+from ..serializers.usuario_serializer import UsuarioSerializer
+from django.db.models import Prefetch
+from apps.usuarios.services.usuario_facade import UsuarioFacade
+
+User = get_user_model()
+
+
+class UsuarioViewSet(viewsets.ViewSet):
+    """
+    Las acciones de 'desactivar' y 'activar' delegan la lógica al UsuarioFacade.
+    """
+    serializer_class = UsuarioSerializer
+    pagination_class = UsuariosPageNumberPagination
+
+    def get_permissions(self):
+        permission_classes = [EsSoporte]
+        return [permission() for permission in permission_classes]
+
+    def get_queryset(self):
+        return (
+            User.objects.filter(is_staff=False)
+            .prefetch_related(
+                Prefetch("asignaciones", queryset=UsuarioXPersona.objects.filter(estado=True).select_related("persona"))
+            )
+        )
+
+    def list(self, request):
+        queryset = self.get_queryset()
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(queryset, request, view=self)
+        serializer = self.serializer_class(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        usuario = get_object_or_404(self.get_queryset(), pk=pk)
+        return Response(self.serializer_class(usuario).data)
+
+    @action(detail=True, methods=['post'], url_path='desactivar')
+    def desactivar_usuario(self, request, pk=None):
+        try:
+            UsuarioFacade.service().desactivar_usuario(pk, ejecutor=request.user)
+            return Response({"message": "Usuario desactivado correctamente."})
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=True, methods=['post'], url_path='activar')
+    def activar_usuario(self, request, pk=None):
+        try:
+            UsuarioFacade.service().activar_usuario(pk, ejecutor=request.user)
+            return Response({"message": "Usuario activado correctamente."})
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=False, methods=['get'], url_path='inactivos')
+    def usuarios_inactivos(self, request):
+        usuarios = self.get_queryset().filter(is_active=False)
+        return Response(self.serializer_class(usuarios, many=True).data)
+
+    @action(detail=False, methods=['get'], url_path='admin-dashboard')
+    def dashboard(self, request):
+        from apps.usuarios.models import RolPlataforma
+        from apps.usuarios.serializers import RolPlataformaSerializer
+        todos = list(self.get_queryset().order_by('id'))
+        activos = [u for u in todos if u.is_active]
+        inactivos = [u for u in todos if not u.is_active]
+        return Response({
+            "usuarios_activos": self.serializer_class(activos, many=True).data,
+            "usuarios_inactivos": self.serializer_class(inactivos, many=True).data,
+            "roles_disponibles": RolPlataformaSerializer(RolPlataforma.objects.all(), many=True).data,
+        })
+
+    @action(detail=True, methods=['get'], url_path='roles-activos')
+    def roles_activos(self, request, pk=None):
+        from apps.usuarios.services.rol_x_usuario_service import RolXUsuarioService
+        from apps.usuarios.serializers import RolXUsuarioSerializer
+        roles = RolXUsuarioService.listar_roles_de_usuario(usuario_id=pk)
+        return Response(RolXUsuarioSerializer(roles, many=True).data)

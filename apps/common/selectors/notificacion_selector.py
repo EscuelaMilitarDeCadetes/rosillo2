@@ -1,0 +1,47 @@
+from django.utils import timezone
+from apps.common.models import Notificacion
+
+
+class NotificacionSelector:
+    @staticmethod
+    def listar():
+        return Notificacion.objects.select_related('usuario_destino').all()
+
+    @staticmethod
+    def obtener(notificacion_id):
+        return Notificacion.objects.select_related('usuario_destino').get(pk=notificacion_id)
+
+    @staticmethod
+    def buscar(notificacion_id):
+        return Notificacion.objects.select_related('usuario_destino').filter(pk=notificacion_id).first()
+
+    @staticmethod
+    def existe(notificacion_id):
+        return Notificacion.objects.filter(pk=notificacion_id).exists()
+
+    @staticmethod
+    def listar_por_usuario(usuario_id, solo_no_leidas=False):
+        qs = Notificacion.objects.filter(usuario_destino_id=usuario_id)
+        if solo_no_leidas:
+            qs = qs.filter(leido=False)
+        return qs.order_by('-fecha_creacion')
+
+    @staticmethod
+    def contar_no_leidas(usuario_id):
+        return Notificacion.objects.filter(usuario_destino_id=usuario_id, leido=False).count()
+
+    @staticmethod
+    def listar_por_tipo(tipo):
+        return Notificacion.objects.select_related('usuario_destino').filter(tipo=tipo)
+
+    @staticmethod
+    def existe_recordatorio_hoy(usuario_id, url_relacionada, tipo='alerta'):
+        """Evita que el job de recordatorios envíe el mismo aviso más de una
+        vez el mismo día para la misma tarea/documento."""
+        hoy = timezone.now().date()
+        return Notificacion.objects.filter(
+            usuario_destino_id=usuario_id,
+            url_relacionada=url_relacionada,
+            tipo=tipo,
+            fecha_creacion__date=hoy,
+        ).exists()

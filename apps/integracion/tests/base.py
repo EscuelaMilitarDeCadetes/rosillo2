@@ -1,0 +1,80 @@
+from django.contrib.auth import get_user_model
+from django.urls import reverse
+from rest_framework.test import APIClient
+from apps.usuarios.models import RolPlataforma, RolXUsuario
+from apps.institucional.models import (
+    GradoEstudios, FacultadEscuela, GrupoInvestigacion, RolGrupo, FacultadXGrupo,
+)
+
+User = get_user_model()
+
+
+class IntegracionFixturesMixin:
+    """
+    Cataloga lo mínimo indispensable (roles de plataforma, grado,
+    facultad, grupo, FacultadXGrupo) y deja logueado por defecto un
+    ejecutor con rol SOPORTE, listo para pegarle a los endpoints de
+    VinculacionViewSet.
+
+    Nota: solo va aquí lo que TODAS las clases de test de este módulo
+    necesitan. Fixtures propios de un único archivo (por ejemplo
+    persona/usuario/asignacion de test_ciclo_vida_usuario.py) van en el
+    setUp() de esa clase específica, no aquí — para no inflar el fixture
+    compartido con cosas que la mayoría de las pruebas no usa.
+    """
+    ROLES_NOMBRES = [
+        'SOPORTE', 'SUPERVISOR', 'GERENTE',
+        'DECANO', 'FACULTAD', 'ESTUDIANTE', 'JURADO', 'TUTOR',
+        'GRUPO', 'CINTERNO', 'CEXTERNO', 'ASESOR',
+    ]
+
+    def setUp(self):
+        self.client = APIClient()
+        self.roles = {
+            nombre: RolPlataforma.objects.create(
+                nombre_rol=nombre, descripcion=f'Rol {nombre}'
+            )
+            for nombre in self.ROLES_NOMBRES
+        }
+        self.grado = GradoEstudios.objects.create(
+            sigla_grado='CIV', descripcion='Civil'
+        )
+        self.facultad = FacultadEscuela.objects.create(
+            nombre_facultad='Facultad de Ingeniería', abreviatura='ING'
+        )
+        self.grupo = GrupoInvestigacion.objects.create(
+            nombre_grupo='Grupo de Pruebas', sigla_grupo='GP'
+        )
+        FacultadXGrupo.objects.create(grupo=self.grupo, facultad=self.facultad)
+        self.rol_grupo = RolGrupo.objects.create(cargo='Investigador')
+        self.ejecutor = self.crear_ejecutor_con_rol('SOPORTE', 'soporte@esmic.edu.co')
+        self.loguearse_como('soporte@esmic.edu.co', 'soporte123')
+
+    def crear_ejecutor_con_rol(self, nombre_rol, username, password='soporte123'):
+        usuario = User.objects.create_user(
+            username=username, email=username, password=password, is_active=True
+        )
+        RolXUsuario.objects.create(
+            usuario=usuario, rol=self.roles[nombre_rol], estado=True
+        )
+        return usuario
+
+    def loguearse_como(self, username, password):
+        login = self.client.post(reverse('login'), {
+            'username': username, 'password': password,
+        })
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {login.data['access']}"
+        )
+
+    def datos_persona(self, correo, documento, nombre='Nombre', apellido='Apellido'):
+        return {
+            'grado_id': self.grado.pk,
+            'nombre': nombre,
+            'apellido': apellido,
+            'documento': documento,
+            'celular': '3000000000',
+            'correo': correo,
+            'username': correo,
+            'password': 'Temporal123!',
+        }
