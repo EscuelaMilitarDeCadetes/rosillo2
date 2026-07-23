@@ -1,14 +1,11 @@
 from apps.investigacion_formal.pagination import InvestigacionFormalPageNumberPagination
-from apps.usuarios.permissions.es_cexterno import EsCExterno
-from apps.usuarios.permissions.es_soporte import EsSoporte
-from apps.usuarios.permissions.es_supervisor import EsSupervisor
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
 from apps.investigacion_formal.serializers.calificacion_serializer import CalificacionSerializer
 from apps.investigacion_formal.services.calificacion_service import CalificacionService
-from apps.usuarios.permissions import EsCInterno
+from apps.investigacion_formal.permissions import ROLES_CONSULTA_CALIFICACION, combinar
+from apps.usuarios.permissions import EsCInterno, EsSoporte
 
 
 class CalificacionViewSet(viewsets.ViewSet):
@@ -18,12 +15,11 @@ class CalificacionViewSet(viewsets.ViewSet):
     def get_permissions(self):
         acciones_autoservicio = ['list', 'retrieve', 'por_proyecto_convocatoria']
         if self.action in acciones_autoservicio:
-            permission_classes = [EsSupervisor | EsCInterno | EsCExterno]
+            return [combinar(ROLES_CONSULTA_CALIFICACION)]   # antes: inline [EsSupervisor | EsCInterno | EsCExterno]
         elif self.action in ['calificar']:
-            permission_classes = [EsCInterno]
+            return [EsCInterno()]
         else:  # create
-            permission_classes = [EsSoporte]
-        return [permission() for permission in permission_classes]
+            return [EsSoporte()]
 
     def list(self, request):
         calificaciones = CalificacionService.listar()

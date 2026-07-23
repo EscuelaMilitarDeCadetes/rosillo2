@@ -146,3 +146,54 @@ class ProyectoXConvocatoriaSelector:
             )
             .distinct()
         )
+
+    @staticmethod
+    def buscar_con_filtros(convocatoria=None, codigo=None, titulo=None,
+                            financiado=None, alianza=None, responsable=None,
+                            calificacion=None, anio_inicio=None, anio_fin=None,
+                            interno=None, gruplac=None, estado=None):
+        """
+        Réplica de ProyectoXConvocatoriaSpecification.conFiltros() del
+        Thymeleaf original: todos los parámetros son opcionales y
+        combinables (AND); solo se añade un filtro si su valor no es None
+        (o no vacío, para los de texto), igual que el original.
+        """
+        from django.db.models import Q
+        qs = ProyectoXConvocatoria.objects.select_related(
+            'proyecto', 'convocatoria', 'proyecto__usuario__persona'
+        ).all()
+        filtros = Q()
+        if convocatoria:
+            filtros &= Q(convocatoria__nombre_convocatoria__icontains=convocatoria)
+        if codigo:
+            filtros &= Q(proyecto__codigo__icontains=codigo)
+        if titulo:
+            filtros &= Q(proyecto__titulo__icontains=titulo)
+        if financiado is not None:
+            filtros &= Q(proyecto__financiado=financiado)
+        if alianza is not None:
+            filtros &= Q(proyecto__alianza=alianza)
+        if responsable:
+            filtros &= (
+                # CORREGIDO: Usuario no tiene campo 'persona' directo, solo la
+                # relación inversa 'asignaciones' (UsuarioXPersona.usuario,
+                # related_name='asignaciones'); y Persona.nombre/apellido son
+                # singulares, no 'nombres'/'apellidos'.
+                Q(proyecto__usuario__asignaciones__estado=True,
+                  proyecto__usuario__asignaciones__persona__nombre__icontains=responsable)
+                | Q(proyecto__usuario__asignaciones__estado=True,
+                    proyecto__usuario__asignaciones__persona__apellido__icontains=responsable)
+            )
+        if calificacion:
+            filtros &= Q(calificacion_ultimo_filtro_calificacion=calificacion)
+        if anio_inicio:
+            filtros &= Q(proyecto__fecha_inicio__year=anio_inicio)
+        if anio_fin:
+            filtros &= Q(proyecto__fecha_fin__year=anio_fin)
+        if interno is not None:
+            filtros &= Q(convocatoria__interno=interno)
+        if gruplac is not None:
+            filtros &= Q(proyecto__gruplac=gruplac)
+        if estado is not None:
+            filtros &= Q(estado=estado)
+        return qs.filter(filtros).order_by('-proyecto__fecha_inicio')

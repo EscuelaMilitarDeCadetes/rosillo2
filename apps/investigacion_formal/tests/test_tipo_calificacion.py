@@ -15,7 +15,7 @@ class TipoCalificacionServiceTests(InvestigacionFormalFixturesMixin, TestCase):
             orden_fase=1,
             ejecutor=self.ejecutor,
         )
-        self.assertEqual(fase.ordenFase, 1)
+        self.assertEqual(fase.orden_fase, 1)
 
     def test_crear_tipo_calificacion_nombre_duplicado_falla(self):
         TipoCalificacionService.crear(

@@ -30,12 +30,12 @@ class TipoCalificacionService:
             tipo_calificacion=tipo_calificacion.strip(),
             descripcion=descripcion.strip(),
             evaluacion=evaluacion,
-            ordenFase=orden_fase,
+            orden_fase=orden_fase,
         )
         HistorialService.registrar(
             ejecutor,
             f"[SOPORTE] Se creó el tipo de calificación "
-            f"'{fase.tipo_calificacion}' (orden={fase.ordenFase}, id={fase.pk}).",
+            f"'{fase.tipo_calificacion}' (orden={fase.orden_fase}, id={fase.pk}).",
             objeto=fase,
         )
         return fase
@@ -50,8 +50,8 @@ class TipoCalificacionService:
         fase.tipo_calificacion = tipo_calificacion.strip()
         fase.descripcion = descripcion.strip()
         fase.evaluacion = evaluacion
-        fase.ordenFase = orden_fase
-        fase.save(update_fields=['tipo_calificacion', 'descripcion', 'evaluacion', 'ordenFase'])
+        fase.orden_fase = orden_fase
+        fase.save(update_fields=['tipo_calificacion', 'descripcion', 'evaluacion', 'orden_fase'])
         HistorialService.registrar(
             ejecutor,
             f"[SOPORTE] Se actualizó el tipo de calificación "

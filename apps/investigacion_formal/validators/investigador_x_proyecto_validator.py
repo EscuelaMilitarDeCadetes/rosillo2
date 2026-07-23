@@ -1,4 +1,3 @@
-# apps/investigacion_formal/validators/investigador_x_proyecto_validator.py
 from rest_framework.exceptions import ValidationError
 from apps.investigacion_formal.selectors.investigador_x_proyecto_selector import (
     InvestigadorXProyectoSelector,
@@ -22,16 +21,6 @@ class InvestigadorXProyectoValidator:
             rol_investigador_id, proyecto_id, persona_x_grupo_id
         )
         if existente is not None and existente.estado:
-            raise ValidationError(
-                "Esta persona ya está registrada con este mismo rol en este proyecto."
-            )
-        if InvestigadorXProyectoSelector.existe_vinculacion_activa(
-            persona_x_grupo_id, proyecto_id
-        ) and InvestigadorXProyectoSelector.obtener_por_combinacion(
-            rol_investigador_id, proyecto_id, persona_x_grupo_id
-        ) is not None and InvestigadorXProyectoSelector.obtener_por_combinacion(
-            rol_investigador_id, proyecto_id, persona_x_grupo_id
-        ).estado:
             raise ValidationError(
                 "Esta persona ya está registrada con este mismo rol en este proyecto."
             )

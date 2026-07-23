@@ -1,4 +1,3 @@
-# apps/investigacion_formal/views/grupo_minciencias_viewset.py
 from apps.investigacion_formal.pagination import InvestigacionFormalPageNumberPagination
 from rest_framework import viewsets, status
 from rest_framework.response import Response
@@ -6,9 +5,8 @@ from apps.investigacion_formal.serializers.grupo_minciencias_serializer import (
     GrupoMincienciasSerializer,
 )
 from apps.investigacion_formal.services.grupo_minciencias_service import GrupoMincienciasService
-from apps.usuarios.permissions import (
-    EsSoporte, EsFacultad, EsGrupo, EsCInterno, EsCExterno, EsAsesor, EsSupervisor, EsDecano, EsGerente,
-)
+from apps.investigacion_formal.permissions import ROLES_LECTURA_CATALOGOS, combinar
+from apps.usuarios.permissions import EsSoporte
 
 
 class GrupoMincienciasViewSet(viewsets.ViewSet):
@@ -17,13 +15,9 @@ class GrupoMincienciasViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action in ["create", "update"]:
-            permission_classes = [EsSoporte]
-        else: #list, retrieve
-            permission_classes = [
-                EsSoporte | EsFacultad | EsGrupo | EsCInterno | EsCExterno
-                | EsAsesor | EsSupervisor | EsDecano | EsGerente
-            ]
-        return [permission() for permission in permission_classes]
+            return [EsSoporte()]
+        else:  # list, retrieve
+            return [combinar(ROLES_LECTURA_CATALOGOS)]
 
     def list(self, request):
         grupos = GrupoMincienciasService.listar()

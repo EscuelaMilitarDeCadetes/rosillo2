@@ -5,9 +5,8 @@ from rest_framework.response import Response
 
 from apps.investigacion_formal.serializers.monto_serializer import MontoSerializer
 from apps.investigacion_formal.services.monto_service import MontoService
-from apps.usuarios.permissions import (
-    EsFacultad, EsGrupo, EsCInterno, EsCExterno,
-    EsAsesor, EsSupervisor, EsDecano, EsGerente,
+from apps.investigacion_formal.permissions import (
+    ROLES_LECTURA_INVESTIGACION_FORMAL, ROLES_ESCRITURA_GESTION, combinar,
 )
 
 
@@ -17,13 +16,9 @@ class MontoViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action in ["create", "asignar_aprobado", "editar_valor_aprobado"]:
-            permission_classes = [EsCInterno | EsCExterno]
-        else: #list, retrieve, por_proyecto, aprobados_calificados, contrapartida_calificados, totales_calificados
-            permission_classes = [
-                EsFacultad | EsGrupo | EsCInterno | EsCExterno
-                | EsAsesor | EsSupervisor | EsDecano | EsGerente
-            ]
-        return [permission() for permission in permission_classes]
+            return [combinar(ROLES_ESCRITURA_GESTION)]
+        else:  # list, retrieve, por_proyecto, aprobados_calificados, contrapartida_calificados, totales_calificados, avance_presupuestal
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL)]
 
     def list(self, request):
         montos = MontoService.listar()
@@ -90,5 +85,11 @@ class MontoViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=["get"], url_path="avance-presupuestal/(?P<proyecto_id>[^/.]+)")
     def avance_presupuestal(self, request, proyecto_id=None):
+        """
+        Widget aislado de % ejecutado. Para la ficha consolidada de
+        seguimiento (avance + tiempo + presupuesto + objetivos) usar en
+        cambio GET /proyectos/{id}/avance-ponderado/ (ProyectoViewSet).
+        Ambos delegan en MontoService.calcular_avance_presupuestal().
+        """
         avance = MontoService.calcular_avance_presupuestal(proyecto_id)
         return Response({"proyecto_id": int(proyecto_id), "avance_presupuestal": avance})

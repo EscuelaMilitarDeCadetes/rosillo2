@@ -9,7 +9,7 @@ class CalificacionSerializer(serializers.ModelSerializer):
         read_only=True
     )
     fase_orden = serializers.IntegerField(
-        source='fase.ordenFase',
+        source='fase.orden_fase',
         read_only=True
     )
     fase_es_evaluacion = serializers.BooleanField(

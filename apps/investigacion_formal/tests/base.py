@@ -87,7 +87,7 @@ class InvestigacionFormalFixturesMixin:
             tipo_calificacion=nombre,
             descripcion=f'Descripción {nombre}',
             evaluacion=evaluacion,
-            ordenFase=orden,
+            orden_fase=orden,
         )
 
     def _crear_proyecto_x_convocatoria(self, proyecto=None, convocatoria=None):

@@ -7,10 +7,10 @@ from apps.investigacion_formal.serializers.objetivo_x_punto_serializer import (
     ObjetivoXPuntoSerializer,
 )
 from apps.investigacion_formal.services.objetivo_x_punto_service import ObjetivoXPuntoService
-from apps.usuarios.permissions import (
-    EsFacultad, EsGrupo, EsCInterno, EsCExterno,
-    EsAsesor, EsSupervisor, EsDecano, EsGerente,
+from apps.investigacion_formal.permissions import (
+    ROLES_LECTURA_INVESTIGACION_FORMAL, ROLES_ESCRITURA_GESTION, ROLES_CREACION_OPERATIVA, combinar,
 )
+from apps.investigacion_formal.services.avance_service import AvanceService
 
 
 class ObjetivoXPuntoViewSet(viewsets.ViewSet):
@@ -18,16 +18,12 @@ class ObjetivoXPuntoViewSet(viewsets.ViewSet):
     pagination_class = InvestigacionFormalPageNumberPagination
 
     def get_permissions(self):
-        if self.action == "create":
-            permission_classes = [EsFacultad | EsGrupo | EsCInterno | EsCExterno]
-        elif self.action in ["agregar_avance", "destroy"]:
-            permission_classes = [EsCInterno | EsCExterno]
-        else: #list, retrieve, por_proyecto, por objetivo
-            permission_classes = [
-                EsFacultad | EsGrupo | EsCInterno | EsCExterno
-                | EsAsesor | EsSupervisor | EsDecano | EsGerente
-            ]
-        return [permission() for permission in permission_classes]
+        if self.action in ["create", "agregar_avance"]:
+            return [combinar(ROLES_CREACION_OPERATIVA)]
+        elif self.action in ["destroy"]:
+            return [combinar(ROLES_ESCRITURA_GESTION)]
+        else:  # list, retrieve, por_proyecto, por_objetivo
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL)]
 
     def list(self, request):
         registros = ObjetivoXPuntoService.listar()
@@ -51,7 +47,7 @@ class ObjetivoXPuntoViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"], url_path="agregar-avance/(?P<punto_control_id>[^/.]+)")
     def agregar_avance(self, request, punto_control_id=None):
-        registro = ObjetivoXPuntoService.agregar_avance(
+        registro, es_correccion = ObjetivoXPuntoService.agregar_avance(
             punto_control_id=punto_control_id,
             descripcion_avance=request.data.get("descripcion_avance"),
             avance=request.data.get("avance"),
@@ -59,7 +55,17 @@ class ObjetivoXPuntoViewSet(viewsets.ViewSet):
             anio_avance=request.data.get("anio_avance"),
             ejecutor=request.user,
         )
-        return Response(self.serializer_class(registro).data, status=status.HTTP_201_CREATED)
+        proyecto_id = registro.objetivo.proyecto_id
+        avance_ponderado = AvanceService.calcular_avance_ponderado(proyecto_id)
+        return Response(
+            {
+                "registro": self.serializer_class(registro).data,
+                "es_correccion_mismo_mes": es_correccion,
+                "proyecto_id": proyecto_id,
+                "avance_ponderado_proyecto": avance_ponderado,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
     def destroy(self, request, pk=None):
         ObjetivoXPuntoService.eliminar(pk, ejecutor=request.user)

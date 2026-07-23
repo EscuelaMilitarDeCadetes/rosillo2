@@ -5,7 +5,7 @@ class TipoCalificacionSelector:
 
     @staticmethod
     def listar():
-        return TipoCalificacion.objects.all().order_by('ordenFase')
+        return TipoCalificacion.objects.all().order_by('orden_fase')
 
     @staticmethod
     def obtener(tipo_calificacion_id):
@@ -32,32 +32,32 @@ class TipoCalificacionSelector:
 
     @staticmethod
     def listar_evaluables():
-        return TipoCalificacion.objects.filter(evaluacion=True).order_by('ordenFase')
+        return TipoCalificacion.objects.filter(evaluacion=True).order_by('orden_fase')
 
     @staticmethod
     def obtener_por_orden(orden_fase):
-        return TipoCalificacion.objects.filter(ordenFase=orden_fase).first()
+        return TipoCalificacion.objects.filter(orden_fase=orden_fase).first()
 
     @staticmethod
     def obtener_primera_fase():
-        return TipoCalificacion.objects.order_by('ordenFase').first()
+        return TipoCalificacion.objects.order_by('orden_fase').first()
 
     @staticmethod
     def obtener_ultima_fase():
-        return TipoCalificacion.objects.order_by('-ordenFase').first()
+        return TipoCalificacion.objects.order_by('-orden_fase').first()
 
     @staticmethod
     def obtener_siguiente_fase(orden_actual):
         return (
             TipoCalificacion.objects
-            .filter(ordenFase__gt=orden_actual)
-            .order_by('ordenFase')
+            .filter(orden_fase__gt=orden_actual)
+            .order_by('orden_fase')
             .first()
         )
 
     @staticmethod
     def existe_orden(orden_fase, excluir_id=None):
-        qs = TipoCalificacion.objects.filter(ordenFase=orden_fase)
+        qs = TipoCalificacion.objects.filter(orden_fase=orden_fase)
         if excluir_id is not None:
             qs = qs.exclude(pk=excluir_id)
         return qs.exists()

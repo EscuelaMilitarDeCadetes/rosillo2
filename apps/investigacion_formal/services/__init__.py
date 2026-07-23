@@ -4,6 +4,7 @@ from .control_cambios_service import ControlCambiosService
 from .convocatoria_service import ConvocatoriaService
 from .ejecucion_service import EjecucionService
 from .estadisticas_service import EstadisticasService
+from .exportacion_service import ExportacionService
 from .grupo_minciencias_service import GrupoMincienciasService
 from .investigador_x_proyecto_service import InvestigadorXProyectoService
 from .monto_service import MontoService
@@ -28,6 +29,7 @@ __all__ = [
     "ConvocatoriaService",
     "EjecucionService",
     "EstadisticasService",
+    "ExportacionService",
     "GrupoMincienciasService",
     "InvestigadorXProyectoService",
     "MontoService",

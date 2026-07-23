@@ -147,3 +147,34 @@ class ProyectoXConvocatoriaService:
             objeto=vinculo,
         )
         return vinculo
+    
+    @staticmethod
+    @transaction.atomic
+    def crear_ya_finalizado_aprobado(proyecto_id, convocatoria_id, ejecutor):
+        """
+        Variante de crear() para proyectos que nacen ya aprobados (hoy,
+        únicamente proyectos externos vía ProyectoService.crear_proyecto_externo).
+        No pasa por calificar_fase: se marca directamente como finalizado
+        y aprobado en ambos filtros, replicando el comportamiento del
+        Thymeleaf original para convocatorias externas.
+        """
+        ProyectoXConvocatoriaValidator.validar_creacion(proyecto_id, convocatoria_id)
+        aplicar = ProyectoXConvocatoria.objects.create(
+            proyecto_id=proyecto_id,
+            convocatoria_id=convocatoria_id,
+            estado=True,
+            estado_finalizado_calificacion=True,
+            ultimo_filtro_calificacion='APROBADO',
+            calificacion_ultimo_filtro_calificacion='APROBADO',
+        )
+        HistorialService.registrar(
+            ejecutor,
+            f"Se vinculó el proyecto id={proyecto_id} a la convocatoria "
+            f"id={convocatoria_id}, ya aprobado (proyecto externo).",
+            objeto=aplicar,
+        )
+        return aplicar
+    
+    @staticmethod
+    def buscar_con_filtros(**filtros):
+        return ProyectoXConvocatoriaSelector.buscar_con_filtros(**filtros)

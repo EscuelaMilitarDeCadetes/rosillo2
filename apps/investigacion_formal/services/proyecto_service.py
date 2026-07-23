@@ -4,6 +4,13 @@ from apps.investigacion_formal.models import Proyecto
 from apps.investigacion_formal.selectors.proyecto_selector import ProyectoSelector
 from apps.investigacion_formal.validators.proyecto_validator import ProyectoValidator
 from apps.common.services.historial_service import HistorialService
+from django.utils import timezone
+from apps.investigacion_formal.models import Monto
+from apps.investigacion_formal.selectors.convocatoria_selector import ConvocatoriaSelector
+from apps.investigacion_formal.services.convocatoria_service import ConvocatoriaService
+from apps.investigacion_formal.services.proyecto_x_convocatoria_service import (
+    ProyectoXConvocatoriaService,
+)
 
 
 class ProyectoService:
@@ -202,6 +209,73 @@ class ProyectoService:
         HistorialService.registrar(
             ejecutor,
             f"Se desactivó el proyecto '{proyecto.titulo}' (id={proyecto.pk}).",
+            objeto=proyecto,
+        )
+        return proyecto    
+    
+    @staticmethod
+    @transaction.atomic
+    def crear_proyecto_externo(usuario_id, gerente_id, titulo, unidad_ejecutora,
+                                linea_investigacion, entidad, valor_solicitado,
+                                alianza, financiado, ejecutor):
+        """
+        Réplica de ProyectosExternosControlador.crearProyecto() +
+        ProyectoServicioImpl.crearProyecto() del Thymeleaf original.
+
+        Regla de negocio (01_architecture.md, flujo de investigación formal,
+        paso 5): los proyectos de convocatoria externa se aprueban
+        automáticamente, sin pasar por las 6 fases de Calificacion que sí
+        aplican a los proyectos internos.
+        """
+        anio_actual = timezone.now().year
+        nombre_convocatoria_externa = f"{entidad} {anio_actual}"
+        convocatoria = ConvocatoriaSelector.buscar_por_nombre(
+            nombre_convocatoria_externa
+        )
+        if convocatoria is None:
+            convocatoria = ConvocatoriaService.crear(
+                nombre_convocatoria=nombre_convocatoria_externa,
+                anio_convocatoria=anio_actual,
+                inicio=timezone.now().date(),
+                cierre=timezone.now().date(),
+                interno=False,
+                ejecutor=ejecutor,
+            )
+            # Las convocatorias externas sintéticas nacen inactivas: no son
+            # una convocatoria "real" abierta a postulación, solo agrupan
+            # proyectos externos para reportes homogéneos con los internos.
+            ConvocatoriaService.cambiar_estado(
+                convocatoria_id=convocatoria.pk, nuevo_estado=False, ejecutor=ejecutor,
+            )
+        proyecto = ProyectoService.crear(
+            usuario_id=usuario_id,
+            gerente_id=gerente_id,
+            titulo=titulo,
+            interno=False,
+            alianza=alianza,
+            financiado=financiado,
+            unidad_ejecutora=unidad_ejecutora,
+            linea_investigacion=linea_investigacion,
+            ejecutor=ejecutor,
+            estado_aprobado='APROBADO',  # auto-aprobación, regla de negocio
+        )
+        Monto.objects.create(
+            proyecto=proyecto,
+            solicitado=valor_solicitado or 0,
+            aprobado=valor_solicitado or 0,
+            asignado=timezone.now().date(),
+            ejecutado=0,
+        )
+        # Nace "ya calificado": no pasa por las 6 fases de Calificacion.
+        ProyectoXConvocatoriaService.crear_ya_finalizado_aprobado(
+            proyecto_id=proyecto.pk,
+            convocatoria_id=convocatoria.pk,
+            ejecutor=ejecutor,
+        )
+        HistorialService.registrar(
+            ejecutor,
+            f"Se creó el proyecto externo '{proyecto.titulo}' con "
+            f"aprobación automática (entidad='{entidad}').",
             objeto=proyecto,
         )
         return proyecto

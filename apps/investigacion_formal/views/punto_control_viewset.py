@@ -4,9 +4,8 @@ from rest_framework.response import Response
 
 from apps.investigacion_formal.serializers.punto_control_serializer import PuntoControlSerializer
 from apps.investigacion_formal.services.punto_control_service import PuntoControlService
-from apps.usuarios.permissions import (
-    EsFacultad, EsGrupo, EsCInterno, EsCExterno,
-    EsAsesor, EsSupervisor, EsDecano, EsGerente,
+from apps.investigacion_formal.permissions import (
+    ROLES_LECTURA_INVESTIGACION_FORMAL, ROLES_ESCRITURA_GESTION, ROLES_CREACION_OPERATIVA, combinar,
 )
 
 
@@ -16,15 +15,11 @@ class PuntoControlViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action == "create":
-            permission_classes = [EsFacultad | EsGrupo | EsCInterno | EsCExterno]
+            return [combinar(ROLES_CREACION_OPERATIVA)]
         elif self.action in ["update", "destroy"]:
-            permission_classes = [EsCInterno | EsCExterno]
-        else: #list, retrieve
-            permission_classes = [
-                EsFacultad | EsGrupo | EsCInterno | EsCExterno
-                | EsAsesor | EsSupervisor | EsDecano | EsGerente
-            ]
-        return [permission() for permission in permission_classes]
+            return [combinar(ROLES_ESCRITURA_GESTION)]
+        else:  # list, retrieve
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL)]
 
     def list(self, request):
         puntos = PuntoControlService.listar()

@@ -5,17 +5,19 @@ from rest_framework.response import Response
 
 from apps.investigacion_formal.serializers.proyecto_serializer import ProyectoSerializer
 from apps.investigacion_formal.services.proyecto_service import ProyectoService
-from apps.usuarios.permissions import (
-    EsFacultad, EsGrupo, EsCInterno, EsCExterno,
-    EsAsesor, EsSupervisor, EsDecano, EsGerente,
+from apps.investigacion_formal.permissions import (
+    ROLES_LECTURA_INVESTIGACION_FORMAL, ROLES_ESCRITURA_GESTION,
+    ROLES_CREACION_PROYECTO, combinar,
 )
+from apps.usuarios.permissions import EsCExterno
 from apps.investigacion_formal.services.avance_service import AvanceService
+from apps.investigacion_formal.services.monto_service import MontoService
 from apps.investigacion_formal.serializers.avance_serializer import AvanceProyectoSerializer
 
 
 ACCIONES_SOLO_CINTERNO_CEXTERNO = [
     "update", "destroy", "asignar_timeline", "editar_fecha_cierre",
-    "cambiar_estado_aprobado", "subir_a_gruplac", "registrar_acta_cierre" "avance_ponderado",
+    "cambiar_estado_aprobado", "subir_a_gruplac", "registrar_acta_cierre",
 ]
 
 
@@ -25,15 +27,13 @@ class ProyectoViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action == "create":
-            permission_classes = [EsFacultad | EsGrupo]
+            return [combinar(ROLES_CREACION_PROYECTO)]   # antes: [EsFacultad | EsGrupo] inline
+        elif self.action == "crear_externo":
+            return [EsCExterno()]
         elif self.action in ACCIONES_SOLO_CINTERNO_CEXTERNO:
-            permission_classes = [EsCInterno | EsCExterno]
-        else: #list, retrieve, por_usuario, por_facultad, por_grupo, por_estado_aprobado
-            permission_classes = [
-                EsFacultad | EsGrupo | EsCInterno | EsCExterno
-                | EsAsesor | EsSupervisor | EsDecano | EsGerente
-            ]
-        return [permission() for permission in permission_classes]
+            return [combinar(ROLES_ESCRITURA_GESTION)]
+        else:
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL)]
 
     def list(self, request):
         proyectos = ProyectoService.listar_activos()
@@ -135,8 +135,12 @@ class ProyectoViewSet(viewsets.ViewSet):
     
     @action(detail=True, methods=["get"], url_path="avance-ponderado")
     def avance_ponderado(self, request, pk=None):
-        from apps.investigacion_formal.services.monto_service import MontoService
-
+        """
+        Ficha consolidada de seguimiento mensual (avance por objetivos +
+        avance en tiempo + avance presupuestal). Para un widget aislado de
+        solo presupuesto, usar en cambio
+        GET /montos/avance-presupuestal/{proyecto_id}/ (MontoViewSet).
+        """
         detalle = AvanceService.calcular_detalle_por_objetivo(pk)
         avance_objetivos = AvanceService.calcular_avance_ponderado(pk)
         avance_tiempo = AvanceService.calcular_avance_tiempo(pk)
@@ -149,3 +153,19 @@ class ProyectoViewSet(viewsets.ViewSet):
             "detalle_por_objetivo": detalle,
         }
         return Response(AvanceProyectoSerializer(payload).data)
+    
+    @action(detail=False, methods=["post"], url_path="crear-externo")
+    def crear_externo(self, request):
+        proyecto = ProyectoService.crear_proyecto_externo(
+            usuario_id=request.data.get("usuario"),
+            gerente_id=request.data.get("gerente"),
+            titulo=request.data.get("titulo"),
+            unidad_ejecutora=request.data.get("unidad_ejecutora"),
+            linea_investigacion=request.data.get("linea_investigacion"),
+            entidad=request.data.get("entidad"),
+            valor_solicitado=request.data.get("valor_solicitado"),
+            alianza=request.data.get("alianza"),
+            financiado=request.data.get("financiado"),
+            ejecutor=request.user,
+        )
+        return Response(self.serializer_class(proyecto).data, status=status.HTTP_201_CREATED)

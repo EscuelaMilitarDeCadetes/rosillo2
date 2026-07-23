@@ -105,13 +105,6 @@ class ProyectoSelector:
         )
 
     @staticmethod
-    def contar_aprobados_por_prefijo_codigo(prefijo_codigo):
-        """Equivalente a countProyectosAprobadosByPrefijo, usado para consecutivo de código."""
-        return Proyecto.objects.filter(
-            codigo__startswith=prefijo_codigo, estado_aprobado='APROBADO'
-        ).count()
-
-    @staticmethod
     def listar_anios_inicio_distintos():
         return (
             Proyecto.objects

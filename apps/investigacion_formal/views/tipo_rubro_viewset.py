@@ -12,6 +12,7 @@ from rest_framework.response import Response
 
 from apps.investigacion_formal.serializers.tipo_rubro_serializer import TipoRubroSerializer
 from apps.investigacion_formal.services.tipo_rubro_service import TipoRubroService
+from apps.investigacion_formal.permissions import ROLES_LECTURA_CATALOGOS, combinar
 from apps.usuarios.permissions import EsSoporte
 
 
@@ -21,13 +22,9 @@ class TipoRubroViewSet(viewsets.ViewSet):
     
     def get_permissions(self):
         if self.action in ["create", "update"]:
-            permission_classes = [EsSoporte]
-        else: #list, retrieve
-            permission_classes = [
-                EsSoporte | EsFacultad | EsGrupo | EsCInterno | EsCExterno
-                | EsAsesor | EsSupervisor | EsDecano | EsGerente
-            ]
-        return [permission() for permission in permission_classes]
+            return [EsSoporte()]
+        else:  # list, retrieve (+ por_proyecto / evaluables / aplicables / por_producto_minciencias / etc. según el archivo)
+            return [combinar(ROLES_LECTURA_CATALOGOS)]
 
     def list(self, request):
         rubros = TipoRubroService.listar()

@@ -66,26 +66,26 @@ class ObjetivoXPuntoService:
     @staticmethod
     @transaction.atomic
     def agregar_avance(punto_control_id, descripcion_avance, avance, mes_avance, anio_avance, ejecutor):
-        """Réplica de ObjetivoXPuntoServicioImpl.agregarAvanceXPunto: desactiva
-        el registro vigente para ese punto de control y crea uno nuevo con el
-        avance reportado, preservando el histórico."""
         ObjetivoXPuntoValidator.validar_nuevo_avance(
             descripcion_avance, avance, mes_avance, anio_avance
         )
-
         punto_control = PuntoControlSelector.obtener(punto_control_id)
         punto_control.completado = avance
         punto_control.save(update_fields=['completado'])
-
         vigente = ObjetivoXPuntoSelector.obtener_activo_por_punto_control(punto_control_id)
         if vigente is None:
             raise ValueError(
                 f"No existe un ObjetivoXPunto activo para el punto de control "
                 f"id={punto_control_id}."
             )
+        # NUEVO: distinguir corrección del mismo mes vs. reporte de un mes nuevo,
+        # para que quien carga el dato reciba confirmación explícita de cuál
+        # de las dos operaciones acaba de ejecutar (mitiga el error silencioso).
+        es_correccion_mismo_mes = (
+            vigente.mes_avance == mes_avance.strip() and vigente.anio_avance == anio_avance
+        )
         vigente.estado = False
         vigente.save(update_fields=['estado'])
-
         nuevo = ObjetivoXPunto.objects.create(
             objetivo=vigente.objetivo,
             punto_control=punto_control,
@@ -95,15 +95,22 @@ class ObjetivoXPuntoService:
             anio_avance=anio_avance,
             estado=True,
         )
-
-        HistorialService.registrar(
-            ejecutor,
-            f"Se registró un nuevo avance ({avance}%) para el objetivo "
-            f"'{nuevo.objetivo.objetivo}' del proyecto "
-            f"'{nuevo.objetivo.proyecto.titulo}' (id={nuevo.pk}).",
-            objeto=nuevo,
-        )
-        return nuevo
+        if es_correccion_mismo_mes:
+            HistorialService.registrar(
+                ejecutor,
+                f"Se CORRIGIÓ el avance de {mes_avance}/{anio_avance} ({vigente.avance}% → "
+                f"{avance}%) para el objetivo '{nuevo.objetivo.objetivo}' del proyecto "
+                f"'{nuevo.objetivo.proyecto.titulo}'.",
+                objeto=nuevo,
+            )
+        else:
+            HistorialService.registrar(
+                ejecutor,
+                f"Se registró un nuevo avance ({avance}%) para el objetivo "
+                f"'{nuevo.objetivo.objetivo}' del proyecto '{nuevo.objetivo.proyecto.titulo}'.",
+                objeto=nuevo,
+            )
+        return nuevo, es_correccion_mismo_mes
 
     @staticmethod
     @transaction.atomic

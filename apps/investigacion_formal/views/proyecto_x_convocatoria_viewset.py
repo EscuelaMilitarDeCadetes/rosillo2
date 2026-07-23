@@ -2,16 +2,20 @@ from apps.investigacion_formal.pagination import InvestigacionFormalPageNumberPa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
 from apps.investigacion_formal.serializers.proyecto_x_convocatoria_serializer import (
     ProyectoXConvocatoriaSerializer,
 )
 from apps.investigacion_formal.services.proyecto_x_convocatoria_service import (
     ProyectoXConvocatoriaService,
 )
-from apps.usuarios.permissions import (
-    EsFacultad, EsGrupo, EsCInterno, EsCExterno,
-    EsAsesor, EsSupervisor, EsDecano, EsGerente,
+from apps.investigacion_formal.permissions import (
+    ROLES_LECTURA_INVESTIGACION_FORMAL, ROLES_ESCRITURA_GESTION,
+    ROLES_CREACION_PROYECTO, combinar,
+)
+from django.http import HttpResponse
+from apps.investigacion_formal.services.exportacion_service import ExportacionService
+from apps.investigacion_formal.selectors.proyecto_x_convocatoria_selector import (
+    ProyectoXConvocatoriaSelector,
 )
 
 ACCIONES_SOLO_CINTERNO_CEXTERNO = [
@@ -25,15 +29,11 @@ class ProyectoXConvocatoriaViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action == "create":
-            permission_classes = [EsFacultad | EsGrupo]
+            return [combinar(ROLES_CREACION_PROYECTO)]   # antes: [EsFacultad | EsGrupo] inline
         elif self.action in ACCIONES_SOLO_CINTERNO_CEXTERNO:
-            permission_classes = [EsCInterno | EsCExterno]
-        else: #list, retrieve, por_proyecto, por_convocatoria, sin_calificar, calificados, por_facultad, por_grupos
-            permission_classes = [
-                EsFacultad | EsGrupo | EsCInterno | EsCExterno
-                | EsAsesor | EsSupervisor | EsDecano | EsGerente
-            ]
-        return [permission() for permission in permission_classes]
+            return [combinar(ROLES_ESCRITURA_GESTION)]
+        else:  # list, retrieve, por_proyecto, por_convocatoria, sin_calificar, calificados, por_facultad, por_grupos
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL)]
 
     def list(self, request):
         registros = ProyectoXConvocatoriaService.listar()
@@ -107,3 +107,66 @@ class ProyectoXConvocatoriaViewSet(viewsets.ViewSet):
     def por_grupo(self, request, grupo_id=None):
         registros = ProyectoXConvocatoriaService.listar_por_grupo(grupo_id)
         return Response(self.serializer_class(registros, many=True).data)
+    
+    @action(detail=False, methods=["get"], url_path="buscar")
+    def buscar(self, request):
+        filtros = dict(
+            convocatoria=request.query_params.get("convocatoria"),
+            codigo=request.query_params.get("codigo"),
+            titulo=request.query_params.get("titulo"),
+            responsable=request.query_params.get("responsable"),
+            calificacion=request.query_params.get("calificacion"),
+        )
+        for campo_booleano in ("financiado", "alianza", "interno", "gruplac", "estado"):
+            valor = request.query_params.get(campo_booleano)
+            filtros[campo_booleano] = (
+                None if valor is None else valor.lower() == "true"
+            )
+        for campo_anio in ("anio_inicio", "anio_fin"):
+            valor = request.query_params.get(campo_anio)
+            filtros[campo_anio] = int(valor) if valor else None
+
+        resultados = ProyectoXConvocatoriaService.buscar_con_filtros(**filtros)
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(resultados, request, view=self)
+        serializer = self.serializer_class(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+    def _filtros_desde_query_params(self, request):
+        """Mismos parámetros de buscar_con_filtros (Hallazgo C), vía querystring."""
+        qp = request.query_params
+        return dict(
+            convocatoria=qp.get("convocatoria"),
+            codigo=qp.get("codigo"),
+            titulo=qp.get("titulo"),
+            financiado=(qp.get("financiado") == "true") if "financiado" in qp else None,
+            alianza=(qp.get("alianza") == "true") if "alianza" in qp else None,
+            responsable=qp.get("responsable"),
+            calificacion=qp.get("calificacion"),
+            anio_inicio=qp.get("anio_inicio"),
+            anio_fin=qp.get("anio_fin"),
+            interno=(qp.get("interno") == "true") if "interno" in qp else None,
+            gruplac=(qp.get("gruplac") == "true") if "gruplac" in qp else None,
+            estado=qp.get("estado"),
+        )
+
+    @action(detail=False, methods=["get"], url_path="export/excel")
+    def export_excel(self, request):
+        filtros = self._filtros_desde_query_params(request)
+        queryset = ProyectoXConvocatoriaSelector.buscar_con_filtros(**filtros)
+        buffer = ExportacionService.exportar_excel(queryset)
+        response = HttpResponse(
+            buffer.read(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = "attachment; filename=proyectos.xlsx"
+        return response
+
+    @action(detail=False, methods=["get"], url_path="export/pdf")
+    def export_pdf(self, request):
+        filtros = self._filtros_desde_query_params(request)
+        queryset = ProyectoXConvocatoriaSelector.buscar_con_filtros(**filtros)
+        buffer = ExportacionService.exportar_pdf(queryset)
+        response = HttpResponse(buffer.read(), content_type="application/pdf")
+        response["Content-Disposition"] = "attachment; filename=proyectos.pdf"
+        return response    

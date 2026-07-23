@@ -57,9 +57,9 @@ class TipoCalificacionValidator:
     @staticmethod
     def _validar_orden(orden_fase):
         if orden_fase is None:
-            raise ValidationError({"ordenFase": "El orden de la fase es obligatorio."})
+            raise ValidationError({"orden_fase": "El orden de la fase es obligatorio."})
         if not isinstance(orden_fase, int) or orden_fase < 1:
-            raise ValidationError({"ordenFase": "El orden de la fase debe ser un entero mayor o igual a 1."})
+            raise ValidationError({"orden_fase": "El orden de la fase debe ser un entero mayor o igual a 1."})
 
     @staticmethod
     def _validar_unicidad_nombre(tipo_calificacion, excluir_id=None):
@@ -72,5 +72,5 @@ class TipoCalificacionValidator:
     def _validar_unicidad_orden(orden_fase, excluir_id=None):
         if TipoCalificacionSelector.existe_orden(orden_fase, excluir_id=excluir_id):
             raise ValidationError(
-                {"ordenFase": f"Ya existe una fase registrada con el orden {orden_fase}."}
+                {"orden_fase": f"Ya existe una fase registrada con el orden {orden_fase}."}
             )

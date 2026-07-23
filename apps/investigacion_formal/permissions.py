@@ -36,6 +36,19 @@ ROLES_ESCRITURA_GESTION = [EsCInterno, EsCExterno]
 # proyecto en campo.
 ROLES_CREACION_OPERATIVA = [EsFacultad, EsGrupo, EsCInterno, EsCExterno]
 
+# Roles que pueden CREAR un proyecto (no una convocatoria externa, no
+# gestión posterior): solo quienes ejecutan directamente el proyecto en
+# campo, igual que ROLES_CREACION_OPERATIVA pero restringido a estos dos
+# — se separa como constante propia porque Proyecto/ProyectoXConvocatoria
+# deliberadamente NO permiten crear a CInterno/CExterno (ver ACCIONES_SOLO_CINTERNO_CEXTERNO).
+ROLES_CREACION_PROYECTO = [EsFacultad, EsGrupo]
+
+# Roles de consulta específicos del flujo de Calificacion (no coincide con
+# ROLES_LECTURA_INVESTIGACION_FORMAL: aquí NO participan Facultad/Grupo
+# directamente, solo quienes intervienen en el proceso de calificación).
+ROLES_CONSULTA_CALIFICACION = [EsSupervisor, EsCInterno, EsCExterno]
+
+
 
 def combinar(clases_permiso):
     """Azúcar sintáctico: instancia y combina con | una lista de clases."""

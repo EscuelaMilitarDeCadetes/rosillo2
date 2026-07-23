@@ -9,9 +9,8 @@ from apps.investigacion_formal.serializers.investigador_x_proyecto_serializer im
 from apps.investigacion_formal.services.investigador_x_proyecto_service import (
     InvestigadorXProyectoService,
 )
-from apps.usuarios.permissions import (
-    EsFacultad, EsGrupo, EsCInterno, EsCExterno,
-    EsAsesor, EsSupervisor, EsDecano, EsGerente,
+from apps.investigacion_formal.permissions import (
+    ROLES_LECTURA_INVESTIGACION_FORMAL, ROLES_ESCRITURA_GESTION, ROLES_CREACION_OPERATIVA, combinar,
 )
 
 
@@ -21,15 +20,11 @@ class InvestigadorXProyectoViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action == "create":
-            permission_classes = [EsFacultad | EsGrupo | EsCInterno | EsCExterno]
+            return [combinar(ROLES_CREACION_OPERATIVA)]
         elif self.action in ["update", "destroy"]:
-            permission_classes = [EsCInterno | EsCExterno]
-        else: #list, retrieve, por_proyecto
-            permission_classes = [
-                EsFacultad | EsGrupo | EsCInterno | EsCExterno
-                | EsAsesor | EsSupervisor | EsDecano | EsGerente
-            ]
-        return [permission() for permission in permission_classes]
+            return [combinar(ROLES_ESCRITURA_GESTION)]
+        else:  # list, retrieve, por_proyecto
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL)]
 
     def list(self, request):
         investigadores = InvestigadorXProyectoService.listar()

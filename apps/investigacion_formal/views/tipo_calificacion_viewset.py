@@ -1,12 +1,4 @@
 from apps.investigacion_formal.pagination import InvestigacionFormalPageNumberPagination
-from apps.usuarios.permissions.es_asesor import EsAsesor
-from apps.usuarios.permissions.es_cexterno import EsCExterno
-from apps.usuarios.permissions.es_cinterno import EsCInterno
-from apps.usuarios.permissions.es_decano import EsDecano
-from apps.usuarios.permissions.es_facultad import EsFacultad
-from apps.usuarios.permissions.es_gerente import EsGerente
-from apps.usuarios.permissions.es_grupo import EsGrupo
-from apps.usuarios.permissions.es_supervisor import EsSupervisor
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -15,6 +7,7 @@ from apps.investigacion_formal.serializers.tipo_calificacion_serializer import (
     TipoCalificacionSerializer,
 )
 from apps.investigacion_formal.services.tipo_calificacion_service import TipoCalificacionService
+from apps.investigacion_formal.permissions import ROLES_LECTURA_CATALOGOS, combinar
 from apps.usuarios.permissions import EsSoporte
 
 
@@ -24,13 +17,9 @@ class TipoCalificacionViewSet(viewsets.ViewSet):
     
     def get_permissions(self):
         if self.action in ["create", "update"]:
-            permission_classes = [EsSoporte]
-        else: #list, retrieve, evaluables
-            permission_classes = [
-                EsSoporte | EsFacultad | EsGrupo | EsCInterno | EsCExterno
-                | EsAsesor | EsSupervisor | EsDecano | EsGerente
-            ]
-        return [permission() for permission in permission_classes]
+            return [EsSoporte()]
+        else:  # list, retrieve, evaluables
+            return [combinar(ROLES_LECTURA_CATALOGOS)]
 
     def list(self, request):
         fases = TipoCalificacionService.listar()

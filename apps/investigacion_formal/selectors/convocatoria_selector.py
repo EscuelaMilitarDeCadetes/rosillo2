@@ -69,3 +69,12 @@ class ConvocatoriaSelector:
     def listar_vencidas():
         hoy = timezone.now().date()
         return Convocatoria.objects.filter(estado=True, cierre__lt=hoy)
+    
+    @staticmethod
+    def buscar_por_nombre(nombre_convocatoria):
+        """Variante silenciosa de obtener(): retorna None si no existe,
+        en vez de lanzar excepción. Necesaria para el patrón
+        buscar-o-crear de crear_proyecto_externo()."""
+        return Convocatoria.objects.filter(
+            nombre_convocatoria=nombre_convocatoria
+        ).first()

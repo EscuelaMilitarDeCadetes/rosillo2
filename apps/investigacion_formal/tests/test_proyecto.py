@@ -79,3 +79,73 @@ class ProyectoServiceTests(InvestigacionFormalFixturesMixin, TestCase):
     def test_editar_fecha_cierre_exitoso(self):
         proyecto = self._crear_proyecto(titulo='Proyecto a Cerrar')
         ProyectoService.asignar_time
+        
+    def test_crear_proyecto_historico_con_codigo_existente(self):
+        """
+        Cubre INV-16: antes de su corrección, cualquier llamada a
+        ProyectoService.crear() —con o sin código— fallaba con
+        TypeError porque ProyectoValidator.validar_creacion() no
+        aceptaba el parámetro `codigo`. Este test falla de inmediato
+        si esa regresión vuelve a aparecer.
+        """
+        proyecto = ProyectoService.crear(
+            usuario_id=self.usuario_proyecto.pk,
+            gerente_id=self.gerente.pk,
+            titulo='Proyecto Histórico Cargado al Repositorio',
+            interno=True,
+            alianza=False,
+            financiado=True,
+            unidad_ejecutora='ING',
+            linea_investigacion='Tecnología',
+            ejecutor=self.ejecutor,
+            codigo='ING2019-I03',
+            estado_aprobado='APROBADO',
+        )
+        self.assertEqual(proyecto.codigo, 'ING2019-I03')
+        self.assertEqual(proyecto.estado_aprobado, 'APROBADO')
+
+    def test_asignar_timeline_no_sobreescribe_codigo_historico(self):
+        """
+        Cubre el guardián `if not proyecto.codigo` de asignar_timeline():
+        un proyecto cargado con código histórico nunca debe perder ese
+        código, ni siquiera si después se le asigna un timeline.
+        """
+        proyecto = ProyectoService.crear(
+            usuario_id=self.usuario_proyecto.pk,
+            gerente_id=self.gerente.pk,
+            titulo='Proyecto Histórico con Timeline Posterior',
+            interno=True,
+            alianza=False,
+            financiado=True,
+            unidad_ejecutora='ING',
+            linea_investigacion='Tecnología',
+            ejecutor=self.ejecutor,
+            codigo='ING2018-E07',
+            estado_aprobado='APROBADO',
+        )
+        actualizado = ProyectoService.asignar_timeline(
+            proyecto_id=proyecto.pk,
+            fecha_inicio='2018-01-01',
+            fecha_fin='2018-12-31',
+            ejecutor=self.ejecutor,
+        )
+        self.assertEqual(actualizado.codigo, 'ING2018-E07')
+
+    def test_crear_proyecto_codigo_duplicado_falla(self):
+        """
+        Cubre que _validar_codigo() realmente se invoque: dos proyectos
+        no pueden compartir el mismo código de repositorio.
+        """
+        ProyectoService.crear(
+            usuario_id=self.usuario_proyecto.pk, gerente_id=self.gerente.pk,
+            titulo='Primer Proyecto Histórico', interno=True, alianza=False,
+            financiado=False, unidad_ejecutora='ING', linea_investigacion='Tecnología',
+            ejecutor=self.ejecutor, codigo='ING2020-I01',
+        )
+        with self.assertRaises(ValidationError):
+            ProyectoService.crear(
+                usuario_id=self.usuario_proyecto.pk, gerente_id=self.gerente.pk,
+                titulo='Segundo Proyecto Histórico', interno=True, alianza=False,
+                financiado=False, unidad_ejecutora='ING', linea_investigacion='Tecnología',
+                ejecutor=self.ejecutor, codigo='ING2020-I01',
+            )

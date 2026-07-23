@@ -5,10 +5,8 @@ from rest_framework.response import Response
 
 from apps.investigacion_formal.serializers.ejecucion_serializer import EjecucionSerializer
 from apps.investigacion_formal.services.ejecucion_service import EjecucionService
-from apps.usuarios.permissions import (
-    EsFacultad, EsGrupo, EsCInterno, EsCExterno,
-    EsAsesor, EsSupervisor, EsDecano, EsGerente,
-)
+from apps.investigacion_formal.permissions import ROLES_LECTURA_INVESTIGACION_FORMAL, combinar
+from apps.usuarios.permissions import EsCInterno, EsCExterno
 
 
 class EjecucionViewSet(viewsets.ViewSet):
@@ -18,12 +16,9 @@ class EjecucionViewSet(viewsets.ViewSet):
     def get_permissions(self):
         if self.action in ["create", "update", "destroy"]:
             permission_classes = [EsCInterno | EsCExterno]
-        else: #list, retrieve, por_monto
-            permission_classes = [
-                EsFacultad | EsGrupo | EsCInterno | EsCExterno
-                | EsAsesor | EsSupervisor | EsDecano | EsGerente
-            ]
-        return [permission() for permission in permission_classes]
+            return [permission() for permission in permission_classes]
+        else:  # list, retrieve, por_monto
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL)]
 
     def list(self, request):
         ejecuciones = EjecucionService.listar()

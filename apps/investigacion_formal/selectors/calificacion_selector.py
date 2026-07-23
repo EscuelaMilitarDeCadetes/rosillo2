@@ -30,7 +30,7 @@ class CalificacionSelector:
             Calificacion.objects
             .select_related('fase')
             .filter(aplicar_id=aplicar_id)
-            .order_by('fase__ordenFase')
+            .order_by('fase__orden_fase')
         )
 
     @staticmethod
@@ -55,7 +55,7 @@ class CalificacionSelector:
             Calificacion.objects
             .select_related('fase')
             .filter(aplicar_id=aplicar_id, aprobado=False, observacion='')
-            .order_by('fase__ordenFase')
+            .order_by('fase__orden_fase')
         )
 
     @staticmethod
@@ -64,7 +64,7 @@ class CalificacionSelector:
             Calificacion.objects
             .select_related('fase')
             .filter(aplicar_id=aplicar_id, aprobado=True)
-            .order_by('fase__ordenFase')
+            .order_by('fase__orden_fase')
         )
 
     @staticmethod
@@ -73,7 +73,7 @@ class CalificacionSelector:
             Calificacion.objects
             .select_related('fase')
             .filter(aplicar_id=aplicar_id, aprobado=False)
-            .order_by('fase__ordenFase')
+            .order_by('fase__orden_fase')
         )
 
     @staticmethod

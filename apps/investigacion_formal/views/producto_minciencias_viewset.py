@@ -1,12 +1,4 @@
 from apps.investigacion_formal.pagination import InvestigacionFormalPageNumberPagination
-from apps.usuarios.permissions.es_asesor import EsAsesor
-from apps.usuarios.permissions.es_cexterno import EsCExterno
-from apps.usuarios.permissions.es_cinterno import EsCInterno
-from apps.usuarios.permissions.es_decano import EsDecano
-from apps.usuarios.permissions.es_facultad import EsFacultad
-from apps.usuarios.permissions.es_gerente import EsGerente
-from apps.usuarios.permissions.es_grupo import EsGrupo
-from apps.usuarios.permissions.es_supervisor import EsSupervisor
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -17,6 +9,7 @@ from apps.investigacion_formal.serializers.producto_minciencias_serializer impor
 from apps.investigacion_formal.services.producto_minciencias_service import (
     ProductoMincienciasService,
 )
+from apps.investigacion_formal.permissions import ROLES_LECTURA_CATALOGOS, combinar
 from apps.usuarios.permissions import EsSoporte
 
 
@@ -26,13 +19,9 @@ class ProductoMincienciasViewSet(viewsets.ViewSet):
     
     def get_permissions(self):
         if self.action in ["create", "update"]:
-            permission_classes = [EsSoporte]
-        else: #list, retrieve, por_proyecto
-            permission_classes = [
-                EsSoporte | EsFacultad | EsGrupo | EsCInterno | EsCExterno
-                | EsAsesor | EsSupervisor | EsDecano | EsGerente
-            ]
-        return [permission() for permission in permission_classes]
+            return [EsSoporte()]
+        else:  # list, retrieve, por_proyecto
+            return [combinar(ROLES_LECTURA_CATALOGOS)]
 
     def list(self, request):
         productos = ProductoMincienciasService.listar()
