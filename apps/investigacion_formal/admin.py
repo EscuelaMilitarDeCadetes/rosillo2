@@ -96,9 +96,9 @@ class ProductoXProyectoAdmin(admin.ModelAdmin):
 
 @admin.register(TipoCalificacion)
 class TipoCalificacionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'tipo_calificacion', 'descripcion', 'evaluacion', 'ordenFase')
-    search_fields = ('tipo_calificacion', 'evaluacion', 'ordenFase')
-    list_filter = ('tipo_calificacion', 'evaluacion', 'ordenFase')
+    list_display = ('id', 'tipo_calificacion', 'descripcion', 'evaluacion', 'orden_fase')
+    search_fields = ('tipo_calificacion', 'evaluacion', 'orden_fase')
+    list_filter = ('tipo_calificacion', 'evaluacion', 'orden_fase')
 
 
 

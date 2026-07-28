@@ -6,6 +6,7 @@ class ActividadFormativa(models.Model):
         ('EN_PROGRESO', 'En Progreso'),
         ('COMPLETADA', 'Completada'),
         ('CANCELADA', 'Cancelada'),
+        ('ELIMINADA', 'Eliminada'),
     ]
     
     proceso_formativo = models.ForeignKey('investigacion_formativa.ProcesoFormativo', on_delete=models.CASCADE, related_name='actividades_formativas')

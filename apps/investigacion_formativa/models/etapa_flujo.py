@@ -39,6 +39,7 @@ class EtapaFlujo(models.Model):
         ]
     )
     permite_reintentos = models.BooleanField(default=True)
+    activo = models.BooleanField(default=True)
     
     class Meta:
         verbose_name = "Etapa de Flujo"

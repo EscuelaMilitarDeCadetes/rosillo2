@@ -9,8 +9,7 @@ class Estudiante(models.Model):
     
     class Meta:
         verbose_name = "Estudiante"
-        verbose_name_plural = "Estudiantes"
-        unique_together = ('persona', 'modalidad_facultad')       
+        verbose_name_plural = "Estudiantes"    
 
     def __str__(self):
         return f"Estudiante: {self.persona.nombre} {self.persona.apellido}" 

@@ -111,7 +111,7 @@ class DocumentoFirmanteAdmin(admin.ModelAdmin):
 
 @admin.register(Historial)
 class HistorialAdmin(admin.ModelAdmin):
-    list_display = ('id', 'usuario', 'accion', 'fecha_creacion', 'objetivo')
+    list_display = ('id', 'usuario', 'accion', 'fecha_creacion', 'objeto_relacionado')
     search_fields = ('usuario__username', 'accion')
     list_filter = ('usuario__username', 'accion')
     ordering = ('-fecha_creacion',)

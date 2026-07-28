@@ -7,7 +7,6 @@ class ProcesoFormativo(models.Model):
     titulo = models.CharField(max_length=500, null=True)
     nota_final = models.FloatField(null=True, blank=True)
     aprobado = models.BooleanField(null=True)
-    # tipo_proceso = models.CharField(max_length=200)
     estado_general = models.CharField(max_length=255)
     porcentaje_avance = models.FloatField(null=True, blank=True)
     horas_acumuladas = models.FloatField(null=True, blank=True)

@@ -22,6 +22,7 @@ class CertificacionExterna(models.Model):
     cumple_horas = models.BooleanField(default=False, help_text="True cuando horas_validadas >= 120")    
     fecha_validacion = models.DateTimeField(null=True, blank=True)
     observaciones = models.TextField(null=True, blank=True)
+    activo = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = "Certificación Externa"

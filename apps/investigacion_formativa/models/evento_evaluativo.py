@@ -7,7 +7,8 @@ class EventoEvaluativo(models.Model):
     es_obligatoria = models.BooleanField()
     fecha_sustentacion = models.DateTimeField()
     lugar = models.CharField(max_length=255, help_text="Ej: 'Sala de Juntas A' o 'Virtual vía Teams'")
-    resultado = models.CharField(max_length=100)    
+    resultado = models.CharField(max_length=100)
+    activo = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = "Sustentación de Proceso de Grado"

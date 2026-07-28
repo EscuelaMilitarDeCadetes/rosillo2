@@ -6,6 +6,7 @@ class PlanTrabajo(models.Model):
         ("ENVIADO", "Enviado a revisión"),
         ("APROBADO", "Aprobado"),
         ("RECHAZADO", "Rechazado"),
+        ("ELIMINADO", "Eliminado"),
     ]
     proceso = models.OneToOneField("investigacion_formativa.ProcesoFormativo", on_delete=models.CASCADE, related_name="plan_trabajo")
     aprobado_por = models.ForeignKey("usuarios.Usuario", on_delete=models.SET_NULL, null=True, blank=True, related_name="planes_aprobados")
