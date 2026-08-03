@@ -41,9 +41,13 @@ class PersonaXGrupoService:
 
     @staticmethod
     @transaction.atomic
-    def crear(persona_id, rol_grupo_id, ejecutor, grupo_id=None, facultad_id=None, vinculacion=None):
+    def crear(persona_id, rol_grupo_id, ejecutor, grupo_id=None, facultad_id=None,
+            vinculacion=None, derivar_facultad_de_grupo=False):
         vinculacion = vinculacion or timezone.now().date()
-        PersonaXGrupoValidator.validar_creacion(persona_id, rol_grupo_id, grupo_id, facultad_id, vinculacion)
+        PersonaXGrupoValidator.validar_creacion(
+            persona_id, rol_grupo_id, grupo_id, facultad_id, vinculacion,
+            derivar_facultad_de_grupo=derivar_facultad_de_grupo,
+        )
         vinculo = PersonaXGrupo.objects.create(
             persona_id=persona_id,
             rol_grupo_id=rol_grupo_id,

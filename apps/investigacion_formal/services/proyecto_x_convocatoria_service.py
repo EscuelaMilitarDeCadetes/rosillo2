@@ -49,14 +49,11 @@ class ProyectoXConvocatoriaService:
     def crear(convocatoria_id, proyecto_id, ejecutor):
         """Réplica de participarConvocatoria: FACULTAD/GRUPO postulan un
         proyecto ya creado a una convocatoria activa."""
-        from django.utils import timezone
-
         ProyectoXConvocatoriaValidator.validar_creacion(convocatoria_id, proyecto_id)
         vinculo = ProyectoXConvocatoria.objects.create(
             convocatoria_id=convocatoria_id,
             proyecto_id=proyecto_id,
             estado=True,
-            fecha_crea=timezone.now().date(),
         )
         HistorialService.registrar(
             ejecutor,

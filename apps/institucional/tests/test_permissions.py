@@ -1,3 +1,4 @@
+# apps/institucional/tests/test_permissions.py
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
@@ -8,11 +9,13 @@ from apps.usuarios.models import (
     RolPlataforma,
     RolXUsuario,
 )
+from django.core.cache import cache
 
 
 class PermissionTests(TestCase):
 
     def setUp(self):
+        cache.clear()
         self.client = APIClient()
         # ---------- Roles ----------
         self.rol_soporte = RolPlataforma.objects.create(
@@ -141,7 +144,44 @@ class PermissionTests(TestCase):
             email="sinrol@esmic.edu.co",
             password="Password123*",
         )
-        self.url = reverse("usuario-list")
+        # ---------- Roles adicionales para los tests "no_puede_acceder" ----------
+        self.rol_estudiante = RolPlataforma.objects.create(
+            nombre_rol="ESTUDIANTE", descripcion="Estudiante"
+        )
+        self.rol_gerente = RolPlataforma.objects.create(
+            nombre_rol="GERENTE", descripcion="Gerente de proyecto"
+        )
+        self.rol_jurado = RolPlataforma.objects.create(
+            nombre_rol="JURADO", descripcion="Jurado evaluador"
+        )
+        self.rol_tutor = RolPlataforma.objects.create(
+            nombre_rol="TUTOR", descripcion="Tutor de proceso formativo"
+        )
+        self.estudiante = Usuario.objects.create_user(
+            username="estudiante@esmic.edu.co",
+            email="estudiante@esmic.edu.co",
+            password="Password123*",
+        )
+        RolXUsuario.objects.create(usuario=self.estudiante, rol=self.rol_estudiante, estado=True)
+        self.gerente = Usuario.objects.create_user(
+            username="gerente@esmic.edu.co",
+            email="gerente@esmic.edu.co",
+            password="Password123*",
+        )
+        RolXUsuario.objects.create(usuario=self.gerente, rol=self.rol_gerente, estado=True)
+        self.jurado = Usuario.objects.create_user(
+            username="jurado@esmic.edu.co",
+            email="jurado@esmic.edu.co",
+            password="Password123*",
+        )
+        RolXUsuario.objects.create(usuario=self.jurado, rol=self.rol_jurado, estado=True)
+        self.tutor = Usuario.objects.create_user(
+            username="tutor@esmic.edu.co",
+            email="tutor@esmic.edu.co",
+            password="Password123*",
+        )
+        RolXUsuario.objects.create(usuario=self.tutor, rol=self.rol_tutor, estado=True)        
+        self.url = reverse("usuarios-list")
         
     def test_soporte_puede_acceder(self):
         login = self.client.post(

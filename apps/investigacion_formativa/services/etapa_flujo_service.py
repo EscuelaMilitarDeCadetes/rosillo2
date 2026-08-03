@@ -31,8 +31,7 @@ class EtapaFlujoService:
               requiere_firma=True, requiere_evaluacion=True, es_final=False,
               permite_reintentos=True):
         EtapaFlujoValidator.validar_creacion(
-            flujo_id, nombre, orden, codigo, rol_responsable, documento_requerido_id,
-            descripcion, tipo_etapa,
+            flujo_id, nombre, orden, codigo, tipo_etapa, rol_responsable,
         )
         etapa = EtapaFlujo.objects.create(
             flujo_id=flujo_id,
@@ -57,7 +56,7 @@ class EtapaFlujoService:
         HistorialService.registrar(
             ejecutor,
             f"Se creó la etapa '{etapa.nombre}' (orden {etapa.orden}) del flujo "
-            f"'{etapa.flujo.nombre}' (id={etapa.pk}).",
+            f"'{etapa.flujo.nombre}' (id={etapa.id}).",
             objeto=etapa,
         )
         return etapa
@@ -72,8 +71,7 @@ class EtapaFlujoService:
                     permite_reintentos=True):
         etapa = EtapaFlujoSelector.obtener(etapa_id)
         EtapaFlujoValidator.validar_actualizacion(
-            etapa, nombre, orden, codigo, rol_responsable, documento_requerido_id,
-            descripcion, tipo_etapa,
+            etapa_id, etapa.flujo_id, nombre, orden, codigo, tipo_etapa, rol_responsable,
         )
         etapa.nombre = nombre
         etapa.orden = orden
@@ -100,7 +98,7 @@ class EtapaFlujoService:
         ])
         HistorialService.registrar(
             ejecutor,
-            f"Se actualizó la etapa '{etapa.nombre}' del flujo '{etapa.flujo.nombre}' (id={etapa.pk}).",
+            f"Se actualizó la etapa '{etapa.nombre}' del flujo '{etapa.flujo.nombre}' (id={etapa_id}).",
             objeto=etapa,
         )
         return etapa
@@ -111,7 +109,7 @@ class EtapaFlujoService:
         etapa = EtapaFlujoSelector.obtener(etapa_id)
         etapa.activo = True
         etapa.save(update_fields=['activo'])
-        HistorialService.registrar(ejecutor, f"Se activó la etapa '{etapa.nombre}' (id={etapa.pk}).", objeto=etapa)
+        HistorialService.registrar(ejecutor, f"Se activó la etapa '{etapa.nombre}' (id={etapa_id}).", objeto=etapa)
         return etapa
 
     @staticmethod
@@ -120,5 +118,5 @@ class EtapaFlujoService:
         etapa = EtapaFlujoSelector.obtener(etapa_id)
         etapa.activo = False
         etapa.save(update_fields=['activo'])
-        HistorialService.registrar(ejecutor, f"Se desactivó la etapa '{etapa.nombre}' (id={etapa.pk}).", objeto=etapa)
+        HistorialService.registrar(ejecutor, f"Se desactivó la etapa '{etapa.nombre}' (id={etapa_id}).", objeto=etapa)
         return etapa

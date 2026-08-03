@@ -14,6 +14,7 @@ class UsuarioServiceTests(BaseUsuarioTestCase):
         usuario_inactivo = Usuario.objects.create_user(
             username="inactivo",
             password="123",
+            email="inactivo@esmic.edu.co",
             is_active=False
         )
         activos = UsuarioService.mostrar_todos_usuarios()

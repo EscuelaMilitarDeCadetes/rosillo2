@@ -10,6 +10,11 @@ User = get_user_model()
 
 
 class ReemplazoRetiroTests(IntegracionFixturesMixin, TestCase):
+    
+    def setUp(self):
+        super().setUp()
+        self.crear_ejecutor_con_rol('FACULTAD', 'facultad.reemplazo@esmic.edu.co')
+        self.loguearse_como('facultad.reemplazo@esmic.edu.co', 'soporte123')
 
     def _crear_estudiante_inicial(self, correo='original@esmic.edu.co', documento='ORIG-1'):
         data = self.datos_persona(correo=correo, documento=documento, nombre='Original')
@@ -33,6 +38,7 @@ class ReemplazoRetiroTests(IntegracionFixturesMixin, TestCase):
         data_reemplazo['rol_plataforma_id'] = self.roles['ESTUDIANTE'].pk
         data_reemplazo['facultad_id'] = self.facultad.pk
         data_reemplazo['rol_grupo_id'] = self.rol_grupo.pk
+        self.loguearse_como('soporte@esmic.edu.co', 'soporte123')  # volver a SOPORTE
         response = self.client.post(reverse('vinculacion-reemplazar'), data_reemplazo)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         vinculo_anterior.refresh_from_db()
@@ -69,6 +75,7 @@ class ReemplazoRetiroTests(IntegracionFixturesMixin, TestCase):
             correo='nuevo@esmic.edu.co', documento='NUEVO-1'
         )
         data_reemplazo['usuario_id'] = usuario_id
+        self.loguearse_como('soporte@esmic.edu.co', 'soporte123')   # <- línea agregada
         response = self.client.post(reverse('vinculacion-reemplazar'), data_reemplazo)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 

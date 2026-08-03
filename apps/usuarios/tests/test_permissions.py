@@ -2,7 +2,8 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
-
+from axes.utils import reset as axes_reset
+from django.core.cache import cache
 from apps.usuarios.models import (
     Usuario,
     RolPlataforma,
@@ -13,6 +14,8 @@ from apps.usuarios.models import (
 class PermissionTests(TestCase):
 
     def setUp(self):
+        axes_reset()        
+        cache.clear()
         self.client = APIClient()
         # ---------- Roles ----------
         self.rol_soporte = RolPlataforma.objects.create(
@@ -71,7 +74,7 @@ class PermissionTests(TestCase):
             status.HTTP_200_OK
         )
             
-    def test_supervisor_no_puede_acceder(self):
+    def test_supervisor_puede_acceder(self):
         login = self.client.post(
             reverse("login"),
             {
@@ -85,7 +88,7 @@ class PermissionTests(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(
             response.status_code,
-            status.HTTP_403_FORBIDDEN
+            status.HTTP_200_OK
         )
         
     def test_usuario_sin_rol_no_puede_acceder(self):

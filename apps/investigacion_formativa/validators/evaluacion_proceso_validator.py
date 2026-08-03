@@ -12,10 +12,12 @@ NOTA_APROBATORIA = 3.5
 class EvaluacionProcesoValidator:
 
     @staticmethod
-    def validar_creacion(evaluador_id, instancia_etapa_id, nota, peso, concepto):
+    def validar_creacion(evaluador_id, instancia_etapa_id, nota, peso, concepto, aprobado, resultado):
         EvaluacionProcesoValidator._validar_concepto(concepto)
         EvaluacionProcesoValidator._validar_nota(nota)
         EvaluacionProcesoValidator._validar_peso(peso)
+        EvaluacionProcesoValidator._validar_resultado(resultado)
+        EvaluacionProcesoValidator.validar_consistencia_aprobado(aprobado, nota)
         EvaluacionProcesoValidator._validar_unicidad(evaluador_id, instancia_etapa_id)
 
     @staticmethod
@@ -76,3 +78,8 @@ class EvaluacionProcesoValidator:
             raise ValidationError(
                 "Este evaluador ya registró una evaluación para esta etapa del proceso."
             )
+
+    @staticmethod
+    def _validar_resultado(resultado):
+        if not resultado or not resultado.strip():
+            raise ValidationError({"resultado": "El resultado de la evaluación es obligatorio."})

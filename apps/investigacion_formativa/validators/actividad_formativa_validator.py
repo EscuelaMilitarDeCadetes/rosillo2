@@ -50,6 +50,11 @@ class ActividadFormativaValidator:
     def validar_eliminacion(actividad):
         if actividad.estado == 'ELIMINADA':
             raise ValidationError("Esta actividad ya se encuentra eliminada.")
+        if actividad.estado != 'PLANIFICADA':
+            raise ValidationError(
+                f"Solo se pueden eliminar actividades en estado 'PLANIFICADA'. "
+                f"Estado actual: '{actividad.estado}'."
+            )
 
     @staticmethod
     def _validar_no_terminal(actividad):

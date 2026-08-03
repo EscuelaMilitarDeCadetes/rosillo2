@@ -1,3 +1,4 @@
+# apps/common/tests/test_permissions.py
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
@@ -8,11 +9,13 @@ from apps.usuarios.models import (
     RolPlataforma,
     RolXUsuario,
 )
+from django.core.cache import cache
 
 
 class PermissionTests(TestCase):
 
     def setUp(self):
+        cache.clear()
         self.client = APIClient()
         # ---------- Roles ----------
         self.rol_soporte = RolPlataforma.objects.create(
@@ -135,13 +138,34 @@ class PermissionTests(TestCase):
             rol=self.rol_decano,
             estado=True
         )
+        # ---------- Usuario con rol pero que no tienen acceso----------
+        self.estudiante = Usuario.objects.create_user(
+            username="estudiante@esmic.edu.co",
+            email="estudiante@esmic.edu.co",
+            password="Password123*",
+        )
+        self.gerente = Usuario.objects.create_user(
+            username="gerente@esmic.edu.co",
+            email="gerente@esmic.edu.co",
+            password="Password123*",
+        )
+        self.jurado = Usuario.objects.create_user(
+            username="jurado@esmic.edu.co",
+            email="jurado@esmic.edu.co",
+            password="Password123*",
+        )
+        self.tutor = Usuario.objects.create_user(
+            username="tutor@esmic.edu.co",
+            email="tutor@esmic.edu.co",
+            password="Password123*",
+        )
         # ---------- Usuario sin rol ----------
         self.sin_rol = Usuario.objects.create_user(
             username="sinrol@esmic.edu.co",
             email="sinrol@esmic.edu.co",
             password="Password123*",
         )
-        self.url = reverse("usuario-list")
+        self.url = reverse("usuarios-list")
         
     def test_soporte_puede_acceder(self):
         login = self.client.post(

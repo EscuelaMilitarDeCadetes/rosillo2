@@ -14,7 +14,7 @@ class ParticipanteProcesoServiceTests(InvestigacionFormativaFixturesMixin, TestC
         super().setUp()
         self.otra_persona = self._crear_persona(nombre='Marta', apellido='López', documento='321654987')
 
-    def _crear_participante(self, rol_en_modalidad='JURADO'):
+    def _crear_participante(self, proceso=None, rol_en_modalidad='JURADO'):
         return ParticipanteProcesoService.crear(
             proceso_formativo_id=self.proceso.pk,
             persona_id=self.otra_persona.pk,
@@ -68,4 +68,4 @@ class ParticipanteProcesoServiceTests(InvestigacionFormativaFixturesMixin, TestC
         self._crear_participante()
         resultado = ParticipanteProcesoService.listar_por_proceso(self.proceso.pk)
         # self.participante (de la fixture base) + el nuevo creado en este test
-        self.assertEqual(resultado.count(), 2)
+        self.assertEqual(resultado.count(), 3)

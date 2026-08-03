@@ -3,7 +3,8 @@ from rest_framework.exceptions import ValidationError
 
 from .base import InvestigacionFormativaFixturesMixin
 from apps.usuarios.models import Usuario
-from apps.investigacion_formal.models import Gerente, Proyecto
+from apps.institucional.models import Gerente
+from apps.investigacion_formal.models import Proyecto
 from apps.investigacion_formativa.services.proceso_formativo_x_proyecto_service import (
     ProcesoFormativoXProyectoService,
 )

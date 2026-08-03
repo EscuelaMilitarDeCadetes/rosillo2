@@ -109,8 +109,9 @@ class PostulacionProcesoServiceTests(InvestigacionFormativaFixturesMixin, TestCa
     def test_eliminar_postulacion_en_borrador_exitoso(self):
         postulacion = self._crear_postulacion()
         pk = postulacion.pk
-        PostulacionProcesoService.eliminar(pk, ejecutor=self.ejecutor)
-        self.assertFalse(PostulacionProcesoService.listar().filter(pk=pk).exists())
+        eliminada = PostulacionProcesoService.eliminar(pk, ejecutor=self.ejecutor)
+        self.assertEqual(eliminada.estado, 'ELIMINADA')
+        self.assertTrue(PostulacionProcesoService.listar().filter(pk=pk).exists())
 
     def test_eliminar_postulacion_enviada_falla(self):
         postulacion = self._crear_postulacion()

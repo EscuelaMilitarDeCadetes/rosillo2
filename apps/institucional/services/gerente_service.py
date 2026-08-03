@@ -24,6 +24,7 @@ from apps.institucional.models import Gerente
 from apps.institucional.selectors.gerente_selector import GerenteSelector
 from apps.institucional.validators.gerente_validator import GerenteValidator
 from apps.common.services.historial_service import HistorialService
+_NO_PROVISTO = object()
 
 
 class GerenteService:
@@ -75,22 +76,19 @@ class GerenteService:
 
     @staticmethod
     @transaction.atomic
-    def actualizar(gerente_id, ejecutor, fecha_ingreso=None, fecha_salida=None):
+    def actualizar(gerente_id, ejecutor, fecha_ingreso=_NO_PROVISTO, fecha_salida=_NO_PROVISTO):
         """
         Edición de datos administrativos (corrección de fechas) sin pasar
         por la semántica de reemplazo de crear().
         """
         gerente = GerenteSelector.obtener(gerente_id)
-        nueva_fecha_ingreso = fecha_ingreso if fecha_ingreso is not None else gerente.fecha_ingreso
-        nueva_fecha_salida = fecha_salida if fecha_salida is not None else gerente.fecha_salida
- 
+        nueva_fecha_ingreso = gerente.fecha_ingreso if fecha_ingreso is _NO_PROVISTO else fecha_ingreso
+        nueva_fecha_salida = gerente.fecha_salida if fecha_salida is _NO_PROVISTO else fecha_salida
         GerenteValidator.validar_actualizacion(gerente, nueva_fecha_ingreso, nueva_fecha_salida)
- 
         gerente.fecha_ingreso = nueva_fecha_ingreso
         gerente.fecha_salida = nueva_fecha_salida
         gerente.estado = nueva_fecha_salida is None
         gerente.save(update_fields=["fecha_ingreso", "fecha_salida", "estado"])
- 
         HistorialService.registrar(
             ejecutor,
             f"Se actualizaron las fechas de la gerencia de "
@@ -103,14 +101,10 @@ class GerenteService:
     @transaction.atomic
     def reactivar(gerente_id, ejecutor):
         gerente = GerenteSelector.obtener(gerente_id)
+        GerenteValidator.validar_actualizacion(gerente, gerente.fecha_ingreso, None)
         gerente.fecha_salida = None
         gerente.estado = True
-        gerente.save(
-            update_fields=[
-                "fecha_salida",
-                "estado"
-            ]
-        )
+        gerente.save(update_fields=["fecha_salida", "estado"])
         HistorialService.registrar(
             ejecutor,
             f"Se reactivó la gerencia de '{gerente.persona}' "

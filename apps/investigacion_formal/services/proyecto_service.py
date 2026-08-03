@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db import transaction
 
 from apps.investigacion_formal.models import Proyecto
@@ -113,6 +115,10 @@ class ProyectoService:
     @staticmethod
     @transaction.atomic
     def asignar_timeline(proyecto_id, fecha_inicio, fecha_fin, ejecutor):
+        if isinstance(fecha_inicio, str):
+            fecha_inicio = datetime.strptime(fecha_inicio, '%Y-%m-%d').date()
+        if isinstance(fecha_fin, str):
+            fecha_fin = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
         proyecto = ProyectoSelector.obtener(proyecto_id)
         ProyectoValidator.validar_asignacion_timeline(fecha_inicio, fecha_fin)
         proyecto.fecha_inicio = fecha_inicio
@@ -141,6 +147,8 @@ class ProyectoService:
     @transaction.atomic
     def editar_fecha_cierre(proyecto_id, nueva_fecha_fin, ejecutor):
         """Réplica de editarFechaCierre."""
+        if isinstance(nueva_fecha_fin, str):
+            nueva_fecha_fin = datetime.strptime(nueva_fecha_fin, '%Y-%m-%d').date()
         proyecto = ProyectoSelector.obtener(proyecto_id)
         ProyectoValidator.validar_edicion_fecha_cierre(proyecto, nueva_fecha_fin)
         proyecto.fecha_fin = nueva_fecha_fin

@@ -83,7 +83,7 @@ class ProyectoXConvocatoriaValidator:
     @staticmethod
     def _validar_unicidad(convocatoria_id, proyecto_id, excluir_id=None):
         if ProyectoXConvocatoriaSelector.existe_vinculo(
-            convocatoria_id, proyecto_id, excluir_id=excluir_id
+            proyecto_id, convocatoria_id, excluir_id=excluir_id
         ):
             raise ValidationError(
                 "Este proyecto ya está registrado en esta misma convocatoria."

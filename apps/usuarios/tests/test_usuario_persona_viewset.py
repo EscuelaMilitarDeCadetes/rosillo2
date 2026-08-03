@@ -4,12 +4,15 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from unittest.mock import patch
 from apps.usuarios.models import Usuario, RolPlataforma, RolXUsuario, UsuarioXPersona
-from apps.institucional.models import Persona
+from apps.institucional.models import Persona, GradoEstudios
+from django.core.cache import cache
 
 
 class UsuarioXPersonaViewsetTests(TestCase):
     def setUp(self):
+        cache.clear()
         self.client = APIClient()
+        self.grado = GradoEstudios.objects.create(sigla_grado='CIV', descripcion='Civil')
         self.rol_soporte = RolPlataforma.objects.create(
             nombre_rol="SOPORTE", descripcion="Administrador"
         )
@@ -20,8 +23,12 @@ class UsuarioXPersonaViewsetTests(TestCase):
             is_active=True
         )
         RolXUsuario.objects.create(usuario=self.admin, rol=self.rol_soporte, estado=True)
-        self.persona_inicial = Persona.objects.create(nombre="Inicial", apellido="Persona")
-        self.persona_nueva = Persona.objects.create(nombre="Nueva", apellido="Persona")
+        self.persona_inicial = Persona.objects.create(
+            grado=self.grado, nombre="Inicial", apellido="Persona", documento="900000001", celular="3000000001", correo="inicial@esmic.edu.co"
+        )
+        self.persona_nueva = Persona.objects.create(
+            grado=self.grado, nombre="Nueva", apellido="Persona", documento="900000002", celular="3000000002", correo="nueva@esmic.edu.co"
+        )
         self.usuario_objetivo = Usuario.objects.create_user(
             username="objetivo@esmic.edu.co",
             email="objetivo@esmic.edu.co",
@@ -37,12 +44,13 @@ class UsuarioXPersonaViewsetTests(TestCase):
             "username": "admin@esmic.edu.co",
             "password": "Admin123*"
         })
+        assert login.status_code == 200, login.data
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {login.data['access']}")
 
     def test_list_solo_incluye_asignaciones_activas(self):
         response = self.client.get(reverse("usuario-persona-list"))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        usuario_ids = [a["usuario_id"] for a in response.data]
+        usuario_ids = [a["usuario_id"] for a in response.data["results"]]
         self.assertIn(self.usuario_objetivo.id, usuario_ids)
 
     def test_retrieve_por_usuario(self):
@@ -109,7 +117,10 @@ class UsuarioXPersonaViewsetTests(TestCase):
         A diferencia de test_reasignar_llama_al_service_correcto (que mockea el
         facade), este test ejercita UsuarioFacade -> integración de punta a punta.
         """
-        otra_persona = Persona.objects.create(nombre='Otra', apellido='Persona')
+        otra_persona = Persona.objects.create(
+            grado=self.grado, nombre='Otra', apellido='Persona',
+            documento='900000003', celular='3000000003', correo='otra@esmic.edu.co'
+        )
         url = reverse('usuario-persona-reasignar')
         data = {'usuario_id': self.usuario_objetivo.id, 'persona_id': otra_persona.id}
         response = self.client.post(url, data, format='json')
@@ -132,7 +143,10 @@ class UsuarioXPersonaViewsetTests(TestCase):
         Round-trip: reasignar y luego confirmar el cambio vía retrieve.
         No lo cubre historico() (que valida una ruta distinta).
         """
-        nueva_persona = Persona.objects.create(nombre='Nueva Persona 2', apellido='Nuevo Apellido')
+        nueva_persona = Persona.objects.create(
+            grado=self.grado, nombre='Nueva Persona 2', apellido='Nuevo Apellido',
+            documento='900000004', celular='3000000004', correo='nueva2@esmic.edu.co'
+        )
         url = reverse('usuario-persona-reasignar')
         data = {'usuario_id': self.usuario_objetivo.id, 'persona_id': nueva_persona.id}
         response = self.client.post(url, data, format='json')

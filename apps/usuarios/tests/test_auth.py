@@ -4,11 +4,13 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from apps.usuarios.models import Usuario, RolPlataforma, RolXUsuario
 from django.core.cache import cache
+from django.test import override_settings
 
 
 class LoginLogoutTests(TestCase):
 
     def setUp(self):
+        cache.clear()
         self.client = APIClient()
         self.rol_soporte = RolPlataforma.objects.create(
             nombre_rol='SOPORTE',
@@ -110,11 +112,30 @@ class LoginLogoutTests(TestCase):
             response.status_code,
             status.HTTP_400_BAD_REQUEST
         )
-        
+    
+    @override_settings()
     def test_login_rate_throttle(self):
-        cache.clear()
-        # Los primeros cinco intentos son válidos
-        for _ in range(5):
+        from rest_framework.settings import api_settings
+        from django.conf import settings
+        original = settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['login']
+        settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['login'] = '5/min'
+        api_settings.reload()
+        try:
+            cache.clear()
+            # Los primeros cinco intentos son válidos
+            for _ in range(5):
+                response = self.client.post(
+                    reverse("login"),
+                    {
+                        "username": "testuser@esmic.edu.co",
+                        "password": "password123",
+                    }
+                )
+                self.assertEqual(
+                    response.status_code,
+                    status.HTTP_200_OK
+                )
+            # El sexto debe ser bloqueado
             response = self.client.post(
                 reverse("login"),
                 {
@@ -124,20 +145,11 @@ class LoginLogoutTests(TestCase):
             )
             self.assertEqual(
                 response.status_code,
-                status.HTTP_200_OK
+                status.HTTP_429_TOO_MANY_REQUESTS
             )
-        # El sexto debe ser bloqueado
-        response = self.client.post(
-            reverse("login"),
-            {
-                "username": "testuser@esmic.edu.co",
-                "password": "password123",
-            }
-        )
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_429_TOO_MANY_REQUESTS
-        )
+        finally:
+            settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['login'] = original
+            api_settings.reload()
         
     def test_login_reporta_debe_cambiar_password(self):
         self.user.debe_cambiar_password = True

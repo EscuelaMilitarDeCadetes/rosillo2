@@ -187,7 +187,7 @@ class VinculacionViewSet(viewsets.ViewSet):
             ejecutor=request.user,
             fecha_retiro=request.data.get('fecha_retiro'),
         )
-        return Response(resultado, status=status.HTTP_200_OK)
+        return Response(_serializar_resultado(resultado), status=status.HTTP_200_OK)
 
 
 # ── Utilidad de serialización ─────────────────────────────────────────── #

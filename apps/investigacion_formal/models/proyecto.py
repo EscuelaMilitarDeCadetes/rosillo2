@@ -18,7 +18,7 @@ class Proyecto(models.Model):
     gruplac = models.BooleanField(default=False)
     
     class Meta:
-        unique_together = ('usuario', 'gerente')
+        pass
 
     def __str__(self):
         return f'{self.codigo} {self.titulo}'

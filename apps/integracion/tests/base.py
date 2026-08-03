@@ -5,6 +5,7 @@ from apps.usuarios.models import RolPlataforma, RolXUsuario
 from apps.institucional.models import (
     GradoEstudios, FacultadEscuela, GrupoInvestigacion, RolGrupo, FacultadXGrupo,
 )
+from django.core.cache import cache
 
 User = get_user_model()
 
@@ -29,6 +30,7 @@ class IntegracionFixturesMixin:
     ]
 
     def setUp(self):
+        cache.clear()
         self.client = APIClient()
         self.roles = {
             nombre: RolPlataforma.objects.create(
@@ -67,13 +69,13 @@ class IntegracionFixturesMixin:
             HTTP_AUTHORIZATION=f"Bearer {login.data['access']}"
         )
 
-    def datos_persona(self, correo, documento, nombre='Nombre', apellido='Apellido'):
+    def datos_persona(self, correo, documento, nombre='Nombre', apellido='Apellido', celular=None):
         return {
             'grado_id': self.grado.pk,
             'nombre': nombre,
             'apellido': apellido,
             'documento': documento,
-            'celular': '3000000000',
+            'celular': celular or f'30{documento[-8:].zfill(8)}',
             'correo': correo,
             'username': correo,
             'password': 'Temporal123!',

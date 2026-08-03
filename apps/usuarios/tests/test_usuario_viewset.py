@@ -8,11 +8,13 @@ from apps.usuarios.models import (
     RolPlataforma,
     RolXUsuario,
 )
+from django.core.cache import cache
 
 
 class UsuarioViewSetTests(TestCase):
 
     def setUp(self):
+        cache.clear()
         self.client = APIClient()
         self.rol_soporte = RolPlataforma.objects.create(
             nombre_rol="SOPORTE",
@@ -123,7 +125,7 @@ class UsuarioViewSetTests(TestCase):
             1
         )
         self.assertEqual(
-            response.data[0]["rol"]["nombre_rol"],
+            response.data[0]["rol_nombre"],
             "SUPERVISOR"
         )
         

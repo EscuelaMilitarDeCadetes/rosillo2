@@ -55,8 +55,7 @@ class EvaluacionProcesoService:
         además abre una Aprobacion pendiente para que un Decano la revise
         (supervisión posterior, no bloqueante) — requiere `usuario_revisor_id`."""
         EvaluacionProcesoValidator.validar_creacion(
-            evaluador_id, instancia_etapa_id, concepto, aprobado, nota, tipo_evaluador,
-            tipo_evaluacion, peso, resultado, es_tercer_evaluador, observaciones,
+            evaluador_id, instancia_etapa_id, nota, peso, concepto, aprobado, resultado,
         )
 
         es_facultad = ejecutor_es_facultad(ejecutor)

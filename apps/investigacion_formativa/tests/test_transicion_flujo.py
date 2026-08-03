@@ -43,7 +43,9 @@ class TransicionFlujoServiceTests(InvestigacionFormativaFixturesMixin, TestCase)
 
     def test_actualizar_transicion_exitoso(self):
         transicion = self._crear_transicion()
-        otra_etapa = self._crear_etapa(nombre='Cierre', orden=3, codigo='CIE')
+        otra_etapa = self._crear_etapa_flujo(
+            flujo=self.flujo_transiciones, nombre='Cierre', orden=3, codigo='CIE',
+        )
         actualizada = TransicionFlujoService.actualizar(
             transicion_id=transicion.pk,
             etapa_origen_id=self.etapa_origen.pk,

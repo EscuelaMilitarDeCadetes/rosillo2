@@ -9,7 +9,7 @@ from apps.investigacion_formativa.services.evento_evaluativo_service import (
 
 class EventoEvaluativoServiceTests(InvestigacionFormativaFixturesMixin, TestCase):
 
-    def _crear_evento(self, numero=1, fecha_sustentacion='2025-07-01 10:00:00'):
+    def _crear_evento(self, numero=1, fecha_sustentacion='2025-07-01T10:00:00Z'):
         return EventoEvaluativoService.crear(
             proceso_formativo_id=self.proceso.pk,
             numero=numero,
@@ -30,7 +30,7 @@ class EventoEvaluativoServiceTests(InvestigacionFormativaFixturesMixin, TestCase
                 proceso_formativo_id=self.proceso.pk,
                 numero=1,
                 es_obligatoria=True,
-                fecha_sustentacion='2025-07-01 10:00:00',
+                fecha_sustentacion='2025-07-01T10:00:00Z',
                 lugar='',
                 ejecutor=self.ejecutor,
             )
@@ -39,7 +39,7 @@ class EventoEvaluativoServiceTests(InvestigacionFormativaFixturesMixin, TestCase
         evento = self._crear_evento()
         reprogramado = EventoEvaluativoService.reprogramar(
             evento_id=evento.pk,
-            fecha_sustentacion='2025-07-10 14:00:00',
+            fecha_sustentacion='2025-07-10T14:00:00Z',
             lugar='Sala de Grados',
             ejecutor=self.ejecutor,
         )

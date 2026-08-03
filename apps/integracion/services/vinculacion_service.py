@@ -137,8 +137,9 @@ class VinculacionService(GestionUsuarioInterface):
     @staticmethod
     def _crear_vinculacion_grupo(persona, rol_grupo_id: int, grupo_id: int, ejecutor):
         """
-        La facultad NO se pasa: PersonaXGrupoService aplica internamente
-        la validación dura grupo<->facultad vía FacultadXGrupo.
+        La facultad NO se pasa: PersonaXGrupoService deriva internamente la
+        facultad de referencia desde FacultadXGrupo (derivar_facultad_de_grupo=True),
+        porque esta persona es nueva y nunca tuvo una facultad previa.
         """
         return PersonaXGrupoService.crear(
             persona_id=persona.pk,
@@ -147,6 +148,7 @@ class VinculacionService(GestionUsuarioInterface):
             facultad_id=None,
             vinculacion=django_timezone.now().date(),
             ejecutor=ejecutor,
+            derivar_facultad_de_grupo=True,
         )
 
     @staticmethod
@@ -449,8 +451,8 @@ class VinculacionService(GestionUsuarioInterface):
 
         HistorialService.registrar(
             ejecutor,
-            f"Se creó el usuario '{user.username}' y se envió un enlace para "
-            "establecer su contraseña inicial (sin transmitir la contraseña por correo)."
+            f"Se crearon las credenciales del usuario '{user.username}' y se envió un enlace "
+            "para establecer su contraseña inicial (sin transmitir la contraseña por correo).",
         )
         return user
 
@@ -498,7 +500,14 @@ class VinculacionService(GestionUsuarioInterface):
         if asignacion_actual:
             if asignacion_actual.persona_id == nueva_persona.id:
                 # Ya está asignada a esa misma persona: no-op idempotente,
-                # evita cerrar y reabrir una asignación idéntica.
+                # evita cerrar y reabrir una asignación idéntica, pero se
+                # deja constancia en el historial del intento.
+                HistorialService.registrar(
+                    ejecutor,
+                    f"Reasigna persona '{nueva_persona.nombre} {nueva_persona.apellido}' "
+                    f"al usuario '{usuario.username}' (ya estaba asignada; no se realizó cambio).",
+                    objeto=asignacion_actual,
+                )
                 return asignacion_actual
             asignacion_actual.estado = False
             asignacion_actual.fecha_fin = django_timezone.now()

@@ -53,6 +53,21 @@ class FacultadXGrupoSelector:
             .first()
         )
         return relacion.grupo if relacion else None
+    
+    @staticmethod
+    def obtener_facultad_de_grupo(grupo_id):
+        """
+        Dirección inversa de obtener_grupo_de_facultad(): dado el id de un
+        GrupoInvestigacion, devuelve la FacultadEscuela a la que está
+        asociado según FacultadXGrupo, o None si no tiene asociación.
+        """
+        relacion = (
+            FacultadXGrupo.objects
+            .select_related('facultad')
+            .filter(grupo_id=grupo_id)
+            .first()
+        )
+        return relacion.facultad if relacion else None
 
     @staticmethod
     def existe_relacion(grupo_id, facultad_id, excluir_id=None):

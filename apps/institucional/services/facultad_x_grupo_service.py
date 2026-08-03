@@ -69,3 +69,12 @@ class FacultadXGrupoService:
         corresponde según la regla de negocio confirmada.
         """
         return FacultadXGrupoSelector.obtener_grupo_de_facultad(facultad_id)
+    
+    @staticmethod
+    def obtener_facultad_de_grupo(grupo_id):
+        """
+        Usado por PersonaXGrupoValidator cuando se vincula directamente por
+        grupo_id (sin facultad explícita): permite derivar la facultad
+        correspondiente en vez de exigir que la persona ya tenga una.
+        """
+        return FacultadXGrupoSelector.obtener_facultad_de_grupo(grupo_id)

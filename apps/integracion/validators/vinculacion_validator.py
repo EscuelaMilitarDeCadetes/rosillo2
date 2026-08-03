@@ -21,7 +21,7 @@ class VinculacionValidator:
 
     @staticmethod
     def validar_datos_usuario(data: dict):
-        requeridos = ['username', 'password', 'email']
+        requeridos = ['username', 'password']
         for campo in requeridos:
             if not data.get(campo):
                 raise ValidationError({campo: f"El campo '{campo}' es obligatorio."})

@@ -10,9 +10,10 @@ class DocumentoFirmanteServiceTests(CommonFixturesMixin, TestCase):
 
     def setUp(self):
         super().setUp()
+        self.ruta_acta_v1 = self._crear_archivo_temporal('acta_v1.pdf', b'contenido acta v1')
         self.documento = DocumentoFirmaService.crear(
             tipo_documento_id=self.tipo_documento.pk,
-            ruta_documento='/documentos/acta_v1.pdf',
+            ruta_documento=self.ruta_acta_v1,
             ip_creacion='127.0.0.1',
             ejecutor=self.ejecutor,
         )

@@ -1,15 +1,22 @@
 from django.test import TestCase
 from rest_framework.exceptions import ValidationError
+
 from .base import CommonFixturesMixin
 from apps.common.services.documento_firma_service import DocumentoFirmaService
 
 
 class DocumentoFirmaServiceTests(CommonFixturesMixin, TestCase):
 
+    def setUp(self):
+        super().setUp()
+        self.ruta_acta_v1 = self._crear_archivo_temporal('acta_v1.pdf', b'contenido acta v1')
+        self.ruta_acta_v2 = self._crear_archivo_temporal('acta_v2.pdf', b'contenido acta v2')
+        self.ruta_otro = self._crear_archivo_temporal('otro.pdf', b'contenido otro documento')
+
     def test_crear_documento_exitoso_es_version_1(self):
         documento = DocumentoFirmaService.crear(
             tipo_documento_id=self.tipo_documento.pk,
-            ruta_documento='/documentos/acta_v1.pdf',
+            ruta_documento=self.ruta_acta_v1,
             ip_creacion='127.0.0.1',
             ejecutor=self.ejecutor,
         )
@@ -20,13 +27,13 @@ class DocumentoFirmaServiceTests(CommonFixturesMixin, TestCase):
     def test_crear_segundo_documento_mismo_tipo_incrementa_version(self):
         DocumentoFirmaService.crear(
             tipo_documento_id=self.tipo_documento.pk,
-            ruta_documento='/documentos/acta_v1.pdf',
+            ruta_documento=self.ruta_acta_v1,
             ip_creacion='127.0.0.1',
             ejecutor=self.ejecutor,
         )
         segundo = DocumentoFirmaService.crear(
             tipo_documento_id=self.tipo_documento.pk,
-            ruta_documento='/documentos/acta_v2.pdf',
+            ruta_documento=self.ruta_acta_v2,
             ip_creacion='127.0.0.1',
             ejecutor=self.ejecutor,
         )
@@ -35,7 +42,7 @@ class DocumentoFirmaServiceTests(CommonFixturesMixin, TestCase):
     def test_crear_documento_asociado_a_objeto_generico(self):
         documento = DocumentoFirmaService.crear(
             tipo_documento_id=self.tipo_documento.pk,
-            ruta_documento='/documentos/acta_v1.pdf',
+            ruta_documento=self.ruta_acta_v1,
             ip_creacion='127.0.0.1',
             ejecutor=self.ejecutor,
             objeto=self.objeto_generico,
@@ -46,7 +53,7 @@ class DocumentoFirmaServiceTests(CommonFixturesMixin, TestCase):
     def test_crear_documento_sin_objeto_deja_content_type_nulo(self):
         documento = DocumentoFirmaService.crear(
             tipo_documento_id=self.tipo_documento.pk,
-            ruta_documento='/documentos/acta_v1.pdf',
+            ruta_documento=self.ruta_acta_v1,
             ip_creacion='127.0.0.1',
             ejecutor=self.ejecutor,
         )
@@ -56,7 +63,7 @@ class DocumentoFirmaServiceTests(CommonFixturesMixin, TestCase):
     def test_habilitar_para_firma(self):
         documento = DocumentoFirmaService.crear(
             tipo_documento_id=self.tipo_documento.pk,
-            ruta_documento='/documentos/acta_v1.pdf',
+            ruta_documento=self.ruta_acta_v1,
             ip_creacion='127.0.0.1',
             ejecutor=self.ejecutor,
         )
@@ -67,7 +74,7 @@ class DocumentoFirmaServiceTests(CommonFixturesMixin, TestCase):
     def test_marcar_rechazado(self):
         documento = DocumentoFirmaService.crear(
             tipo_documento_id=self.tipo_documento.pk,
-            ruta_documento='/documentos/acta_v1.pdf',
+            ruta_documento=self.ruta_acta_v1,
             ip_creacion='127.0.0.1',
             ejecutor=self.ejecutor,
         )
@@ -78,7 +85,7 @@ class DocumentoFirmaServiceTests(CommonFixturesMixin, TestCase):
     def test_marcar_firmado_completamente(self):
         documento = DocumentoFirmaService.crear(
             tipo_documento_id=self.tipo_documento.pk,
-            ruta_documento='/documentos/acta_v1.pdf',
+            ruta_documento=self.ruta_acta_v1,
             ip_creacion='127.0.0.1',
             ejecutor=self.ejecutor,
         )
@@ -88,7 +95,7 @@ class DocumentoFirmaServiceTests(CommonFixturesMixin, TestCase):
     def test_no_se_puede_retroceder_un_documento_ya_firmado(self):
         documento = DocumentoFirmaService.crear(
             tipo_documento_id=self.tipo_documento.pk,
-            ruta_documento='/documentos/acta_v1.pdf',
+            ruta_documento=self.ruta_acta_v1,
             ip_creacion='127.0.0.1',
             ejecutor=self.ejecutor,
         )
@@ -99,7 +106,7 @@ class DocumentoFirmaServiceTests(CommonFixturesMixin, TestCase):
     def test_eliminar_documento_en_borrador_exitoso(self):
         documento = DocumentoFirmaService.crear(
             tipo_documento_id=self.tipo_documento.pk,
-            ruta_documento='/documentos/acta_v1.pdf',
+            ruta_documento=self.ruta_acta_v1,
             ip_creacion='127.0.0.1',
             ejecutor=self.ejecutor,
         )
@@ -109,7 +116,7 @@ class DocumentoFirmaServiceTests(CommonFixturesMixin, TestCase):
     def test_eliminar_documento_en_firmas_falla(self):
         documento = DocumentoFirmaService.crear(
             tipo_documento_id=self.tipo_documento.pk,
-            ruta_documento='/documentos/acta_v1.pdf',
+            ruta_documento=self.ruta_acta_v1,
             ip_creacion='127.0.0.1',
             ejecutor=self.ejecutor,
         )
@@ -120,7 +127,7 @@ class DocumentoFirmaServiceTests(CommonFixturesMixin, TestCase):
     def test_listar_por_tipo_documento(self):
         DocumentoFirmaService.crear(
             tipo_documento_id=self.tipo_documento.pk,
-            ruta_documento='/documentos/acta_v1.pdf',
+            ruta_documento=self.ruta_acta_v1,
             ip_creacion='127.0.0.1',
             ejecutor=self.ejecutor,
         )
@@ -130,13 +137,13 @@ class DocumentoFirmaServiceTests(CommonFixturesMixin, TestCase):
     def test_obtener_ultima_version(self):
         DocumentoFirmaService.crear(
             tipo_documento_id=self.tipo_documento.pk,
-            ruta_documento='/documentos/acta_v1.pdf',
+            ruta_documento=self.ruta_acta_v1,
             ip_creacion='127.0.0.1',
             ejecutor=self.ejecutor,
         )
         segundo = DocumentoFirmaService.crear(
             tipo_documento_id=self.tipo_documento.pk,
-            ruta_documento='/documentos/acta_v2.pdf',
+            ruta_documento=self.ruta_acta_v2,
             ip_creacion='127.0.0.1',
             ejecutor=self.ejecutor,
         )
@@ -146,7 +153,7 @@ class DocumentoFirmaServiceTests(CommonFixturesMixin, TestCase):
     def test_listar_habilitados_para_firma(self):
         documento = DocumentoFirmaService.crear(
             tipo_documento_id=self.tipo_documento.pk,
-            ruta_documento='/documentos/acta_v1.pdf',
+            ruta_documento=self.ruta_acta_v1,
             ip_creacion='127.0.0.1',
             ejecutor=self.ejecutor,
         )
@@ -157,7 +164,7 @@ class DocumentoFirmaServiceTests(CommonFixturesMixin, TestCase):
     def test_listar_por_objeto(self):
         DocumentoFirmaService.crear(
             tipo_documento_id=self.tipo_documento.pk,
-            ruta_documento='/documentos/acta_v1.pdf',
+            ruta_documento=self.ruta_acta_v1,
             ip_creacion='127.0.0.1',
             ejecutor=self.ejecutor,
             objeto=self.objeto_generico,
@@ -165,11 +172,11 @@ class DocumentoFirmaServiceTests(CommonFixturesMixin, TestCase):
         otro_objeto = self._crear_objeto_generico(nombre='Otra Facultad', abreviatura='OFAC')
         DocumentoFirmaService.crear(
             tipo_documento_id=self.tipo_documento.pk,
-            ruta_documento='/documentos/otro.pdf',
+            ruta_documento=self.ruta_otro,
             ip_creacion='127.0.0.1',
             ejecutor=self.ejecutor,
             objeto=otro_objeto,
         )
         resultados = DocumentoFirmaService.listar_por_objeto(self.objeto_generico)
         self.assertEqual(resultados.count(), 1)
-        self.assertEqual(resultados.first().ruta_documento, '/documentos/acta_v1.pdf')
+        self.assertEqual(resultados.first().ruta_documento, self.ruta_acta_v1)

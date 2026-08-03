@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.test import TestCase
 from rest_framework.exceptions import ValidationError
 
@@ -58,8 +60,8 @@ class ProyectoServiceTests(InvestigacionFormalFixturesMixin, TestCase):
         proyecto = self._crear_proyecto(titulo='Proyecto con Timeline')
         actualizado = ProyectoService.asignar_timeline(
             proyecto_id=proyecto.pk,
-            fecha_inicio='2024-01-01',
-            fecha_fin='2024-12-31',
+            fecha_inicio=date(2024, 1, 1),
+            fecha_fin=date(2024, 12, 31),
             ejecutor=self.ejecutor,
         )
         self.assertIsNotNone(actualizado.fecha_inicio)
@@ -71,14 +73,25 @@ class ProyectoServiceTests(InvestigacionFormalFixturesMixin, TestCase):
         with self.assertRaises(ValidationError):
             ProyectoService.asignar_timeline(
                 proyecto_id=proyecto.pk,
-                fecha_inicio='2024-12-31',
-                fecha_fin='2024-01-01',
+                fecha_inicio=date(2024, 12, 31),
+                fecha_fin=date(2024, 1, 1),
                 ejecutor=self.ejecutor,
             )
 
     def test_editar_fecha_cierre_exitoso(self):
         proyecto = self._crear_proyecto(titulo='Proyecto a Cerrar')
-        ProyectoService.asignar_time
+        proyecto = ProyectoService.asignar_timeline(
+            proyecto_id=proyecto.pk,
+            fecha_inicio='2024-01-01',
+            fecha_fin='2024-12-31',
+            ejecutor=self.ejecutor,
+        )
+        actualizado = ProyectoService.editar_fecha_cierre(
+            proyecto_id=proyecto.pk,
+            nueva_fecha_fin='2025-06-30',
+            ejecutor=self.ejecutor,
+        )
+        self.assertEqual(str(actualizado.fecha_fin), '2025-06-30')
         
     def test_crear_proyecto_historico_con_codigo_existente(self):
         """
@@ -125,8 +138,8 @@ class ProyectoServiceTests(InvestigacionFormalFixturesMixin, TestCase):
         )
         actualizado = ProyectoService.asignar_timeline(
             proyecto_id=proyecto.pk,
-            fecha_inicio='2018-01-01',
-            fecha_fin='2018-12-31',
+            fecha_inicio=date(2018, 1, 1),
+            fecha_fin=date(2018, 12, 31),
             ejecutor=self.ejecutor,
         )
         self.assertEqual(actualizado.codigo, 'ING2018-E07')

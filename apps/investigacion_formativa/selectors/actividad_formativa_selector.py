@@ -9,6 +9,7 @@ class ActividadFormativaSelector:
     def listar():
         return (
             ActividadFormativa.objects
+            .exclude(estado='ELIMINADA')
             .select_related('proceso_formativo', 'responsable', 'documento_soporte')
             .order_by('-fecha_inicio')
         )

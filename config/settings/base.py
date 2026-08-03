@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from datetime import timedelta
 from pathlib import Path
 import os
+import sys
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -241,6 +242,14 @@ SECURE_BROWSER_XSS_FILTER = False
 # --- Logging ---
 LOGS_DIR = BASE_DIR / 'logs'
 LOGS_DIR.mkdir(exist_ok=True)
+
+# Desactiva django-axes durante `python manage.py test` para que los
+# tests de login/permisos de distintas apps no se bloqueen entre sí
+# por acumular intentos fallidos contra la misma IP del test client.
+if 'test' in sys.argv:
+    AXES_ENABLED = False
+    REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = []
+    REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['login'] = None
 
 LOGGING = {
     'version': 1,

@@ -4,11 +4,19 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
-from ..permissions.es_soporte import EsSoporte
 from django.shortcuts import get_object_or_404
 from ..serializers.usuario_serializer import UsuarioSerializer
 from django.db.models import Prefetch
 from apps.usuarios.services.usuario_facade import UsuarioFacade
+
+from ..permissions.es_soporte import EsSoporte
+from ..permissions.es_asesor import EsAsesor
+from ..permissions.es_facultad import EsFacultad
+from ..permissions.es_grupo import EsGrupo
+from ..permissions.es_cinterno import EsCInterno
+from ..permissions.es_cexterno import EsCExterno
+from ..permissions.es_decano import EsDecano
+from ..permissions.es_supervisor import EsSupervisor
 
 User = get_user_model()
 
@@ -21,12 +29,20 @@ class UsuarioViewSet(viewsets.ViewSet):
     pagination_class = UsuariosPageNumberPagination
 
     def get_permissions(self):
-        permission_classes = [EsSoporte]
-        return [permission() for permission in permission_classes]
+        if self.action in ('desactivar_usuario', 'activar_usuario'):
+            # Acciones sensibles: solo SOPORTE puede desactivar/activar usuarios.
+            permission_classes = [EsSoporte]
+        else:
+            permission_classes = [
+                EsSoporte | EsAsesor | EsFacultad | EsSupervisor |
+                EsGrupo | EsCInterno | EsCExterno | EsDecano
+            ]
+            return [permission() for permission in permission_classes]
 
     def get_queryset(self):
         return (
             User.objects.filter(is_staff=False)
+            .order_by('id')
             .prefetch_related(
                 Prefetch("asignaciones", queryset=UsuarioXPersona.objects.filter(estado=True).select_related("persona"))
             )

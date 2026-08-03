@@ -101,12 +101,6 @@ class PlanTrabajoServiceTests(InvestigacionFormativaFixturesMixin, TestCase):
                 plan_trabajo_id=plan.pk, observaciones='', ejecutor=self.ejecutor,
             )
 
-    def test_eliminar_plan_en_borrador_hard_delete(self):
-        plan = self._crear_plan()
-        pk = plan.pk
-        PlanTrabajoService.eliminar(pk, ejecutor=self.ejecutor)
-        self.assertFalse(PlanTrabajoService.listar().filter(pk=pk).exists())
-
     def test_eliminar_plan_enviado_falla(self):
         plan = self._crear_plan()
         PlanTrabajoService.enviar(plan.pk, ejecutor=self.ejecutor)

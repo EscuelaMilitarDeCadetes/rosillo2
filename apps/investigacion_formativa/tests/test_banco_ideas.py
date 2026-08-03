@@ -86,8 +86,11 @@ class BancoIdeasServiceTests(InvestigacionFormativaFixturesMixin, TestCase):
     def test_eliminar_idea_disponible_exitoso(self):
         idea = self._crear_banco_idea(idea='Idea a eliminar')
         resultado = BancoIdeasService.eliminar(idea.pk, ejecutor=self.ejecutor)
-        self.assertTrue(resultado)
-        self.assertFalse(BancoIdeasService.listar().filter(pk=idea.pk).exists())
+        self.assertEqual(resultado.estado, 'ELIMINADA')
+        self.assertTrue(BancoIdeasService.listar().filter(pk=idea.pk).exists())  # sigue en el historial
+        self.assertFalse(
+            BancoIdeasService.listar_disponibles().filter(pk=idea.pk).exists()
+        )
 
     def test_eliminar_idea_tomada_falla(self):
         idea = self._crear_banco_idea(idea='Idea comprometida', estado='TOMADA')

@@ -33,14 +33,14 @@ class PasswordTests(TestCase):
     @patch('apps.usuarios.services.password_service.send_mail')
     def test_forgot_password_email_registrado(self, mock_mail):
         response = self.client.post(
-            '/api/password/forgot-password/',
+            '/api/usuarios/password/forgot-password/',
             {'email': 'user@esmic.edu.co'}
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_reset_password_token_invalido(self):
         response = self.client.post(
-            '/api/password/reset-password/',
+            '/api/usuarios/password/reset-password/',
             {
                 'token': 'tokeninvalido',
                 'password': 'nueva123456',
@@ -54,7 +54,7 @@ class PasswordTests(TestCase):
             HTTP_AUTHORIZATION=f"Bearer {self.access_token}"
         )
         response = self.client.post(
-            '/api/password/change-password/',
+            '/api/usuarios/password/change-password/',
             {
                 'old_password': 'oldpassword123',
                 'new_password': 'nueva123456'
@@ -67,7 +67,7 @@ class PasswordTests(TestCase):
             HTTP_AUTHORIZATION=f"Bearer {self.access_token}"
         )
         response = self.client.post(
-            '/api/password/change-password/',
+            '/api/usuarios/password/change-password/',
             {
                 'old_password': 'wrongpassword',
                 'new_password': 'nueva123456'
@@ -80,7 +80,7 @@ class PasswordTests(TestCase):
         self.user.token_creado_en = timezone.now()
         self.user.save()
         response = self.client.post(
-            "/api/password/reset-password/",
+            "/api/usuarios/password/reset-password/",
             {
                 "token": "token123",
                 "password": "NuevaPassword123*",
@@ -106,7 +106,7 @@ class PasswordTests(TestCase):
         )
         self.user.save()
         response = self.client.post(
-            "/api/password/reset-password/",
+            "/api/usuarios/password/reset-password/",
             {
                 "token": "token123",
                 "password": "NuevaPassword123*",
@@ -123,7 +123,7 @@ class PasswordTests(TestCase):
         self.user.save(update_fields=['debe_cambiar_password'])
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
 
-        response = self.client.post('/api/password/change-password/', {
+        response = self.client.post('/api/usuarios/password/change-password/', {
             'old_password': 'oldpassword123',
             'new_password': 'nueva123456'
         })

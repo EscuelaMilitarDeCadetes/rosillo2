@@ -105,7 +105,7 @@ class RolXUsuarioTests(TestCase):
         client_sin_rol.credentials(
             HTTP_AUTHORIZATION=f"Bearer {login.data['access']}"
         )
-        response = client_sin_rol.get('/api/usuarios/usuarios')
+        response = client_sin_rol.get(reverse('usuarios-list'))
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         
     def test_put_no_permitido_sobre_rol_x_usuario(self):

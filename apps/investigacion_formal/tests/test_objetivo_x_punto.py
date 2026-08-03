@@ -1,3 +1,4 @@
+# apps/investigacion_formal/tests/test_objetivo_x_punto.py
 from django.test import TestCase
 from rest_framework.exceptions import ValidationError
 
@@ -70,7 +71,7 @@ class ObjetivoXPuntoServiceTests(InvestigacionFormalFixturesMixin, TestCase):
             peso=100,
             ejecutor=self.ejecutor,
         )
-        nuevo = ObjetivoXPuntoService.agregar_avance(
+        nuevo, es_correccion = ObjetivoXPuntoService.agregar_avance(
             punto_control_id=vinculo_inicial.punto_control_id,
             descripcion_avance='Avance del primer mes',
             avance=25,

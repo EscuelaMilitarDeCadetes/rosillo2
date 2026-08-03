@@ -40,17 +40,22 @@ from apps.institucional.services.facultad_x_grupo_service import FacultadXGrupoS
 class PersonaXGrupoValidator:
 
     @staticmethod
-    def validar_creacion(persona_id, rol_grupo_id, grupo_id, facultad_id, vinculacion):
+    def validar_creacion(persona_id, rol_grupo_id, grupo_id, facultad_id, vinculacion,
+                        derivar_facultad_de_grupo=False):
         PersonaXGrupoValidator._validar_persona_existe(persona_id)
         PersonaXGrupoValidator._validar_rol_grupo_existe(rol_grupo_id)
         PersonaXGrupoValidator._validar_referencias_opcionales(grupo_id, facultad_id)
         PersonaXGrupoValidator._validar_vinculacion(vinculacion)
         PersonaXGrupoValidator._validar_unicidad(persona_id, rol_grupo_id, grupo_id, facultad_id)
         if grupo_id:
-            PersonaXGrupoValidator._validar_correspondencia_grupo_facultad(persona_id, grupo_id, facultad_id)
+            PersonaXGrupoValidator._validar_correspondencia_grupo_facultad(
+                persona_id, grupo_id, facultad_id,
+                derivar_facultad_de_grupo=derivar_facultad_de_grupo,
+            )
 
     @staticmethod
-    def validar_actualizacion(persona_x_grupo_id, persona_id, rol_grupo_id, grupo_id, facultad_id, vinculacion):
+    def validar_actualizacion(persona_x_grupo_id, persona_id, rol_grupo_id, grupo_id, facultad_id, vinculacion,
+                            derivar_facultad_de_grupo=False):
         PersonaXGrupoValidator._validar_persona_existe(persona_id)
         PersonaXGrupoValidator._validar_rol_grupo_existe(rol_grupo_id)
         PersonaXGrupoValidator._validar_referencias_opcionales(grupo_id, facultad_id)
@@ -60,7 +65,8 @@ class PersonaXGrupoValidator:
         )
         if grupo_id:
             PersonaXGrupoValidator._validar_correspondencia_grupo_facultad(
-                persona_id, grupo_id, facultad_id, excluir_id=persona_x_grupo_id
+                persona_id, grupo_id, facultad_id, excluir_id=persona_x_grupo_id,
+                derivar_facultad_de_grupo=derivar_facultad_de_grupo,
             )
 
     @staticmethod
@@ -113,24 +119,34 @@ class PersonaXGrupoValidator:
             )
 
     @staticmethod
-    def _validar_correspondencia_grupo_facultad(persona_id, grupo_id, facultad_id, excluir_id=None):
-        """
-        Validación dura confirmada explícitamente. Determina la facultad
-        de referencia (la de la propia fila si viene poblada; si no, la
-        facultad activa de la Persona en otra fila) y exige que el grupo
-        coincida con el que FacultadXGrupo asocia a esa facultad.
-        """
+    def _validar_correspondencia_grupo_facultad(persona_id, grupo_id, facultad_id, excluir_id=None,
+                                                derivar_facultad_de_grupo=False):
         facultad_referencia_id = facultad_id
         if not facultad_referencia_id:
             facultad_activa = PersonaXGrupoSelector.obtener_facultad_activa_de_persona(persona_id)
-            if facultad_activa is None:
+            if facultad_activa is not None:
+                facultad_referencia_id = facultad_activa.pk
+            elif derivar_facultad_de_grupo:
+                # Solo permitido cuando el caller (VinculacionService, alta de
+                # investigador nuevo) lo pide explícitamente: deriva la
+                # facultad desde el grupo vía FacultadXGrupo en vez de exigir
+                # que la persona ya tenga una.
+                facultad_derivada = FacultadXGrupoService.obtener_facultad_de_grupo(grupo_id)
+                if facultad_derivada is None:
+                    raise ValidationError(
+                        "Esta persona no tiene ninguna vinculación de facultad "
+                        "activa, y el grupo de investigación indicado tampoco "
+                        "tiene ninguna facultad asociada en FacultadXGrupo. No "
+                        "es posible determinar la facultad de referencia."
+                    )
+                facultad_referencia_id = facultad_derivada.pk
+            else:
                 raise ValidationError(
                     "Esta persona no tiene ninguna vinculación de facultad "
                     "activa. Toda persona debe estar vinculada primero a "
                     "una facultad antes de poder vincularse a un grupo de "
                     "investigación como investigador."
                 )
-            facultad_referencia_id = facultad_activa.pk
 
         grupo_permitido = FacultadXGrupoService.obtener_grupo_de_facultad(facultad_referencia_id)
         if grupo_permitido is None:

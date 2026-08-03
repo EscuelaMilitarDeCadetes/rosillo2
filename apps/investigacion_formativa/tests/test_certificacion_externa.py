@@ -59,6 +59,10 @@ class CertificacionExternaServiceTests(InvestigacionFormativaFixturesMixin, Test
 
     def test_actualizar_certificacion_validada_falla(self):
         certificacion = self._crear_certificacion()
+        documento = self._crear_documento_firma('Certificado de aprobación')
+        CertificacionExternaService.adjuntar_certificado_aprobacion(
+            certificacion.pk, documento.pk, ejecutor=self.ejecutor,
+        )
         CertificacionExternaService.validar_horas(
             certificacion_id=certificacion.pk, horas_validadas=certificacion.horas_certificadas,
             validado_por_id=self.ejecutor.pk, ejecutor=self.ejecutor,

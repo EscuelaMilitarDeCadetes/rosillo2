@@ -8,7 +8,7 @@ from apps.investigacion_formativa.services.flujo_proceso_service import FlujoPro
 
 class FlujoProcesoServiceTests(InvestigacionFormativaFixturesMixin, TestCase):
 
-    def _crear_flujo(self, nombre='Flujo alterno TG', version=2):
+    def _crear_flujo(self, nombre='Flujo alterno TG', version=3):
         return FlujoProcesoService.crear(
             modalidad_id=self.modalidad.pk,
             nombre=nombre,
@@ -69,7 +69,7 @@ class FlujoProcesoServiceTests(InvestigacionFormativaFixturesMixin, TestCase):
         self._crear_flujo()
         resultado = FlujoProcesoService.listar_por_modalidad(self.modalidad.pk)
         # self.flujo (fixture base) + el nuevo creado en este test
-        self.assertEqual(resultado.count(), 2)
+        self.assertEqual(resultado.count(), 3)
 
     def test_listar_activos_excluye_desactivados(self):
         flujo = self._crear_flujo()

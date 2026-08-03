@@ -32,7 +32,7 @@ class EstudianteService:
     @transaction.atomic
     def crear(persona_id, modalidad_facultad_id, correo_personal, nivel, ejecutor):
         EstudianteValidator.validar_creacion(
-            persona_id, modalidad_facultad_id, correo_personal, nivel
+            persona_id, correo_personal, nivel
         )
         estudiante = Estudiante.objects.create(
             persona_id=persona_id,
@@ -53,7 +53,7 @@ class EstudianteService:
     @transaction.atomic
     def actualizar(estudiante_id, correo_personal, nivel, ejecutor):
         estudiante = EstudianteSelector.obtener(estudiante_id)
-        EstudianteValidator.validar_actualizacion(estudiante, correo_personal, nivel)
+        EstudianteValidator.validar_actualizacion(correo_personal, nivel)
         estudiante.correo_personal = correo_personal
         estudiante.nivel = nivel
         estudiante.save(update_fields=['correo_personal', 'nivel'])

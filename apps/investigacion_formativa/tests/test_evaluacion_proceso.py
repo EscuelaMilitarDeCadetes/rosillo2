@@ -12,7 +12,7 @@ class EvaluacionProcesoServiceTests(InvestigacionFormativaFixturesMixin, TestCas
     def setUp(self):
         super().setUp()
         self.proceso = self._crear_proceso_formativo()
-        self.etapa = self._crear_etapa_flujo(orden=1, nombre='Etapa evaluable')
+        self.etapa = self._crear_etapa_flujo(orden=3, nombre='Etapa evaluable')
         self.instancia = self._crear_instancia_etapa(self.proceso, self.etapa, estado='EN_PROCESO')
         self.tutor = self._crear_participante(self.proceso, rol_en_modalidad='TUTOR')
 
