@@ -1,5 +1,6 @@
 # apps/investigacion_formativa/views/homologacion_viewset.py
 
+from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormativa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -21,11 +22,11 @@ class HomologacionViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action == "create":
-            return [combinar(ROLES_AUTOR_HOMOLOGACION)]
+            return [combinar(ROLES_AUTOR_HOMOLOGACION), TieneAmbitoFormativa()]
         if self.action in ["aprobar", "rechazar", "cargar_acta"]:
-            return [combinar(ROLES_ESCRITURA_GESTION)]
+            return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormativa()]
         else:
-            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA)]
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA), TieneAmbitoFormativa()]
 
     def create(self, request):
         homologacion = HomologacionService.crear(

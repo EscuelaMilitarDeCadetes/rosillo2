@@ -47,7 +47,7 @@ class UsuarioViewSetTests(TestCase):
             estado=True
         )
         login = self.client.post(
-            reverse("login"),
+            reverse("login-formal"),
             {
                 "username": "admin@esmic.edu.co",
                 "password": "Admin123*"

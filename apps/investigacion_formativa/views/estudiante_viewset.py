@@ -1,5 +1,6 @@
 # apps/investigacion_formativa/views/estudiante_viewset.py
 
+from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormativa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -20,9 +21,9 @@ class EstudianteViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action in ["create", "update", "desactivar", "reactivar"]:
-            return [combinar(ROLES_ESCRITURA_GESTION)]
+            return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormativa()]
         else:  # list, retrieve, por_facultad, por_modalidad
-            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA)]
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA), TieneAmbitoFormativa()]
 
     def list(self, request):
         estudiantes = EstudianteService.listar()

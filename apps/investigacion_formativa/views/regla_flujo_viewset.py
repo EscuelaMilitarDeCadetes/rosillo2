@@ -1,3 +1,4 @@
+from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormativa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -16,9 +17,9 @@ class ReglaFlujoViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action in ["create", "update", "activar", "desactivar", "destroy"]:
-            return [combinar(ROLES_CONFIGURACION_FLUJO)]
+            return [combinar(ROLES_CONFIGURACION_FLUJO), TieneAmbitoFormativa()]
         else:  # list, retrieve, por_transicion
-            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA)]
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA), TieneAmbitoFormativa()]
 
     def list(self, request):
         reglas = ReglaFlujoService.listar()

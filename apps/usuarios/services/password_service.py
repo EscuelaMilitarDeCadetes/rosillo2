@@ -1,7 +1,8 @@
+# apps/usuarios/services/password_service.py
 import secrets
 from datetime import timedelta
 from django.utils import timezone
-from django.core.mail import send_mail
+from apps.common.services.email_service import EmailService
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
@@ -32,7 +33,7 @@ class PasswordService:
             # Enviar correo
             subject = 'Restablecimiento de contraseña'
             message = f'Para restablecer tu contraseña, haz click en el siguiente enlace: {link}\n\nEl enlace expirará en {PasswordService.TOKEN_EXPIRATION_HOURS} hora.'
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email])
+            EmailService.enviar(subject=subject, message=message, recipient_list=[user.email])
             # Al ser anónimo, podemos registrar al usuario afectado como el "ejecutor" o manejarlo nulo
             HistorialService.registrar(user, f"Se realiza la petición de restablecimiento de contraseña para el usuario {user.username}")
             return True

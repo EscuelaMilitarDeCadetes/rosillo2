@@ -1,3 +1,4 @@
+#apps/integracion/tests/test_permisos.py
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
@@ -9,11 +10,13 @@ class PermisosVinculacionTests(IntegracionFixturesMixin, TestCase):
     def test_facultad_puede_crear_estudiante_jurado_tutor(self):
         self.crear_ejecutor_con_rol('FACULTAD', 'decano.facultad@esmic.edu.co')
         self.loguearse_como('decano.facultad@esmic.edu.co', 'soporte123')
+
         endpoints = {
             'crear-estudiante': 'ESTUDIANTE',
             'crear-jurado': 'JURADO',
             'crear-tutor': 'TUTOR',
         }
+
         for i, (url_name, nombre_rol) in enumerate(endpoints.items()):
             with self.subTest(rol=nombre_rol):
                 data = self.datos_persona(
@@ -50,11 +53,8 @@ class PermisosVinculacionTests(IntegracionFixturesMixin, TestCase):
             username='sinrol@esmic.edu.co', email='sinrol@esmic.edu.co',
             password='clave123', is_active=True,
         )
-        self.loguearse_como('sinrol@esmic.edu.co', 'clave123')
-        data = self.datos_persona(correo='fallido@esmic.edu.co', documento='FALLIDO-1')
-        data['rol_plataforma_id'] = self.roles['SOPORTE'].pk
-        response = self.client.post(reverse('vinculacion-crear-soporte'), data)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.intentar_login_debe_fallar('sinrol@esmic.edu.co', 'clave123')
+        # Ya no se llega a crear nada: el usuario nunca obtuvo token.
 
     # ------------------------------------------------------------------ #
     # Regresión: hallazgo ronda 4/5 — /reemplazar/ sin permission_classes
@@ -75,8 +75,4 @@ class PermisosVinculacionTests(IntegracionFixturesMixin, TestCase):
             username='sinrol.reemplazo@esmic.edu.co', email='sinrol.reemplazo@esmic.edu.co',
             password='clave123', is_active=True,
         )
-        self.loguearse_como('sinrol.reemplazo@esmic.edu.co', 'clave123')
-        response = self.client.post(
-            reverse('vinculacion-reemplazar'), {'usuario_id': self.ejecutor.id}
-        )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.intentar_login_debe_fallar('sinrol.reemplazo@esmic.edu.co', 'clave123')

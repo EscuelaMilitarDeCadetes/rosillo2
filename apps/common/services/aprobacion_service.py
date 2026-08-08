@@ -1,9 +1,9 @@
 from django.db import transaction
-from django.utils import timezone
 from apps.common.models import Aprobacion
 from apps.common.selectors.aprobacion_selector import AprobacionSelector
 from apps.common.validators.aprobacion_validator import AprobacionValidator
 from apps.common.services.historial_service import HistorialService
+from apps.common.services.notificacion_service import NotificacionService
 
 
 class AprobacionService:
@@ -32,6 +32,16 @@ class AprobacionService:
             f"id_documento={id_documento}, revisor_id={usuario_revisor_id}, id={aprobacion.pk}).",
             objeto=aprobacion,
         )
+        if estado == 'PENDIENTE':
+            NotificacionService.crear(
+                usuario_destino_id=usuario_revisor_id,
+                mensaje=(
+                    f"Tiene una nueva solicitud de aprobación pendiente "
+                    f"(id={aprobacion.pk})."
+                ),
+                tipo='alerta',
+                notificar_email=True,
+            )
         return aprobacion
 
     @staticmethod

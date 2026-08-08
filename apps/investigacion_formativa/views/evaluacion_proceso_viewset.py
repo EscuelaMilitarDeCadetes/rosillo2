@@ -1,5 +1,6 @@
 # apps/investigacion_formativa/views/evaluacion_proceso_viewset.py
 
+from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormativa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -21,9 +22,9 @@ class EvaluacionProcesoViewSet(viewsets.ViewSet):
     def get_permissions(self):
         if self.action == "create":
             # Solo quien califica (Tutor/Jurado) puede emitir una evaluación
-            return [combinar([EsTutor, EsJurado, EsFacultad, EsDecano, EsSoporte])]
+            return [combinar([EsTutor, EsJurado, EsFacultad, EsDecano, EsSoporte]), TieneAmbitoFormativa()]
         else:  # list, retrieve, por_instancia_etapa, por_proceso
-            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA)]
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA), TieneAmbitoFormativa()]
 
     def list(self, request):
         evaluaciones = EvaluacionProcesoService.listar()

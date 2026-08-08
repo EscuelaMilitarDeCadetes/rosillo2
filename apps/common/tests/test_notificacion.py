@@ -31,12 +31,13 @@ class NotificacionServiceTests(CommonFixturesMixin, TestCase):
             )
 
     def test_crear_notificacion_con_email_envia_correo(self):
-        NotificacionService.crear(
-            usuario_destino_id=self.otro_usuario.pk,
-            mensaje='Recordatorio de entrega de documento.',
-            tipo='alerta',
-            notificar_email=True,
-        )
+        with self.captureOnCommitCallbacks(execute=True):
+            NotificacionService.crear(
+                usuario_destino_id=self.otro_usuario.pk,
+                mensaje='Recordatorio de entrega de documento.',
+                tipo='alerta',
+                notificar_email=True,
+            )
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, [self.otro_usuario.email])
 

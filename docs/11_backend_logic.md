@@ -66,6 +66,7 @@ Al usar `viewsets.ViewSet` sin `queryset`, `router.register()` **requiere `basen
 - `Historial` es **append-only**: el modelo no expone `actualizar()` ni `eliminar()`.
 - Campos opcionales `campo`, `valor_anterior`, `valor_nuevo` (JSONField) permiten guardar diffs estructurados cuando se necesita trazabilidad fina (no todos los `registrar()` los usan).
 - `Historial` usa `GenericForeignKey` (`content_type`/`object_id`), igual que `DocumentoFirma` y `Tarea` — mismo patrón reutilizado tres veces en `common`.
+- Mismo criterio se aplicó al envío de correo: `EmailService.enviar()` (`apps/common/services/email_service.py`) es el único punto de entrada permitido para enviar email desde cualquier módulo — ningún service debe llamar a `send_mail()` ni a la tarea de Celery directamente.
 
 ## Borrado: soft-delete vs. hard-delete
 
@@ -94,3 +95,4 @@ La autenticación y seguridad de usuarios se documenta ahora en 07_security.md.
 
 - **Definiciones duplicadas de métodos en Python se descartan en silencio** (la segunda sobrescribe la primera sin error) — requiere auditar los archivos de service línea por línea, especialmente después de copiar/pegar entre módulos similares.
 - Los hacks de IDs hardcodeados del Thymeleaf original (`grupo_id=3`, `id != 15`, segmentación fija Refimil/Ginsi/CM) están completamente abandonados; cualquier lógica nueva debe ser paramétrica sobre el esquema institucional genérico (`FacultadXGrupo` como fuente de verdad para la correspondencia grupo-facultad).
+- Cualquier test que dependa de que un email se envíe (via assert sobre mail.outbox o sobre un mock de send_mail) debe envolver la llamada en self.captureOnCommitCallbacks(execute=True), y el @patch debe apuntar a apps.common.tasks.send_mail — nunca al módulo del service que originalmente llamaba a send_mail antes de la migración a Celery.

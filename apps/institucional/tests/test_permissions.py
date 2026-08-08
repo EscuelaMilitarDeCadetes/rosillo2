@@ -185,7 +185,7 @@ class PermissionTests(TestCase):
         
     def test_soporte_puede_acceder(self):
         login = self.client.post(
-            reverse("login"),
+            reverse('login-formal'),
             {
                 "username": "soporte@esmic.edu.co",
                 "password": "Password123*"
@@ -202,7 +202,7 @@ class PermissionTests(TestCase):
         
     def test_supervisor_puede_acceder(self):
         login = self.client.post(
-            reverse("login"),
+            reverse('login-formal'),
             {
                 "username": "supervisor@esmic.edu.co",
                 "password": "Password123*"
@@ -219,7 +219,7 @@ class PermissionTests(TestCase):
         
     def test_asesor_puede_acceder(self):
         login = self.client.post(
-            reverse("login"),
+            reverse('login-formal'),
             {
                 "username": "asesor@esmic.edu.co",
                 "password": "Password123*"
@@ -236,7 +236,7 @@ class PermissionTests(TestCase):
         
     def test_facultad_puede_acceder(self):
         login = self.client.post(
-            reverse("login"),
+            reverse('login-formal'),
             {
                 "username": "facultad@esmic.edu.co",
                 "password": "Password123*"
@@ -253,7 +253,7 @@ class PermissionTests(TestCase):
         
     def test_grupo_puede_acceder(self):
         login = self.client.post(
-            reverse("login"),
+            reverse('login-formal'),
             {
                 "username": "grupo@esmic.edu.co",
                 "password": "Password123*"
@@ -270,7 +270,7 @@ class PermissionTests(TestCase):
         
     def test_cinterno_puede_acceder(self):
         login = self.client.post(
-            reverse("login"),
+            reverse('login-formal'),
             {
                 "username": "cinterno@esmic.edu.co",
                 "password": "Password123*"
@@ -287,7 +287,7 @@ class PermissionTests(TestCase):
         
     def test_cexterno_puede_acceder(self):
         login = self.client.post(
-            reverse("login"),
+            reverse('login-formal'),
             {
                 "username": "cexterno@esmic.edu.co",
                 "password": "Password123*"
@@ -304,7 +304,7 @@ class PermissionTests(TestCase):
         
     def test_decano_puede_acceder(self):
         login = self.client.post(
-            reverse("login"),
+            reverse('login-formal'),
             {
                 "username": "decano@esmic.edu.co",
                 "password": "Password123*"
@@ -321,7 +321,7 @@ class PermissionTests(TestCase):
             
     def test_estudiante_no_puede_acceder(self):
         login = self.client.post(
-            reverse("login"),
+            reverse('login-formativa'),
             {
                 "username": "estudiante@esmic.edu.co",
                 "password": "Password123*"
@@ -338,7 +338,7 @@ class PermissionTests(TestCase):
             
     def test_gerente_no_puede_acceder(self):
         login = self.client.post(
-            reverse("login"),
+            reverse('login-formal'),
             {
                 "username": "gerente@esmic.edu.co",
                 "password": "Password123*"
@@ -355,7 +355,7 @@ class PermissionTests(TestCase):
             
     def test_jurado_no_puede_acceder(self):
         login = self.client.post(
-            reverse("login"),
+            reverse('login-formativa'),
             {
                 "username": "jurado@esmic.edu.co",
                 "password": "Password123*"
@@ -372,7 +372,7 @@ class PermissionTests(TestCase):
             
     def test_tutor_no_puede_acceder(self):
         login = self.client.post(
-            reverse("login"),
+            reverse('login-formativa'),
             {
                 "username": "tutor@esmic.edu.co",
                 "password": "Password123*"
@@ -389,20 +389,13 @@ class PermissionTests(TestCase):
         
     def test_usuario_sin_rol_no_puede_acceder(self):
         login = self.client.post(
-            reverse("login"),
-            {
-                "username": "sinrol@esmic.edu.co",
-                "password": "Password123*"
-            }
+            reverse("login-formal"),
+            {"username": "sinrol@esmic.edu.co", "password": "Password123*"}
         )
-        self.client.credentials(
-            HTTP_AUTHORIZATION=f"Bearer {login.data['access']}"
-        )
-        response = self.client.get(self.url)
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_403_FORBIDDEN
-        )
+        # El gate por ámbito bloquea el login antes de emitir token:
+        # no hay 'access' que usar, así que el 403 se valida aquí.
+        self.assertEqual(login.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertIn("error", login.data)
         
     def test_usuario_anonimo_no_puede_acceder(self):
         response = self.client.get(self.url)

@@ -14,6 +14,7 @@ Los permisos de "quién puede crear/reemplazar/retirar a quién" NO se
 validan en este archivo ni en VinculacionValidator: viven únicamente en
 permission_classes de VinculacionViewSet, conforme a 11_backend_logic.md.
 """
+#apps/integracion/services/vinculacion_service.py
 import secrets
 import string
 
@@ -443,10 +444,8 @@ class VinculacionService(GestionUsuarioInterface):
             except Persona.DoesNotExist:
                 pass
 
-        transaction.on_commit(
-            lambda: VinculacionService._enviar_enlace_establecimiento_password(
-                email=user.email, username=user.username, token=token
-            )
+        VinculacionService._enviar_enlace_establecimiento_password(
+            email=user.email, username=user.username, token=token
         )
 
         HistorialService.registrar(
@@ -535,8 +534,10 @@ class VinculacionService(GestionUsuarioInterface):
         """
         if not email:
             return
-        from django.core.mail import send_mail
+
         from django.conf import settings
+        from apps.common.services.email_service import EmailService
+
         link = f"{settings.FRONTEND_URL}/reset-password?token={token}"
         subject = "Confirmación de datos de acceso"
         message = (
@@ -547,8 +548,4 @@ class VinculacionService(GestionUsuarioInterface):
             f"El enlace expirará en {PasswordService.TOKEN_EXPIRATION_HOURS} hora(s).\n\n"
             "Bienvenido a la plataforma ROSILLO."
         )
-        try:
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).error(f"Fallo al enviar enlace de acceso a {email}: {e}")
+        EmailService.enviar(subject=subject, message=message, recipient_list=[email])

@@ -1,15 +1,17 @@
 # apps/investigacion_formal/views/estadisticas_viewset.py — reemplazar archivo completo
+
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from apps.investigacion_formal.services.estadisticas_service import EstadisticasService
 from apps.investigacion_formal.permissions import ROLES_LECTURA_INVESTIGACION_FORMAL, combinar
+from apps.usuarios.permissions import TieneAmbitoFormal
 
 
 class EstadisticasViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
-        return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL)]
+        return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL), TieneAmbitoFormal()]
 
     @action(detail=False, methods=["get"], url_path="proyectos-por-anio")
     def proyectos_por_anio(self, request):

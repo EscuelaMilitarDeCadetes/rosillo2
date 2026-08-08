@@ -1,3 +1,4 @@
+from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormativa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -23,20 +24,20 @@ class PostulacionProcesoViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action in ["create", "update", "enviar", "destroy"]:
-            return [combinar(ROLES_AUTOR_POSTULACION)]
+            return [combinar(ROLES_AUTOR_POSTULACION), TieneAmbitoFormativa()]
         elif self.action == "pasar_a_validacion":
-            return [combinar(ROLES_VALIDACION_POSTULACION)]
+            return [combinar(ROLES_VALIDACION_POSTULACION), TieneAmbitoFormativa()]
         elif self.action in ["aprobar", "rechazar"]:
             # Decisión DIRECTA sobre la postulación: Decano/Soporte. Facultad
             # ya NO puede aprobar/rechazar por sí sola — debe pasar por
             # 'solicitar_decision_decano'.
-            return [combinar(ROLES_DECISION_DIRECTA_DECANO)]
+            return [combinar(ROLES_DECISION_DIRECTA_DECANO), TieneAmbitoFormativa()]
         elif self.action == "solicitar_decision_decano":
-            return [combinar(ROLES_SOLICITUD_APROBACION_FACULTAD)]
+            return [combinar(ROLES_SOLICITUD_APROBACION_FACULTAD), TieneAmbitoFormativa()]
         elif self.action in ["confirmar_aprobacion_decano", "denegar_por_decano"]:
-            return [combinar(ROLES_CONFIRMACION_DECANO)]
+            return [combinar(ROLES_CONFIRMACION_DECANO), TieneAmbitoFormativa()]
         else:  # list, retrieve, por_estudiante, pendientes_por_facultad
-            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA)]
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA), TieneAmbitoFormativa()]
 
     def list(self, request):
         postulaciones = PostulacionProcesoService.listar()

@@ -1,4 +1,5 @@
 from apps.investigacion_formal.pagination import InvestigacionFormalPageNumberPagination
+from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormal
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -16,9 +17,9 @@ class MontoViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action in ["create", "asignar_aprobado", "editar_valor_aprobado"]:
-            return [combinar(ROLES_ESCRITURA_GESTION)]
+            return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormal()]
         else:  # list, retrieve, por_proyecto, aprobados_calificados, contrapartida_calificados, totales_calificados, avance_presupuestal
-            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL)]
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL), TieneAmbitoFormal()]
 
     def list(self, request):
         montos = MontoService.listar()

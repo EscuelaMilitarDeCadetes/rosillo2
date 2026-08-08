@@ -1,6 +1,8 @@
+# apps/integracion/tests/base.py
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework.test import APIClient
+from rest_framework import status
 from apps.usuarios.models import RolPlataforma, RolXUsuario
 from apps.institucional.models import (
     GradoEstudios, FacultadEscuela, GrupoInvestigacion, RolGrupo, FacultadXGrupo,
@@ -23,6 +25,7 @@ class IntegracionFixturesMixin:
     setUp() de esa clase específica, no aquí — para no inflar el fixture
     compartido con cosas que la mayoría de las pruebas no usa.
     """
+
     ROLES_NOMBRES = [
         'SOPORTE', 'SUPERVISOR', 'GERENTE',
         'DECANO', 'FACULTAD', 'ESTUDIANTE', 'JURADO', 'TUTOR',
@@ -62,12 +65,18 @@ class IntegracionFixturesMixin:
         return usuario
 
     def loguearse_como(self, username, password):
-        login = self.client.post(reverse('login'), {
+        login = self.client.post(reverse('login-formal'), {
             'username': username, 'password': password,
         })
         self.client.credentials(
             HTTP_AUTHORIZATION=f"Bearer {login.data['access']}"
         )
+
+    def intentar_login_debe_fallar(self, username, password):
+        login = self.client.post(reverse('login-formal'), {
+            'username': username, 'password': password,
+        })
+        self.assertEqual(login.status_code, status.HTTP_403_FORBIDDEN)
 
     def datos_persona(self, correo, documento, nombre='Nombre', apellido='Apellido', celular=None):
         return {

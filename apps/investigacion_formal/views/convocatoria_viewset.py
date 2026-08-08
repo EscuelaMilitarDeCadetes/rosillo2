@@ -2,11 +2,10 @@ from apps.investigacion_formal.pagination import InvestigacionFormalPageNumberPa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
 from apps.investigacion_formal.serializers.convocatoria_serializer import ConvocatoriaSerializer
 from apps.investigacion_formal.services.convocatoria_service import ConvocatoriaService
 from apps.investigacion_formal.permissions import ROLES_LECTURA_INVESTIGACION_FORMAL, combinar
-from apps.usuarios.permissions import EsAsesor, EsCInterno
+from apps.usuarios.permissions import EsAsesor, EsCInterno, TieneAmbitoFormal
 
 
 class ConvocatoriaViewSet(viewsets.ViewSet):
@@ -19,10 +18,10 @@ class ConvocatoriaViewSet(viewsets.ViewSet):
         elif self.action == "cambiar_estado":
             permission_classes = [EsCInterno]
         elif self.action in ["list", "retrieve", "activas"]:
-            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL)]
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL), TieneAmbitoFormal()]
         else:  # internas, externas
             permission_classes = [EsCInterno]
-        return [permission() for permission in permission_classes]
+        return [permission() for permission in permission_classes] + [TieneAmbitoFormal()]
 
     def list(self, request):
         convocatorias = ConvocatoriaService.listar()

@@ -1,4 +1,5 @@
 # apps/investigacion_formativa/views/banco_ideas_viewset.py
+from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormativa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -21,13 +22,13 @@ class BancoIdeasViewSet(viewsets.ViewSet):
     def get_permissions(self):
         if self.action in ["create", "update", "destroy"]:
             # Alta/edicion/borrado del catalogo de ideas: administrativo.
-            return [combinar(ROLES_ESCRITURA_GESTION)]
+            return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormativa()]
         elif self.action in ["separar", "tomar", "liberar"]:
             # Tomar/liberar una idea es una accion del propio estudiante
             # (o de Facultad/Decano/Soporte gestionando en su nombre).
-            return [combinar(ROLES_INTERACCION_BANCO_IDEAS)]
+            return [combinar(ROLES_INTERACCION_BANCO_IDEAS), TieneAmbitoFormativa()]
         else:  # list, retrieve, por_facultad, disponibles
-            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA)]
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA), TieneAmbitoFormativa()]
 
     def list(self, request):
         ideas = BancoIdeasService.listar()

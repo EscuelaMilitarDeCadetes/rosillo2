@@ -34,7 +34,7 @@ class RolXUsuarioTests(TestCase):
             password='Target123*',
             is_active=True
         )
-        login = self.client.post(reverse('login'), {
+        login = self.client.post(reverse('login-formal'), {
             'username': 'admin@esmic.edu.co',
             'password': 'Admin123*'
         })
@@ -97,16 +97,12 @@ class RolXUsuarioTests(TestCase):
             password='Sinrol123*',
             is_active=True
         )
-        login = self.client.post(reverse('login'), {
+        login = self.client.post(reverse('login-formal'), {
             'username': 'sinrol@esmic.edu.co',
             'password': 'Sinrol123*'
         })
-        client_sin_rol = APIClient()
-        client_sin_rol.credentials(
-            HTTP_AUTHORIZATION=f"Bearer {login.data['access']}"
-        )
-        response = client_sin_rol.get(reverse('usuarios-list'))
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(login.status_code, status.HTTP_403_FORBIDDEN)
+        # client_sin_rol ya no aplica: no hay token que emitir
         
     def test_put_no_permitido_sobre_rol_x_usuario(self):
         rxu = RolXUsuario.objects.create(usuario=self.target_user, rol=self.rol_supervisor, estado=True)

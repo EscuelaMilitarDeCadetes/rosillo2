@@ -1,11 +1,14 @@
+#apps/common/services/notificacion_service.py
 from django.db import transaction
-from django.core.mail import send_mail
-from django.conf import settings
+from apps.common.services.email_service import EmailService
 from apps.common.models import Notificacion
 from apps.common.selectors.notificacion_selector import NotificacionSelector
 from apps.common.selectors.tarea_selector import TareaSelector
 from apps.common.validators.notificacion_validator import NotificacionValidator
 from apps.common.services.historial_service import HistorialService
+
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 
 class NotificacionService:
@@ -21,40 +24,54 @@ class NotificacionService:
     @transaction.atomic
     def crear(usuario_destino_id, mensaje, tipo=None, url_relacionada=None, notificar_email=False):
         NotificacionValidator.validar_creacion(usuario_destino_id, mensaje, tipo, url_relacionada)
+
         notificacion = Notificacion.objects.create(
             usuario_destino_id=usuario_destino_id,
-            mensaje=mensaje.strip(),
+            mensaje=mensaje,
             tipo=tipo,
             url_relacionada=url_relacionada,
         )
+
         if notificar_email:
             NotificacionService._enviar_email(notificacion)
+
+        # --- empujar en vivo por WebSocket ---
+        channel_layer = get_channel_layer()
+        transaction.on_commit(lambda: async_to_sync(channel_layer.group_send)(
+            f"notificaciones_{usuario_destino_id}",
+            {
+                "type": "notificacion_nueva",
+                "data": {
+                    "id": notificacion.pk,
+                    "mensaje": notificacion.mensaje,
+                    "tipo": notificacion.tipo,
+                    "url_relacionada": notificacion.url_relacionada,
+                    "fecha_creacion": notificacion.fecha_creacion.isoformat(),
+                },
+            },
+        ))
         return notificacion
 
     @staticmethod
     def _enviar_email(notificacion):
-        try:
-            titulos_por_tipo = {
-                'alerta': 'Alerta - Rosillo',
-                'error': 'Error - Rosillo',
-                'exito': 'Confirmación - Rosillo',
-                'info': 'Notificación - Rosillo',
-            }
-            asunto = titulos_por_tipo.get(notificacion.tipo, "Notificación ESMIC - ROSILLO")
-            contenido_html = (
-                "<p>Gusto en saludarlo Señor(a),</p>"
-                f"<p>{notificacion.mensaje}</p>"
-                "<p>No responder a este mensaje.</p>"
-            )
-            send_mail(
-                subject=asunto,
-                message=notificacion.mensaje,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[notificacion.usuario_destino.email],
-                html_message=contenido_html,
-            )
-        except Exception:
-            pass
+        titulos_por_tipo = {
+            'alerta': 'Alerta - Rosillo',
+            'error': 'Error - Rosillo',
+            'exito': 'Confirmación - Rosillo',
+            'info': 'Notificación - Rosillo',
+        }
+        asunto = titulos_por_tipo.get(notificacion.tipo, "Notificación ESMIC - ROSILLO")
+        contenido_html = (
+            "<p>Gusto en saludarlo Señor(a),</p>"
+            f"<p>{notificacion.mensaje}</p>"
+            "<p>No responder a este mensaje.</p>"
+        )
+        EmailService.enviar(
+            subject=asunto,
+            message=notificacion.mensaje,
+            recipient_list=[notificacion.usuario_destino.email],
+            html_message=contenido_html,
+        )
 
     @staticmethod
     @transaction.atomic

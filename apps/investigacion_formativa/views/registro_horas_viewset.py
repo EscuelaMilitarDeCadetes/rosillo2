@@ -1,3 +1,4 @@
+from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormativa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -18,9 +19,9 @@ class RegistroHorasViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action in ["create", "ajustar_horas_requeridas", "recalcular", "destroy"]:
-            return [combinar(ROLES_ESCRITURA_GESTION)]
+            return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormativa()]
         else:  # list, retrieve, por_proceso
-            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA)]
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA), TieneAmbitoFormativa()]
 
     def list(self, request):
         controles = RegistroHorasService.listar()

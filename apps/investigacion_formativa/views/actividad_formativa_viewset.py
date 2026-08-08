@@ -1,4 +1,5 @@
 # apps/investigacion_formativa/views/actividad_formativa_viewset.py
+from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormativa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -22,12 +23,12 @@ class ActividadFormativaViewSet(viewsets.ViewSet):
         if self.action in ["create", "update", "iniciar", "completar", "cancelar"]:
             # El propio estudiante reporta/completa/cancela su actividad, o
             # Facultad/Decano/Soporte la gestionan en su nombre.
-            return [combinar(ROLES_GESTION_ACTIVIDAD_FORMATIVA)]
+            return [combinar(ROLES_GESTION_ACTIVIDAD_FORMATIVA), TieneAmbitoFormativa()]
         elif self.action == "destroy":
             # Eliminar sigue siendo una accion administrativa.
-            return [combinar(ROLES_ESCRITURA_GESTION)]
+            return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormativa()]
         else:  # list, retrieve, por_proceso, por_responsable
-            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA)]
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA), TieneAmbitoFormativa()]
 
     def list(self, request):
         actividades = ActividadFormativaService.listar()

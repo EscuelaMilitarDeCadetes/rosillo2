@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from apps.investigacion_formal.serializers.calificacion_serializer import CalificacionSerializer
 from apps.investigacion_formal.services.calificacion_service import CalificacionService
 from apps.investigacion_formal.permissions import ROLES_CONSULTA_CALIFICACION, combinar
-from apps.usuarios.permissions import EsCInterno, EsSoporte
+from apps.usuarios.permissions import EsCInterno, EsSoporte, TieneAmbitoFormal
 
 
 class CalificacionViewSet(viewsets.ViewSet):
@@ -15,11 +15,11 @@ class CalificacionViewSet(viewsets.ViewSet):
     def get_permissions(self):
         acciones_autoservicio = ['list', 'retrieve', 'por_proyecto_convocatoria']
         if self.action in acciones_autoservicio:
-            return [combinar(ROLES_CONSULTA_CALIFICACION)]   # antes: inline [EsSupervisor | EsCInterno | EsCExterno]
+            return [combinar(ROLES_CONSULTA_CALIFICACION), TieneAmbitoFormal()]   # antes: inline [EsSupervisor | EsCInterno | EsCExterno]
         elif self.action in ['calificar']:
-            return [EsCInterno()]
+            return [EsCInterno(), TieneAmbitoFormal()]
         else:  # create
-            return [EsSoporte()]
+            return [EsSoporte(), TieneAmbitoFormal()]
 
     def list(self, request):
         calificaciones = CalificacionService.listar()

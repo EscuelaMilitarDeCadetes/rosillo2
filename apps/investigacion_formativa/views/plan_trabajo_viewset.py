@@ -1,3 +1,4 @@
+from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormativa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -17,11 +18,11 @@ class PlanTrabajoViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action in ["create", "update", "enviar", "destroy"]:
-            return [combinar(ROLES_AUTOR_PLAN_TRABAJO)]
+            return [combinar(ROLES_AUTOR_PLAN_TRABAJO), TieneAmbitoFormativa()]
         elif self.action in ["aprobar", "rechazar"]:
-            return [combinar(ROLES_APROBACION_PLAN_TRABAJO)]
+            return [combinar(ROLES_APROBACION_PLAN_TRABAJO), TieneAmbitoFormativa()]
         else:  # list, retrieve, por_proceso
-            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA)]
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA), TieneAmbitoFormativa()]
 
     def list(self, request):
         planes = PlanTrabajoService.listar()

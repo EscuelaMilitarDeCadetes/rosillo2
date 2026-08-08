@@ -1,12 +1,5 @@
 from apps.investigacion_formal.pagination import InvestigacionFormalPageNumberPagination
-from apps.usuarios.permissions.es_asesor import EsAsesor
-from apps.usuarios.permissions.es_cexterno import EsCExterno
-from apps.usuarios.permissions.es_cinterno import EsCInterno
-from apps.usuarios.permissions.es_decano import EsDecano
-from apps.usuarios.permissions.es_facultad import EsFacultad
-from apps.usuarios.permissions.es_gerente import EsGerente
-from apps.usuarios.permissions.es_grupo import EsGrupo
-from apps.usuarios.permissions.es_supervisor import EsSupervisor
+from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormal
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 
@@ -22,9 +15,9 @@ class TipoRubroViewSet(viewsets.ViewSet):
     
     def get_permissions(self):
         if self.action in ["create", "update"]:
-            return [EsSoporte()]
+            return [EsSoporte(), TieneAmbitoFormal()]
         else:  # list, retrieve (+ por_proyecto / evaluables / aplicables / por_producto_minciencias / etc. según el archivo)
-            return [combinar(ROLES_LECTURA_CATALOGOS)]
+            return [combinar(ROLES_LECTURA_CATALOGOS), TieneAmbitoFormal()]
 
     def list(self, request):
         rubros = TipoRubroService.listar()

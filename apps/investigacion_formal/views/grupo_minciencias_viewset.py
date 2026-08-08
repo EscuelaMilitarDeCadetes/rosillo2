@@ -6,7 +6,7 @@ from apps.investigacion_formal.serializers.grupo_minciencias_serializer import (
 )
 from apps.investigacion_formal.services.grupo_minciencias_service import GrupoMincienciasService
 from apps.investigacion_formal.permissions import ROLES_LECTURA_CATALOGOS, combinar
-from apps.usuarios.permissions import EsSoporte
+from apps.usuarios.permissions import EsSoporte, TieneAmbitoFormal
 
 
 class GrupoMincienciasViewSet(viewsets.ViewSet):
@@ -15,9 +15,9 @@ class GrupoMincienciasViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action in ["create", "update"]:
-            return [EsSoporte()]
+            return [EsSoporte(), TieneAmbitoFormal()]
         else:  # list, retrieve
-            return [combinar(ROLES_LECTURA_CATALOGOS)]
+            return [combinar(ROLES_LECTURA_CATALOGOS), TieneAmbitoFormal()]
 
     def list(self, request):
         grupos = GrupoMincienciasService.listar()

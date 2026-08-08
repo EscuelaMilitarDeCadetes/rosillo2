@@ -27,6 +27,25 @@ Cargadas por `base.py` desde `BASE_DIR / '.env'`. Como mínimo se requieren:
 
 PostgreSQL, configurada 100% por variables de entorno (`DATABASES['default']` en `base.py`). No hay `sqlite` de respaldo — todos los ambientes, incluido local, requieren Postgres corriendo.
 
+## Colas de tareas (Celery)
+
+El envío de correo (`EmailService`) y el job diario de recordatorios de tareas (`enviar_recordatorios_tareas_task`) corren como tareas asíncronas vía Celery, con Redis como broker y result backend.
+
+- `config/celery.py` define la app de Celery (`app = Celery('rosillo')`), autodescubre tareas (`apps.common.tasks`, y cualquier `tasks.py` que se agregue en otros módulos).
+- `config/__init__.py` importa la app de Celery al arrancar Django.
+- `CELERY_BEAT_SCHEDULE` (en `base.py`) programa `enviar_recordatorios_tareas_task` todos los días a las 7:00 a.m. Se usa un diccionario estático en settings en vez de `django-celery-beat`, para no agregar tablas nuevas (fase de modelado de BD cerrada).
+- En `local.py`, `CELERY_TASK_ALWAYS_EAGER = True` hace que las tareas corran en el mismo proceso durante desarrollo y `python manage.py test apps` — **no requiere Redis levantado para correr la suite de tests**. En `stage`/`production` esta variable no debe estar activa: ahí se necesita worker real.
+- En `local.py`, `CHANNEL_LAYERS` usa `channels.layers.InMemoryChannelLayer` en vez del `RedisChannelLayer` de `base.py`, por la misma razón que `CELERY_TASK_ALWAYS_EAGER`: evitar que la suite de tests (o cualquier test que use `captureOnCommitCallbacks(execute=True)`) dependa de un Redis real levantado. En `stage`/`production` se hereda el `RedisChannelLayer` de `base.py` sin cambios.
+
+**Procesos requeridos en despliegue (además de Django/ASGI):**
+
+```bash
+celery -A config worker --loglevel=info
+celery -A config beat --loglevel=info
+```
+
+Ambos requieren acceso a la misma instancia de Redis configurada en `CELERY_BROKER_URL`.
+
 ## Archivos estáticos y media
 
 - `STATIC_ROOT = BASE_DIR / 'staticfiles'` — requiere `collectstatic` antes de servir en stage/producción (no hay configuración de `whitenoise` ni CDN todavía).
@@ -39,13 +58,13 @@ PostgreSQL, configurada 100% por variables de entorno (`DATABASES['default']` en
 2. `DJANGO_SETTINGS_MODULE=config.settings.<ambiente>`
 3. `python manage.py migrate`
 4. `python manage.py collectstatic --noinput`
-6. Levantar WSGI (`config.wsgi.application`) detrás de un servidor de aplicación (gunicorn/uwsgi) + proxy (nginx).
+5. Levantar `celery worker` y `celery beat` (ver sección "Colas de tareas" arriba) — sin esto, los correos quedan encolados sin enviarse y el job de recordatorios no corre.
+6. Levantar ASGI (`config.asgi.application`) con `daphne` (ver Dockerfile/docker-compose) + proxy (nginx).
 7. Verificar que `DOCUMENTOS_ROOT` y sus subcarpetas existen y son escribibles por el usuario del proceso.
 
-## Pendiente / riesgos conocidos
 
-- **No hay Celery ni cron configurado.** `NotificacionService.enviar_recordatorios_tareas()` existe pero nada lo dispara automáticamente — falta definir el worker/scheduler y agregarlo al despliegue.
-- **`CORS_ALLOWED_ORIGINS` no está parametrizado por ambiente** (ver arriba).
-- **No hay `Dockerfile`/`docker-compose` ni pipeline CI/CD documentado** en el repositorio hasta la fecha — el despliegue actual es manual.
-- **Postman**: solo se ha validado el módulo `usuarios` end-to-end; falta ejecutar la colección completa contra `investigacion_formal` (recién completado) antes de considerar el backend listo para stage.
-- Confirmar si `production.py` necesita `SECURE_HSTS_SECONDS` reducido en el primer despliegue (activar HSTS de un año inmediatamente puede ser riesgoso si el certificado SSL aún no está 100% estable en el dominio).
+## Decisiones ya resueltas
+
+- **Dockerfile / docker-compose / CI**: agregados (`Dockerfile`, `docker-compose.yml`, `.github/workflows/ci.yml`). El CI corre la suite completa de tests en cada push/PR, sin necesitar Redis (`CELERY_TASK_ALWAYS_EAGER=True` en `local.py`).
+- **`CORS_ALLOWED_ORIGINS` parametrizado por ambiente**: ver `07_security.md`.
+- **`SECURE_HSTS_SECONDS` configurable vía `.env`**: permite subirlo gradualmente en producción sin redeploy — ver detalle arriba.

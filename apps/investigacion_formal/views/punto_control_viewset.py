@@ -1,4 +1,5 @@
 from apps.investigacion_formal.pagination import InvestigacionFormalPageNumberPagination
+from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormal
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 
@@ -15,11 +16,11 @@ class PuntoControlViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action == "create":
-            return [combinar(ROLES_CREACION_OPERATIVA)]
+            return [combinar(ROLES_CREACION_OPERATIVA), TieneAmbitoFormal()]
         elif self.action in ["update", "destroy"]:
-            return [combinar(ROLES_ESCRITURA_GESTION)]
+            return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormal()]
         else:  # list, retrieve
-            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL)]
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL), TieneAmbitoFormal()]
 
     def list(self, request):
         puntos = PuntoControlService.listar()

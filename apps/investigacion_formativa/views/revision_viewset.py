@@ -1,3 +1,4 @@
+from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormativa
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 
@@ -19,9 +20,9 @@ class RevisionViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action == "create":
-            return [combinar(ROLES_CALIFICACION_PROCESO)]
+            return [combinar(ROLES_CALIFICACION_PROCESO), TieneAmbitoFormativa()]
         else:  # list, retrieve, por_instancia_etapa
-            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA)]
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA), TieneAmbitoFormativa()]
 
     def list(self, request):
         revisiones = RevisionService.listar()

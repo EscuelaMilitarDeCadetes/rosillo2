@@ -40,7 +40,7 @@ class UsuarioXPersonaViewsetTests(TestCase):
             persona=self.persona_inicial,
             estado=True
         )
-        login = self.client.post(reverse("login"), {
+        login = self.client.post(reverse('login-formal'), {
             "username": "admin@esmic.edu.co",
             "password": "Admin123*"
         })

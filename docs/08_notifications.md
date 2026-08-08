@@ -29,9 +29,11 @@ Ordenamiento por defecto: `-fecha_creacion`.
   - Evita duplicar el mismo aviso el mismo día para la misma tarea vía `NotificacionSelector.existe_recordatorio_hoy(usuario_id, url_relacionada, tipo='alerta')`.
   - Al finalizar registra un resumen en `Historial` con `usuario=None` (acción de sistema).
 
-## Envío de correo
+**Envío de correo**
 
-`notificar_email=True` dispara `NotificacionService._enviar_email()`, que llama `send_mail()` directamente con `DEFAULT_FROM_EMAIL`. **El envío es síncrono**: ocurre dentro de la misma llamada al servicio, no hay cola de tareas. Cualquier excepción de envío se silencia (`try/except Exception: pass`) para no romper la creación de la notificación.
+`notificar_email=True` dispara `NotificacionService._enviar_email()`, que delega en `EmailService.enviar()` (`apps/common/services/email_service.py`) — servicio central de correo, con la misma responsabilidad que `HistorialService` tiene para auditoría: cualquier módulo que necesite enviar un correo pasa por aquí, no llama a `send_mail()` directamente.
+
+`EmailService.enviar()` encola el envío como tarea de Celery (`apps/common/tasks.py::enviar_email_task`) y difiere el `.delay()` hasta `transaction.on_commit()` internamente, así el caller no necesita envolverlo. **El envío ya no es síncrono**: el request retorna sin esperar a que SMTP responda; un worker de Celery procesa la tarea aparte. Reintentos automáticos (hasta 3, con backoff de 60s) están configurados en la tarea; si todos los intentos fallan, se loguea el error en vez de romper el flujo que originó la notificación (mismo criterio de tolerancia a fallos que tenía el `try/except` anterior, pero ahora con visibilidad en logs en vez de fallo silencioso).
 
 ## Endpoints — `NotificacionViewSet` (`/api/common/notificacion/`)
 
@@ -40,11 +42,9 @@ Ordenamiento por defecto: `-fecha_creacion`.
 - `POST /marcar-todas-leidas/` (usa `request.user` si no se pasa `usuario_destino`)
 - `GET /por-usuario/<usuario_id>/?solo_no_leidas=true`
 - `GET /no-leidas/<usuario_id>/`
-- `POST /enviar-recordatorios/` — **restringido a `IsAdminUser`**, dispara el job de recordatorios manualmente con `dias_anticipacion` opcional en el body
+- `POST /enviar-recordatorios/` — restringido a IsAdminUser, dispara el job de recordatorios manualmente con dias_anticipacion opcional en el body. Complementa (no reemplaza) la ejecución automática diaria vía Celery beat — ver más abajo.
 
-## Pendiente
+## Decisiones ya resueltas
 
-- **Programación automática**: `enviar_recordatorios_tareas()` existe y funciona, pero no hay Celery beat ni cron configurado que lo dispare periódicamente. Hoy solo corre si alguien llama al endpoint admin manualmente.
-- **Notificaciones en tiempo real**: no hay WebSockets/Channels. El frontend debe hacer polling sobre `no-leidas/<usuario_id>/`.
-- **Desacoplar el envío de email**: al ser síncrono, un SMTP lento bloquea el request. Si se implementa el módulo de email (deliberadamente diferido, ver `10_future_improvements.md`), debería moverse el envío a una tarea asíncrona.
-- **Relación con `Tarea` / `Aprobacion`**: los recordatorios cubren `Tarea`, pero no hay un mecanismo equivalente para avisar sobre `Aprobacion` pendientes o `DocumentoFirmante` en estado `PENDIENTE` — vale la pena evaluar si deben generar notificaciones también.
+- **Relación con `Aprobacion` / `DocumentoFirmante`**: resuelto. `AprobacionService.crear()` notifica al `usuario_revisor` cuando se genera una solicitud `PENDIENTE`; `DocumentoFirmanteService.asignar_firmante()` notifica al firmante asignado. Ambos usan `tipo='alerta'` + `notificar_email=True`, mismo patrón que los recordatorios de `Tarea`.
+- **Notificaciones en tiempo real**: hay WebSockets/Channels. Ruta de implementación ya definida (Channels + Redis, reutilizando el broker de Celery) — ver detalle en la sección de arquitectura.

@@ -30,6 +30,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 
 # Application definition
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -43,6 +44,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_recaptcha', # Para validación de reCAPTCHA
     'rest_framework_simplejwt.token_blacklist',
+    'channels',
     # MIS APPS MODULARES
     'apps.common.apps.CommonConfig',
     'apps.crm',
@@ -52,6 +54,13 @@ INSTALLED_APPS = [
     'apps.investigacion_formativa',
     'apps.usuarios',
 ]
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')]},
+    },
+}
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -188,7 +197,7 @@ AUTHENTICATION_BACKENDS = [
 # 2. Configuración de django-axes (Equivalente a LoginAttemptService)
 AXES_FAILURE_LIMIT = 5 # Máximo 6 intentos fallidos
 AXES_COOLOFF_TIME = 1 # Bloquea por 2 horas
-AXES_LOCKOUT_TEMPLATE = 'lockout.html' # Opcional: una plantilla para mostrar si está bloqueado
+AXES_LOCKOUT_CALLABLE = 'config.axes_handlers.lockout_response' # Opcional: una plantilla para mostrar si está bloqueado
 AXES_USERNAME_FORM_FIELD = 'username' # El campo del formulario que contiene el username
 
 # AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True
@@ -215,18 +224,47 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'notificacionesrosillo@esmic.edu.co')
 
+# 5.1 Configuración de Celery (colas de tareas asíncronas — envío de
+# correo y job de recordatorios de tareas)
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+# Si una tarea falla tras agotar reintentos, no debe reventar al caller
+# (mismo criterio de tolerancia que tenía el try/except silencioso
+# original); el error queda logueado desde la tarea, no propagado.
+CELERY_TASK_EAGER_PROPAGATES = False
+
+from celery.schedules import crontab  # noqa: E402
+
+CELERY_BEAT_SCHEDULE = {
+    'enviar-recordatorios-tareas-diario': {
+        'task': 'apps.common.tasks.enviar_recordatorios_tareas_task',
+        'schedule': crontab(hour=7, minute=0),  # todos los días 7:00 a.m.
+    },
+}
+
 # 6. Límite de tamaño de Archivos (Equivalente a spring.servlet.multipart.*)
 # El valor está en bytes. 100MB = 100 * 1024 * 1024 = 104857600 bytes.
 DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600
 FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600
 
 # --- CONFIGURACIÓN PARA CORS ---
-# Si tu frontend de React se ejecutará en un dominio diferente (ej. localhost:3000),
-# necesitas permitir que haga peticiones a tu API de Django (ej. localhost:8082).
+# Cada ambiente define su propio CORS_ALLOWED_ORIGINS vía .env (ver
+# local.py/development.py/stage.py/production.py). base.py deja un
+# default vacío a propósito, para que ningún ambiente herede por error
+# el origen de desarrollo (localhost:3000) si alguien olvida configurarlo.
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000", # Asumiendo que React corre en el puerto 3000
+    origin.strip()
+    for origin in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+    if origin.strip()
 ]
+
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+
 # --- CONFIGURACIÓN DE RECAPTCHA ---
 RECAPTCHA_PUBLIC_KEY = os.getenv('RECAPTCHA_PUBLIC_KEY')
 RECAPTCHA_PRIVATE_KEY = os.getenv('RECAPTCHA_PRIVATE_KEY')
@@ -250,6 +288,7 @@ if 'test' in sys.argv:
     AXES_ENABLED = False
     REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = []
     REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['login'] = None
+    AMBITO_CHECK_PERMISIVO_SIN_AUTH = True
 
 LOGGING = {
     'version': 1,

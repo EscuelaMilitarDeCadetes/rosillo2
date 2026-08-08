@@ -11,7 +11,10 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
 # HSTS
-SECURE_HSTS_SECONDS = 31536000
+# Arrancar bajo (ej. 3600 = 1 hora) en el primer despliegue, mientras se
+# confirma que el certificado SSL es estable, y subir gradualmente hasta
+# 31536000 (1 año) vía .env, sin necesidad de redeploy de código.
+SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '3600'))
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
@@ -27,3 +30,5 @@ SESSION_SAVE_EVERY_REQUEST = True
 CSRF_COOKIE_HTTPONLY = True
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')

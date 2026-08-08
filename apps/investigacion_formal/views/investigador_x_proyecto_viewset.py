@@ -2,7 +2,6 @@ from apps.investigacion_formal.pagination import InvestigacionFormalPageNumberPa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
 from apps.investigacion_formal.serializers.investigador_x_proyecto_serializer import (
     InvestigadorXProyectoSerializer,
 )
@@ -12,6 +11,7 @@ from apps.investigacion_formal.services.investigador_x_proyecto_service import (
 from apps.investigacion_formal.permissions import (
     ROLES_LECTURA_INVESTIGACION_FORMAL, ROLES_ESCRITURA_GESTION, ROLES_CREACION_OPERATIVA, combinar,
 )
+from apps.usuarios.permissions import TieneAmbitoFormal
 
 
 class InvestigadorXProyectoViewSet(viewsets.ViewSet):
@@ -20,11 +20,11 @@ class InvestigadorXProyectoViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action == "create":
-            return [combinar(ROLES_CREACION_OPERATIVA)]
+            return [combinar(ROLES_CREACION_OPERATIVA), TieneAmbitoFormal()]
         elif self.action in ["update", "destroy"]:
-            return [combinar(ROLES_ESCRITURA_GESTION)]
+            return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormal()]
         else:  # list, retrieve, por_proyecto
-            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL)]
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL), TieneAmbitoFormal()]
 
     def list(self, request):
         investigadores = InvestigadorXProyectoService.listar()

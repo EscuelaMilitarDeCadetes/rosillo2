@@ -1,4 +1,5 @@
 from apps.investigacion_formal.pagination import InvestigacionFormalPageNumberPagination
+from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormal
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -29,11 +30,11 @@ class ProyectoXConvocatoriaViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action == "create":
-            return [combinar(ROLES_CREACION_PROYECTO)]   # antes: [EsFacultad | EsGrupo] inline
+            return [combinar(ROLES_CREACION_PROYECTO), TieneAmbitoFormal()]   # antes: [EsFacultad | EsGrupo] inline
         elif self.action in ACCIONES_SOLO_CINTERNO_CEXTERNO:
-            return [combinar(ROLES_ESCRITURA_GESTION)]
+            return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormal()]
         else:  # list, retrieve, por_proyecto, por_convocatoria, sin_calificar, calificados, por_facultad, por_grupos
-            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL)]
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL), TieneAmbitoFormal()]
 
     def list(self, request):
         registros = ProyectoXConvocatoriaService.listar()

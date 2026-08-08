@@ -1,3 +1,4 @@
+from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormativa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -21,11 +22,11 @@ class RegistroActividadesViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action in ["create", "update", "destroy"]:
-            return [combinar(ROLES_AUTOR_REGISTRO_ACTIVIDADES)]
+            return [combinar(ROLES_AUTOR_REGISTRO_ACTIVIDADES), TieneAmbitoFormativa()]
         elif self.action == "aprobar":
-            return [combinar(ROLES_APROBACION_REGISTRO_ACTIVIDADES)]
+            return [combinar(ROLES_APROBACION_REGISTRO_ACTIVIDADES), TieneAmbitoFormativa()]
         else:  # list, retrieve, por_proceso
-            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA)]
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA), TieneAmbitoFormativa()]
 
     def list(self, request):
         registros = RegistroActividadesService.listar()

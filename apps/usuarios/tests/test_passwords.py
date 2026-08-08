@@ -1,3 +1,4 @@
+#apps/usuarios/tests/test_passwords.py
 from datetime import timedelta
 from django.utils import timezone          
 from django.test import TestCase
@@ -24,13 +25,13 @@ class PasswordTests(TestCase):
         RolXUsuario.objects.create(
             usuario=self.user, rol=rol, estado=True
         )
-        login = self.client.post(reverse('login'), {
+        login = self.client.post(reverse('login-formal'), {
             'username': 'user@esmic.edu.co',
             'password': 'oldpassword123'
         })
         self.access_token = login.data['access']
 
-    @patch('apps.usuarios.services.password_service.send_mail')
+    @patch('apps.common.tasks.send_mail')
     def test_forgot_password_email_registrado(self, mock_mail):
         response = self.client.post(
             '/api/usuarios/password/forgot-password/',

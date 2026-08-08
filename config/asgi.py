@@ -8,16 +8,19 @@ https://docs.djangoproject.com/en/5.2/howto/deployment/asgi/
 """
 
 import os
-
 from django.core.asgi import get_asgi_application
-
-"""
-Cambia 'config.settings.local' por el ambiente que corresponda 
-cuando despliegues (config.settings.stage, config.settings.production), 
-o mejor: usa la variable de entorno directamente:
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', os.getenv('DJANGO_SETTINGS_MODULE', 'config.settings.local'))
-"""
+from channels.routing import ProtocolTypeRouter, URLRouter
+from apps.common.middleware_ws import JWTAuthMiddleware
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.local')
 
-application = get_asgi_application()
+django_asgi_app = get_asgi_application()
+
+from apps.common.routing import websocket_urlpatterns  # noqa: E402
+
+application = ProtocolTypeRouter({
+    "http": django_asgi_app,
+    "websocket": JWTAuthMiddleware(
+        URLRouter(websocket_urlpatterns)
+    ),
+})

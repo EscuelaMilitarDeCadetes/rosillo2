@@ -1,5 +1,6 @@
 # E:\PROYECTO_ROSILLO\django_react\django\rosillo\apps\investigacion_formativa\views\segunda_instancia_viewset.py
 
+from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormativa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -25,19 +26,19 @@ class SegundaInstanciaViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action == "create":
-            return [combinar(ROLES_CALIFICACION_PROCESO)]
+            return [combinar(ROLES_CALIFICACION_PROCESO), TieneAmbitoFormativa()]
         elif self.action == "activar":
             # Activación DIRECTA: Decano/Soporte. Facultad ya NO activa por
             # sí sola — debe pasar por 'solicitar_activacion_decano'.
-            return [combinar(ROLES_DECISION_DIRECTA_DECANO)]
+            return [combinar(ROLES_DECISION_DIRECTA_DECANO), TieneAmbitoFormativa()]
         elif self.action in ["consumir", "destroy"]:
-            return [combinar(ROLES_ESCRITURA_GESTION)]
+            return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormativa()]
         elif self.action == "solicitar_activacion_decano":
-            return [combinar(ROLES_SOLICITUD_APROBACION_FACULTAD)]
+            return [combinar(ROLES_SOLICITUD_APROBACION_FACULTAD), TieneAmbitoFormativa()]
         elif self.action in ["confirmar_activacion_decano", "denegar_activacion_decano"]:
-            return [combinar(ROLES_CONFIRMACION_DECANO)]
+            return [combinar(ROLES_CONFIRMACION_DECANO), TieneAmbitoFormativa()]
         else:  # list, retrieve, activadas_pendientes
-            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA)]
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA), TieneAmbitoFormativa()]
 
     def list(self, request):
         instancias = SegundaInstanciaService.listar()

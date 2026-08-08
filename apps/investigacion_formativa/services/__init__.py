@@ -7,6 +7,7 @@ from .estudiante_service import EstudianteService
 from .etapa_flujo_service import EtapaFlujoService
 from .evaluacion_proceso_service import EvaluacionProcesoService
 from .evento_evaluativo_service import EventoEvaluativoService
+from .exportacion_service import ExportacionService
 from .flujo_proceso_service import FlujoProcesoService
 from .homologacion_service import HomologacionService
 from .instancia_etapa_service import InstanciaEtapaService
@@ -27,7 +28,6 @@ from .transicion_flujo_service import TransicionFlujoService
 from .tutor_service import TutorService
 from .validacion_antiplagio_service import ValidacionAntiplagioService
 
-
 __all__ = [
     "ActividadFormativaService",
     "AvanceService",
@@ -38,6 +38,7 @@ __all__ = [
     "EtapaFlujoService",
     "EvaluacionProcesoService",
     "EventoEvaluativoService",
+    "ExportacionService",
     "FlujoProcesoService",
     "HomologacionService",
     "InstanciaEtapaService",
@@ -56,5 +57,5 @@ __all__ = [
     "SegundaInstanciaService",
     "TransicionFlujoService",
     "TutorService",
-    "ValidacionAntiplagioService"
+    "ValidacionAntiplagioService",
 ]

@@ -4,6 +4,8 @@
 
 - **JWT** vía `rest_framework_simplejwt`. Access token de 30 minutos, refresh de 1 día, con rotación de refresh tokens activada.
 - **Blacklist de tokens** en logout y en desactivación de usuario. La invalidación se hace iterando `OutstandingToken.objects.filter(user=user)` y ejecutando `BlacklistedToken.objects.get_or_create(token=token)` por cada uno — se prefiere este patrón sobre `RefreshToken().blacklist()` porque invalida **todas** las sesiones activas del usuario (todos sus refresh tokens vigentes), no solo la sesión desde la que se ejecuta la acción. Esto es clave para el caso de desactivación forzada de un usuario.
+- **Login dual por ámbito**: existen dos endpoints de login, `login-formal` y `login-formativa`, ambos servidos por `AmbitoLoginView` (base común en `usuarios/views/ambito_login_view.py`) con dos subclases concretas. El ámbito (formal/formativa) al que puede acceder cada rol está mapeado en `ambitos.py`. **El gate de ámbito ocurre en el login, no en el recurso**: si el usuario no tiene ningún `RolXUsuario` asociado a ese ámbito, el login responde `403 Forbidden` con `{"error": ...}` y nunca llega a emitir un access/refresh token. Esto es una diferencia de comportamiento importante frente al modelo anterior (donde el 403 ocurría al intentar acceder al recurso, no al loguearse) — los tests que antes usaban el login solo como paso de setup para obtener un token deben usar `login-formal`/`login-formativa` explícitamente (ya no existe el nombre de URL genérico `login`).
+- **`TieneAmbitoFormal` / `TieneAmbitoFormativa`**: clases de permiso DRF (`usuarios/permissions/tiene_ambito.py`) que se combinan con las clases de permiso por rol en `get_permissions()` de cada `ViewSet`, para confirmar que el token JWT corresponde al ámbito correcto del recurso que se está consultando.
 - **`UsuarioXPersona`** es la tabla intermedia que permite que una cuenta institucional (p. ej. `director.facultad.ciencias@...`) persista aunque la `Persona` que ocupa ese cargo rote. El historial de quién ocupó el cargo y cuándo queda auditado ahí, no se pierde al reasignar la cuenta.
 
 ## Control de fuerza bruta y throttling
@@ -18,21 +20,7 @@
 
 ## Control de acceso y roles
 
-Usuarios → roles → permisos. Los roles institucionales identificados (`Asesor`, `Cexterno`, `Cinterno`, `Decano`, `Estudiante`, `Facultad`, `Gerente`, `Grupo`, `Jurado`, `Soporte`, `Supervisor`, `Tutor`) se traducen en el backend a clases de permiso DRF por rol, evaluadas en `get_permissions()` de cada `ViewSet` — nunca dentro de la capa de `services` (ver `11_backend_logic.md`).
-
-Clases de permiso implementadas hasta ahora (roles con lógica ya construida en `investigacion_formal`):
-
-- `EsSoporte`
-- `EsFacultad`
-- `EsCInterno`
-- `EsCExterno`
-- `EsAsesor`
-- `EsSupervisor`
-- `EsDecano`
-- `EsGerente`
-- `EsGrupo`
-
-Los roles `Estudiante`, `Jurado` y `Tutor` están definidos a nivel de dominio (rol dentro de `PersonaXGrupo` / `ParticipanteProceso`) pero todavía no tienen una clase de permiso DRF propia porque su lógica de acceso vive en `investigacion_formativa`, aún no implementada a nivel de vista.
+Los roles `Estudiante`, `Jurado` y `Tutor` están definidos a nivel de dominio (rol dentro de `PersonaXGrupo` / `ParticipanteProceso`) pero todavía no tienen una clase de permiso DRF propia — su control de acceso se resuelve hoy mediante `TieneAmbitoFormal()` / `TieneAmbitoFormativa()` combinado con el rol de plataforma, no con una clase de permiso dedicada por rol como en el resto de `investigacion_formal`.
 
 ## Registro de auditoría
 
@@ -50,8 +38,7 @@ Configurado de forma incremental según el ambiente (ver `09_deployment.md` para
 
 `CORS_ALLOWED_ORIGINS` está definido en `base.py` y heredado por todos los ambientes — actualmente apunta solo a `http://localhost:3000` (frontend React en desarrollo local). **Pendiente**: parametrizar por ambiente antes de desplegar a `stage`/`production`, para no dejar ese origen de desarrollo habilitado en producción ni bloquear el dominio real del frontend desplegado.
 
-## Pendiente
+## Decisiones ya resueltas
 
-- Definir clases de permiso DRF para `Estudiante`, `Jurado` y `Tutor` cuando se implemente la capa de vistas de `investigacion_formativa`.
-- Parametrizar `CORS_ALLOWED_ORIGINS` por ambiente.
-- Evaluar si `Aprobacion`/`DocumentoFirmante` en estado pendiente deberían integrarse con Axes-style de alerta o solo quedarse en el sistema de `Notificacion` (ver `08_notifications.md`).
+- **`CORS_ALLOWED_ORIGINS` parametrizado por ambiente**: cada ambiente lee su propio valor desde `.env` (ver `09_deployment.md`). `base.py` ya no trae un default de desarrollo — si un ambiente no lo define, CORS queda cerrado por defecto (falla cerrado, no abierto).
+- **Alertas de `Aprobacion`/`DocumentoFirmante` pendientes**: se resolvieron reutilizando el sistema de `Notificacion` existente (`tipo='alerta'` + email), no se construyó un mecanismo nuevo tipo Axes — ver `08_notifications.md`.

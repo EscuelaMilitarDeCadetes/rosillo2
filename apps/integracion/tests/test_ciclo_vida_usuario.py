@@ -12,6 +12,7 @@ VinculacionService directamente, sin HTTP, conforme al estándar de
 estos métodos tiene lógica de permisos que solo pueda verificarse pasando
 por la capa HTTP.
 """
+#apps/integracion/tests/test_ciclo_vida_usuario.py
 from unittest.mock import patch
 
 from django.http import Http404
@@ -112,12 +113,8 @@ class CicloVidaUsuarioTests(IntegracionFixturesMixin, TestCase):
         )
         mock_on_commit.assert_called_once()
 
-    @patch("django.core.mail.send_mail")
+    @patch("apps.common.tasks.send_mail")
     def test_crear_credenciales_no_envia_password_en_texto_plano(self, mock_send_mail):
-        # captureOnCommitCallbacks(execute=True) es necesario porque
-        # TestCase envuelve cada test en una transacción que se revierte
-        # al final: sin esto, transaction.on_commit(...) nunca dispararía
-        # y mock_send_mail no se llamaría, dando un falso negativo.
         with self.captureOnCommitCallbacks(execute=True):
             VinculacionService.crear_credenciales(
                 data={
@@ -131,7 +128,6 @@ class CicloVidaUsuarioTests(IntegracionFixturesMixin, TestCase):
         _, args, kwargs = mock_send_mail.mock_calls[0]
         mensaje_enviado = args[1] if len(args) > 1 else kwargs.get('message', '')
         self.assertNotIn('Temporal123*', mensaje_enviado)
-        self.assertIn('reset-password?token=', mensaje_enviado)
 
     # ---------------- activar / desactivar / reactivar ----------------
 

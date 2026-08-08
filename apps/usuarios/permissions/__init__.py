@@ -10,3 +10,4 @@ from .es_jurado import EsJurado
 from .es_soporte import EsSoporte
 from .es_supervisor import EsSupervisor
 from .es_tutor import EsTutor
+from .tiene_ambito import TieneAmbitoFormal, TieneAmbitoFormativa

@@ -1,4 +1,5 @@
 # apps/investigacion_formativa/views/instancia_etapa_viewset.py
+from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormativa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -24,9 +25,9 @@ class InstanciaEtapaViewSet(viewsets.ViewSet):
             # El chequeo fino de que el ejecutor coincida con el rol_responsable
             # de ESTA etapa concreta lo hace InstanciaEtapaService (ver
             # _validar_ejecutor_responsable / ejecutor_autorizado_para_etapa).
-            return [combinar(ROLES_GESTION_INSTANCIA_ETAPA)]
+            return [combinar(ROLES_GESTION_INSTANCIA_ETAPA), TieneAmbitoFormativa()]
         else:  # list, retrieve, por_proceso
-            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA)]
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA), TieneAmbitoFormativa()]
 
     def list(self, request):
         instancias = InstanciaEtapaService.listar()

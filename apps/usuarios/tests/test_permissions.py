@@ -59,7 +59,7 @@ class PermissionTests(TestCase):
         
     def test_soporte_puede_acceder(self):
         login = self.client.post(
-            reverse("login"),
+            reverse('login-formal'),
             {
                 "username": "soporte@esmic.edu.co",
                 "password": "Password123*"
@@ -76,7 +76,7 @@ class PermissionTests(TestCase):
             
     def test_supervisor_puede_acceder(self):
         login = self.client.post(
-            reverse("login"),
+            reverse('login-formal'),
             {
                 "username": "supervisor@esmic.edu.co",
                 "password": "Password123*"
@@ -93,20 +93,10 @@ class PermissionTests(TestCase):
         
     def test_usuario_sin_rol_no_puede_acceder(self):
         login = self.client.post(
-            reverse("login"),
-            {
-                "username": "sinrol@esmic.edu.co",
-                "password": "Password123*"
-            }
+            reverse('login-formal'),
+            {"username": "sinrol@esmic.edu.co", "password": "Password123*"}
         )
-        self.client.credentials(
-            HTTP_AUTHORIZATION=f"Bearer {login.data['access']}"
-        )
-        response = self.client.get(self.url)
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_403_FORBIDDEN
-        )
+        self.assertEqual(login.status_code, status.HTTP_403_FORBIDDEN)
         
     def test_usuario_anonimo_no_puede_acceder(self):
         response = self.client.get(self.url)

@@ -35,6 +35,16 @@ class DocumentoFirmanteService:
             f"del documento id={documento_firma_id} (firmante id={firmante.pk}).",
             objeto=firmante,
         )
+        NotificacionService.crear(
+            usuario_destino_id=usuario_id,
+            mensaje=(
+                f"Se le asignó como firmante (orden={orden}) del documento "
+                f"'{firmante.documento_firma.tipo_documento.nombre_documento}'. "
+                f"Queda pendiente su firma."
+            ),
+            tipo='alerta',
+            notificar_email=True,
+        )
         return firmante
 
     @staticmethod

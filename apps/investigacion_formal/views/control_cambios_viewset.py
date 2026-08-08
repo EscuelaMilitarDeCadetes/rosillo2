@@ -2,7 +2,6 @@ from apps.investigacion_formal.pagination import InvestigacionFormalPageNumberPa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
 from apps.investigacion_formal.serializers.control_cambios_serializer import (
     ControlCambiosSerializer,
 )
@@ -10,7 +9,7 @@ from apps.investigacion_formal.services.control_cambios_service import ControlCa
 from apps.investigacion_formal.permissions import (
     ROLES_LECTURA_INVESTIGACION_FORMAL, ROLES_CREACION_OPERATIVA, combinar,
 )
-from apps.usuarios.permissions import EsCInterno, EsCExterno
+from apps.usuarios.permissions import EsCInterno, EsCExterno, TieneAmbitoFormal
 
 
 class ControlCambiosViewSet(viewsets.ViewSet):
@@ -19,13 +18,12 @@ class ControlCambiosViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action in ["create"]:
-            return [combinar(ROLES_CREACION_OPERATIVA)]
+            return [combinar(ROLES_CREACION_OPERATIVA), TieneAmbitoFormal()]
         elif self.action in ["actualizar_banderas"]:
             permission_classes = [EsCInterno | EsCExterno]
-            return [permission() for permission in permission_classes]
+            return [permission() for permission in permission_classes] + [TieneAmbitoFormal()]
         else:
-            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL)]
-
+            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL), TieneAmbitoFormal()]
 
     def list(self, request):
         registros = ControlCambiosService.listar()

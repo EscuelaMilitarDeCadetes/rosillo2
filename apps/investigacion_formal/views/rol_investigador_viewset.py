@@ -1,4 +1,5 @@
 from apps.investigacion_formal.pagination import InvestigacionFormalPageNumberPagination
+from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormal
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from apps.investigacion_formal.permissions import ROLES_LECTURA_CATALOGOS, combinar
@@ -15,9 +16,9 @@ class RolInvestigadorViewSet(viewsets.ViewSet):
     
     def get_permissions(self):
         if self.action in ["create", "update"]:
-            return [EsSoporte()]
+            return [EsSoporte(), TieneAmbitoFormal()]
         else:  # list, retrieve
-            return [combinar(ROLES_LECTURA_CATALOGOS)]
+            return [combinar(ROLES_LECTURA_CATALOGOS), TieneAmbitoFormal()]
 
     def list(self, request):
         roles = RolInvestigadorService.listar()
