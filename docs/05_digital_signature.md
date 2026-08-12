@@ -46,8 +46,9 @@ Cada cambio de estado — creación, asignación de firmantes, cada firma indivi
 
 `DocumentoFirma` usa el mismo patrón de `GenericForeignKey` que `Historial` y `Tarea` dentro de `common`, lo que permite que cualquier módulo (`investigacion_formal`, y eventualmente `investigacion_formativa`) reutilice el sistema de firma sin declarar tablas propias. Ejemplos de objetos que hoy o a futuro requieren firma: actas de cierre de proyecto, fichas técnicas de seguimiento, formatos de inscripción y aprobación temática de trabajos de grado, certificados de cumplimiento.
 
-## Pendiente
 
-- **Escritura física del archivo a disco**: los servicios actuales (`DocumentoFirmaService`) reciben `ruta_documento` como string ya construido; la lógica de guardar el binario en disco (equivalente al manejo de archivos del Thymeleaf original) todavía no está implementada como servicio propio.
-- **Notificación a firmantes**: no hay un enganche automático con `NotificacionService` cuando un documento pasa a `EN_FIRMAS` o cuando le corresponde el turno a un firmante — hoy el firmante tendría que revisar manualmente si tiene documentos pendientes.
-- **Verificación de integridad**: `hash_documento` se calcula al crear, pero no hay un proceso que lo recalcule y compare periódicamente contra el archivo en disco para detectar modificaciones fuera de la plataforma.
+## Decisiones ya resueltas
+
+- **Escritura física del archivo a disco**: `DocumentoFirmaService.crear_desde_archivo()` centraliza la escritura del binario vía `default_storage.save()`, a partir de un archivo subido por multipart, para que ningún módulo reimplemente esa lógica. 
+- **Notificación a firmantes**: `DocumentoFirmanteService.asignar_firmante()` y `generar_codigo_verificacion()` disparan `NotificacionService.crear(..., notificar_email=True)` automáticamente; el firmante ya no depende de revisar manualmente si tiene documentos pendientes.
+- **Verificación de integridad periódica**: `DocumentoFirmaService.verificar_integridad_todos()` corre diariamente vía Celery Beat (`verificar_integridad_documentos_task`, 2:00 a.m.). Recalcula el hash de cada `DocumentoFirma` y lo compara contra `hash_documento` (calculado una única vez al crear el documento). Si no coincide o el archivo ya no existe en disco, se registra en `Historial` (ejecutor "SISTEMA") y se notifica por `NotificacionService` a todos los superusuarios activos, vía in-app y email. 
