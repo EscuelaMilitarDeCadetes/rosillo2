@@ -245,6 +245,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'apps.common.tasks.enviar_recordatorios_tareas_task',
         'schedule': crontab(hour=7, minute=0),  # todos los días 7:00 a.m.
     },
+    'verificar-integridad-documentos-diario': {
+        'task': 'apps.common.tasks.verificar_integridad_documentos_task',
+        'schedule': crontab(hour=2, minute=0),  # fuera de horario laboral
+    },
 }
 
 # 6. Límite de tamaño de Archivos (Equivalente a spring.servlet.multipart.*)

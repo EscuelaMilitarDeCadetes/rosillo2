@@ -20,6 +20,8 @@ class DocumentoFirma(models.Model):
     hash_documento = models.CharField(max_length=64)
     ip_creacion = models.GenericIPAddressField()
     habilitado_firma = models.BooleanField(default=False)
+    integridad_ok = models.BooleanField(null=True, default=None)
+    fecha_ultima_verificacion_integridad = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together = ('tipo_documento', 'content_type', 'object_id', 'version')

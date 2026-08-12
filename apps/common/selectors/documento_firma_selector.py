@@ -73,3 +73,12 @@ class DocumentoFirmaSelector:
             .filter(content_type=content_type, object_id=objeto.pk)
             .order_by('-version')
         )
+    
+    @staticmethod
+    def listar_para_verificar_integridad():
+        """
+        Todos los documentos con archivo físico registrado, sin importar
+        su estado — un BORRADOR o un EN_FIRMAS también pueden ser
+        alterados fuera de la plataforma, no solo los ya FIRMADOS.
+        """
+        return DocumentoFirma.objects.exclude(ruta_documento='')

@@ -44,3 +44,18 @@ def enviar_recordatorios_tareas_task(dias_anticipacion=3):
     creadas = NotificacionService.enviar_recordatorios_tareas(dias_anticipacion=dias_anticipacion)
     logger.info(f"[Celery beat] enviar_recordatorios_tareas_task: {len(creadas)} notificaciones generadas.")
     return len(creadas)
+
+@shared_task
+def verificar_integridad_documentos_task():
+    """
+    Tarea periódica (ver CELERY_BEAT_SCHEDULE). Recalcula el hash de cada
+    DocumentoFirma y lo compara contra el registrado al crearlo; genera
+    Notificacion + Historial si detecta discrepancia o archivo faltante.
+    """
+    from apps.common.services.documento_firma_service import DocumentoFirmaService
+    resultados = DocumentoFirmaService.verificar_integridad_todos()
+    logger.info(
+        f"[Celery beat] verificar_integridad_documentos_task: "
+        f"{resultados['verificados']} verificados, {resultados['alterados']} con alerta."
+    )
+    return resultados

@@ -9,6 +9,14 @@ from rest_framework.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 
+import logging
+from django.utils import timezone
+from django.contrib.auth import get_user_model
+from apps.common.services.notificacion_service import NotificacionService
+
+Usuario = get_user_model()
+logger = logging.getLogger(__name__)
+
 
 class DocumentoFirmaService:
     @staticmethod
@@ -172,3 +180,74 @@ class DocumentoFirmaService:
     def listar_por_objeto(objeto):
         """Depende del campo content_type/object_id propuesto. 🔶"""
         return DocumentoFirmaSelector.listar_por_objeto(objeto)
+
+    @staticmethod
+    @transaction.atomic
+    def verificar_integridad(documento_firma_id):
+        """
+        Recalcula el hash del archivo en disco y lo compara contra
+        hash_documento (calculado una única vez en crear()). No modifica
+        estado ni ruta_documento — solo dos campos de monitoreo — y nunca
+        lanza excepción hacia el llamador: la task que la invoke necesita
+        seguir con el resto de documentos aunque uno falle.
+        """
+        documento = DocumentoFirmaSelector.obtener(documento_firma_id)
+        try:
+            with open(documento.ruta_documento, "rb") as archivo:
+                hash_actual = hashlib.sha256(archivo.read()).hexdigest()
+        except FileNotFoundError:
+            documento.integridad_ok = False
+            documento.fecha_ultima_verificacion_integridad = timezone.now()
+            documento.save(update_fields=['integridad_ok', 'fecha_ultima_verificacion_integridad'])
+            DocumentoFirmaService._alertar_integridad(
+                documento,
+                f"El archivo ya no existe en la ruta '{documento.ruta_documento}'."
+            )
+            return False
+
+        coincide = (hash_actual == documento.hash_documento)
+        documento.integridad_ok = coincide
+        documento.fecha_ultima_verificacion_integridad = timezone.now()
+        documento.save(update_fields=['integridad_ok', 'fecha_ultima_verificacion_integridad'])
+
+        if not coincide:
+            DocumentoFirmaService._alertar_integridad(
+                documento,
+                f"El hash del archivo en disco no coincide con el registrado "
+                f"(esperado {documento.hash_documento[:12]}…, actual {hash_actual[:12]}…)."
+            )
+        return coincide
+
+    @staticmethod
+    def _alertar_integridad(documento, detalle):
+        HistorialService.registrar(
+            None,  # ejecutor=None -> Historial lo muestra como "SISTEMA"
+            f"ALERTA DE INTEGRIDAD: '{documento.tipo_documento.nombre_documento}' "
+            f"versión {documento.version} (id={documento.pk}). {detalle}",
+            objeto=documento,
+        )
+        for superusuario in Usuario.objects.filter(is_superuser=True, is_active=True):
+            NotificacionService.crear(
+                usuario_destino_id=superusuario.pk,
+                mensaje=(
+                    f"Posible alteración fuera de la plataforma en el documento "
+                    f"'{documento.tipo_documento.nombre_documento}' v{documento.version}. {detalle}"
+                ),
+                tipo='error',
+                notificar_email=True,
+            )
+
+    @staticmethod
+    def verificar_integridad_todos():
+        """Recorre todos los documentos; aísla fallos por documento para que
+        uno corrupto/ilegible no detenga la corrida completa."""
+        resultados = {'verificados': 0, 'alterados': 0}
+        for documento in DocumentoFirmaSelector.listar_para_verificar_integridad():
+            try:
+                ok = DocumentoFirmaService.verificar_integridad(documento.pk)
+                resultados['verificados'] += 1
+                if not ok:
+                    resultados['alterados'] += 1
+            except Exception:
+                logger.exception(f"Fallo verificando integridad del documento id={documento.pk}")
+        return resultados
