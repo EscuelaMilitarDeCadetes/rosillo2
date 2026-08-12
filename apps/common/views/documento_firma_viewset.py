@@ -53,12 +53,18 @@ class DocumentoFirmaViewSet(viewsets.ViewSet):
 
     def create(self, request):
         objeto = _resolver_objeto_generico(request.data)
-        documento = DocumentoFirmaService.crear(
+        archivo = request.FILES.get("archivo")
+        kwargs = dict(
             tipo_documento_id=request.data.get("tipo_documento"),
-            ruta_documento=request.data.get("ruta_documento"),
             ip_creacion=request.META.get("REMOTE_ADDR", "0.0.0.0"),
             ejecutor=request.user,
             objeto=objeto,
+            estado=request.data.get("estado", "BORRADOR"),
+        )
+        documento = (
+            DocumentoFirmaService.crear_desde_archivo(archivo=archivo, **kwargs)
+            if archivo is not None
+            else DocumentoFirmaService.crear(ruta_documento=request.data.get("ruta_documento"), **kwargs)
         )
         return Response(self.serializer_class(documento).data, status=status.HTTP_201_CREATED)
 

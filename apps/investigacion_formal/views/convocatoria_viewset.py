@@ -35,12 +35,14 @@ class ConvocatoriaViewSet(viewsets.ViewSet):
         return Response(self.serializer_class(convocatoria).data)
 
     def create(self, request):
-        convocatoria = ConvocatoriaService.crear(
+        convocatoria = ConvocatoriaService.crear_con_documento(
             nombre_convocatoria=request.data.get("nombre_convocatoria"),
             anio_convocatoria=request.data.get("anio_convocatoria"),
             inicio=request.data.get("inicio"),
             cierre=request.data.get("cierre"),
             interno=request.data.get("interno"),
+            archivo=request.FILES.get("archivo"),
+            ip_creacion=request.META.get("REMOTE_ADDR", "0.0.0.0"),
             ejecutor=request.user,
         )
         return Response(self.serializer_class(convocatoria).data, status=status.HTTP_201_CREATED)

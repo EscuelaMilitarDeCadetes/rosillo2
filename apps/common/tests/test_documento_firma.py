@@ -1,3 +1,5 @@
+import os
+
 from django.test import TestCase
 from rest_framework.exceptions import ValidationError
 
@@ -180,3 +182,43 @@ class DocumentoFirmaServiceTests(CommonFixturesMixin, TestCase):
         resultados = DocumentoFirmaService.listar_por_objeto(self.objeto_generico)
         self.assertEqual(resultados.count(), 1)
         self.assertEqual(resultados.first().ruta_documento, self.ruta_acta_v1)
+        
+    def test_crear_documento_con_estado_firmado_para_carga_historica(self):
+        documento = DocumentoFirmaService.crear(
+            tipo_documento_id=self.tipo_documento.pk,
+            ruta_documento=self.ruta_acta_v1,
+            ip_creacion='127.0.0.1',
+            ejecutor=self.ejecutor,
+            estado='FIRMADO',
+        )
+        self.assertEqual(documento.estado, 'FIRMADO')
+    
+    def test_crear_desde_archivo_escribe_en_disco_y_asocia_objeto(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        archivo = SimpleUploadedFile('convocatoria.pdf', b'contenido pdf de prueba')
+        documento = DocumentoFirmaService.crear_desde_archivo(
+            tipo_documento_id=self.tipo_documento.pk,
+            archivo=archivo,
+            ip_creacion='127.0.0.1',
+            ejecutor=self.ejecutor,
+            objeto=self.objeto_generico,
+            carpeta='pruebas',
+        )
+        self.assertEqual(documento.estado, 'BORRADOR')
+        self.assertEqual(documento.object_id, self.objeto_generico.pk)
+        self.assertEqual(len(documento.hash_documento), 64)
+        # El archivo debe existir físicamente en la ruta que quedó registrada.
+        self.assertTrue(os.path.exists(documento.ruta_documento))
+    
+    def test_crear_desde_archivo_con_estado_firmado(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        archivo = SimpleUploadedFile('historico.pdf', b'documento ya firmado en 2021')
+        documento = DocumentoFirmaService.crear_desde_archivo(
+            tipo_documento_id=self.tipo_documento.pk,
+            archivo=archivo,
+            ip_creacion='127.0.0.1',
+            ejecutor=self.ejecutor,
+            estado='FIRMADO',
+            carpeta='pruebas',
+        )
+        self.assertEqual(documento.estado, 'FIRMADO')

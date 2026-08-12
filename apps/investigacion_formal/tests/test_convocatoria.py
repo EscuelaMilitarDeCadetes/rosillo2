@@ -1,4 +1,5 @@
 from django.test import TestCase
+from apps.common.selectors.documento_firma_selector import DocumentoFirmaSelector
 from rest_framework.exceptions import ValidationError
 
 from .base import InvestigacionFormalFixturesMixin
@@ -110,3 +111,38 @@ class ConvocatoriaServiceTests(InvestigacionFormalFixturesMixin, TestCase):
         )
         self.assertEqual(ConvocatoriaService.listar_internas().count(), 1)
         self.assertEqual(ConvocatoriaService.listar_externas().count(), 1)
+        
+    def test_crear_con_documento_exitoso(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from apps.common.models import TipoDocumento
+        TipoDocumento.objects.create(nombre_documento='Convocatoria', grupo='convocatoria')
+        archivo = SimpleUploadedFile('convocatoria_2025.pdf', b'condiciones de la convocatoria')
+        convocatoria = ConvocatoriaService.crear_con_documento(
+            nombre_convocatoria='Convocatoria con Documento',
+            anio_convocatoria=2025,
+            inicio='2025-01-01',
+            cierre='2025-06-30',
+            interno=True,
+            archivo=archivo,
+            ip_creacion='127.0.0.1',
+            ejecutor=self.ejecutor,
+        )
+        self.assertIsNotNone(convocatoria.pk)
+        documentos = DocumentoFirmaSelector.listar_por_objeto(convocatoria)
+        self.assertEqual(documentos.count(), 1)
+        self.assertEqual(documentos.first().estado, 'BORRADOR')
+
+    def test_crear_con_documento_sin_seed_tipo_documento_falla(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        archivo = SimpleUploadedFile('convocatoria_2025.pdf', b'condiciones de la convocatoria')
+        with self.assertRaises(ValidationError):
+            ConvocatoriaService.crear_con_documento(
+                nombre_convocatoria='Convocatoria Sin Seed',
+                anio_convocatoria=2025,
+                inicio='2025-01-01',
+                cierre='2025-06-30',
+                interno=True,
+                archivo=archivo,
+                ip_creacion='127.0.0.1',
+                ejecutor=self.ejecutor,
+            )

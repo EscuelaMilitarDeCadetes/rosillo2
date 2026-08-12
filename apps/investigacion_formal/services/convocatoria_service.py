@@ -5,6 +5,10 @@ from apps.investigacion_formal.selectors.convocatoria_selector import Convocator
 from apps.investigacion_formal.validators.convocatoria_validator import ConvocatoriaValidator
 from apps.common.services.historial_service import HistorialService
 
+from rest_framework.exceptions import ValidationError
+from apps.common.services.documento_firma_service import DocumentoFirmaService
+from apps.common.selectors.tipo_documento_selector import TipoDocumentoSelector
+
 
 class ConvocatoriaService:
 
@@ -48,6 +52,43 @@ class ConvocatoriaService:
             f"Se creó la convocatoria '{convocatoria.nombre_convocatoria}' "
             f"({'interna' if interno else 'externa'}, id={convocatoria.pk}).",
             objeto=convocatoria,
+        )
+        return convocatoria
+
+    @staticmethod
+    @transaction.atomic
+    def crear_con_documento(nombre_convocatoria, anio_convocatoria, inicio, cierre,
+                             interno, archivo, ip_creacion, ejecutor):
+        """
+        Equivalente al 'newConvocatory' de Thymeleaf: crea la convocatoria y
+        registra su documento principal (TipoDocumento 'Convocatoria') en una
+        sola operación atómica. Si el registro del documento falla, el
+        rollback deshace también la convocatoria.
+        """
+        if archivo is None:
+            raise ValidationError({"archivo": "El documento principal de la convocatoria es obligatorio."})
+        convocatoria = ConvocatoriaService.crear(
+            nombre_convocatoria=nombre_convocatoria,
+            anio_convocatoria=anio_convocatoria,
+            inicio=inicio,
+            cierre=cierre,
+            interno=interno,
+            ejecutor=ejecutor,
+        )
+        tipo_documento = TipoDocumentoSelector.obtener_por_nombre("Convocatoria")
+        if tipo_documento is None:
+            raise ValidationError(
+                "No existe el TipoDocumento 'Convocatoria' (seed pendiente: "
+                "grupo='convocatoria', nombre_documento='Convocatoria')."
+            )
+        DocumentoFirmaService.crear_desde_archivo(
+            tipo_documento_id=tipo_documento.pk,
+            archivo=archivo,
+            ip_creacion=ip_creacion,
+            ejecutor=ejecutor,
+            objeto=convocatoria,
+            estado='BORRADOR',
+            carpeta='convocatorias',
         )
         return convocatoria
 
