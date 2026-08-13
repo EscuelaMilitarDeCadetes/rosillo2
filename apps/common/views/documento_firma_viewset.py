@@ -5,7 +5,6 @@ from apps.usuarios.permissions.es_decano import EsDecano
 from apps.usuarios.permissions.es_facultad import EsFacultad
 from apps.usuarios.permissions.es_gerente import EsGerente
 from apps.usuarios.permissions.es_grupo import EsGrupo
-from apps.usuarios.permissions.es_soporte import EsSoporte
 from apps.usuarios.permissions.es_supervisor import EsSupervisor
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -14,6 +13,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.contrib.contenttypes.models import ContentType
 from apps.common.serializers import DocumentoFirmaSerializer
 from apps.common.services.documento_firma_service import DocumentoFirmaService
+from django.http import FileResponse
+import os
 
 
 def _resolver_objeto_generico(data):
@@ -31,7 +32,7 @@ class DocumentoFirmaViewSet(viewsets.ViewSet):
     pagination_class = CommonPageNumberPagination
 
     def get_permissions(self):
-        acciones_autoservicio = ['list', 'retrieve', 'por_tipo_documento', 'ultima_version', 'por_objeto', 'habilitados_para_firma']
+        acciones_autoservicio = ['list', 'retrieve', 'por_tipo_documento', 'ultima_version', 'por_objeto', 'descargar', 'habilitados_para_firma']
         if self.action in acciones_autoservicio:
             permission_classes = [IsAuthenticated]
         elif self.action in ['marcar_rechazado', 'rechazar']:
@@ -111,3 +112,11 @@ class DocumentoFirmaViewSet(viewsets.ViewSet):
             )
         documentos = DocumentoFirmaService.listar_por_objeto(objeto)
         return Response(self.serializer_class(documentos, many=True).data)
+    
+    @action(detail=True, methods=["get"], url_path="descargar")
+    def descargar(self, request, pk=None):
+        documento = DocumentoFirmaService.obtener(pk)
+        if not os.path.exists(documento.ruta_documento):
+            return Response({"error": "El archivo no se encuentra en disco."}, status=status.HTTP_404_NOT_FOUND)
+        nombre_archivo = os.path.basename(documento.ruta_documento)
+        return FileResponse(open(documento.ruta_documento, "rb"), as_attachment=True, filename=nombre_archivo)
