@@ -40,7 +40,9 @@ class ConvocatoriaViewSet(viewsets.ViewSet):
             anio_convocatoria=request.data.get("anio_convocatoria"),
             inicio=request.data.get("inicio"),
             cierre=request.data.get("cierre"),
-            interno=request.data.get("interno"),
+            interno=True,  # Regla de autorización: solo EsAsesor llega aquí (get_permissions),
+                            # y EsAsesor solo puede crear convocatorias internas. Se ignora
+                            # cualquier valor de "interno" que venga en el payload del cliente.
             archivo=request.FILES.get("archivo"),
             ip_creacion=request.META.get("REMOTE_ADDR", "0.0.0.0"),
             ejecutor=request.user,
@@ -66,11 +68,17 @@ class ConvocatoriaViewSet(viewsets.ViewSet):
         estado = request.query_params.get("estado")
         estado = estado.lower() == "true" if estado is not None else None
         convocatorias = ConvocatoriaService.listar_internas(estado=estado)
-        return Response(self.serializer_class(convocatorias, many=True).data)
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(convocatorias, request, view=self)
+        serializer = self.serializer_class(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     @action(detail=False, methods=["get"], url_path="externas")
     def externas(self, request):
         estado = request.query_params.get("estado")
         estado = estado.lower() == "true" if estado is not None else None
         convocatorias = ConvocatoriaService.listar_externas(estado=estado)
-        return Response(self.serializer_class(convocatorias, many=True).data)
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(convocatorias, request, view=self)
+        serializer = self.serializer_class(page, many=True)
+        return paginator.get_paginated_response(serializer.data)

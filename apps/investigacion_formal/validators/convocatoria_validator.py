@@ -7,6 +7,11 @@ class ConvocatoriaValidator:
 
     @staticmethod
     def validar_creacion(nombre_convocatoria, anio_convocatoria, inicio, cierre, interno):
+        # NOTA: la restricción "solo ASESOR crea internas" se resuelve en
+        # ConvocatoriaViewSet.create() forzando interno=True, no aquí.
+        # Este validador es de dominio y debe aceptar interno=False cuando lo
+        # invoca ProyectoService.crear_proyecto_externo() para la convocatoria
+        # sintética de proyectos externos.
         ConvocatoriaValidator._validar_nombre(nombre_convocatoria)
         ConvocatoriaValidator._validar_anio(anio_convocatoria)
         ConvocatoriaValidator._validar_fechas(inicio, cierre)
