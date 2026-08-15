@@ -5,6 +5,14 @@ from apps.common.selectors.documento_firma_selector import DocumentoFirmaSelecto
 
 ESTADOS_VALIDOS = {choice[0] for choice in DocumentoFirma.ESTADO_CHOICES}
 
+# Réplica de ValidarArchivos.pdf() (Thymeleaf). El original tenía
+# SIZE_PDF = 1500_000_000 (~1500MB) pese a que el mensaje de la plantilla
+# adminConvocatoria.html decía "no superior en tamaño a 15Mb" — era un bug
+# del original (le sobraban dos ceros). Aquí se usa el límite realmente
+# pretendido: 15MB.
+TAMANO_MAXIMO_PDF = 15_000_000  # bytes
+TAMANO_MAXIMO_PDF_MB = TAMANO_MAXIMO_PDF // 1_000_000
+
 
 class DocumentoFirmaValidator:
     @staticmethod
@@ -16,6 +24,31 @@ class DocumentoFirmaValidator:
         DocumentoFirmaValidator._validar_objeto(content_type, object_id)
         DocumentoFirmaValidator._validar_estado(estado)
         DocumentoFirmaValidator._validar_unicidad_version(tipo_documento_id, content_type, object_id, version)
+        
+    @staticmethod
+    def validar_archivo_pdf(archivo):
+        """
+        Réplica de ValidarArchivos.pdf(): solo se aceptan archivos PDF y de
+        máximo TAMANO_MAXIMO_PDF. Se invoca ANTES de escribir el archivo a
+        disco (igual que el original validaba antes de Files.write()), desde
+        DocumentoFirmaService.crear_desde_archivo() — punto de entrada único
+        para todos los módulos (convocatoria, proyecto, presupuesto, etc.),
+        así que esta regla aplica de forma centralizada a cualquier documento
+        que entre por multipart, sin que cada servicio la reimplemente.
+        """
+        if archivo is None:
+            raise ValidationError({"archivo": "El archivo es obligatorio."})
+        content_type = getattr(archivo, "content_type", None)
+        if content_type != "application/pdf":
+            raise ValidationError(
+                {"archivo": "El archivo debe ser de tipo PDF."}
+            )
+        tamano = getattr(archivo, "size", None)
+        if tamano is not None and tamano > TAMANO_MAXIMO_PDF:
+            raise ValidationError(
+                {"archivo": f"El archivo supera el tamaño máximo permitido de "
+                            f"{TAMANO_MAXIMO_PDF_MB}MB."}
+            )
 
     @staticmethod
     def validar_cambio_estado(documento_firma, nuevo_estado):

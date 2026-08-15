@@ -116,7 +116,9 @@ class ConvocatoriaServiceTests(InvestigacionFormalFixturesMixin, TestCase):
         from django.core.files.uploadedfile import SimpleUploadedFile
         from apps.common.models import TipoDocumento
         TipoDocumento.objects.create(nombre_documento='Convocatoria', grupo='convocatoria')
-        archivo = SimpleUploadedFile('convocatoria_2025.pdf', b'condiciones de la convocatoria')
+        archivo = SimpleUploadedFile(
+            'convocatoria_2025.pdf', b'condiciones de la convocatoria', content_type='application/pdf'
+        )
         convocatoria = ConvocatoriaService.crear_con_documento(
             nombre_convocatoria='Convocatoria con Documento',
             anio_convocatoria=2025,
@@ -134,7 +136,9 @@ class ConvocatoriaServiceTests(InvestigacionFormalFixturesMixin, TestCase):
 
     def test_crear_con_documento_sin_seed_tipo_documento_falla(self):
         from django.core.files.uploadedfile import SimpleUploadedFile
-        archivo = SimpleUploadedFile('convocatoria_2025.pdf', b'condiciones de la convocatoria')
+        archivo = SimpleUploadedFile(
+            'convocatoria_2025.pdf', b'condiciones de la convocatoria', content_type='application/pdf'
+        )
         with self.assertRaises(ValidationError):
             ConvocatoriaService.crear_con_documento(
                 nombre_convocatoria='Convocatoria Sin Seed',

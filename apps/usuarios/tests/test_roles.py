@@ -1,3 +1,4 @@
+#apps/usuarios/tests/test_roles.py
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
@@ -124,3 +125,15 @@ class RolXUsuarioTests(TestCase):
         response = self.client.get(f'/api/usuarios/roles-usuario/historico/{self.target_user.id}/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(any(not r['estado'] for r in response.data))
+        
+    def test_soporte_puede_editar_un_rol_de_plataforma(self):
+        rol = RolPlataforma.objects.create(nombre_rol="TEMP", descripcion="temporal")
+        self.client.force_authenticate(user=self.admin)   
+        response = self.client.patch(
+            f"/api/usuarios/roles/{rol.id}/",
+            {"descripcion": "descripcion actualizada"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        rol.refresh_from_db()
+        self.assertEqual(rol.descripcion, "descripcion actualizada")

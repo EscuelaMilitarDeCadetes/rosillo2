@@ -1,3 +1,4 @@
+#apps/usuarios/views/rol_plataforma_viewset.py
 from apps.usuarios.pagination import UsuariosPageNumberPagination
 from rest_framework import viewsets, status
 from rest_framework.response import Response
@@ -35,3 +36,15 @@ class RolPlataformaViewSet(viewsets.ViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    # --- Permite a SOPORTE corregir nombre_rol/descripcion de un rol
+    # existente. Solo vía PATCH (partial_update): el catálogo no admite
+    # reemplazo total (PUT), únicamente corrección puntual de campos. No se
+    # define update() a propósito, para que el router excluya PUT del mapeo
+    # de verbos y responda 405, igual que hace con destroy(). ---
+    def partial_update(self, request, pk=None):
+        rol = get_object_or_404(self.get_queryset(), pk=pk)
+        serializer = self.serializer_class(rol, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)

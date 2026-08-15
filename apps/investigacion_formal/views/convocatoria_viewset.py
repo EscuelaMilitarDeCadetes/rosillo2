@@ -3,8 +3,16 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from apps.investigacion_formal.serializers.convocatoria_serializer import ConvocatoriaSerializer
+from apps.investigacion_formal.serializers.proyecto_x_convocatoria_serializer import (
+    ProyectoXConvocatoriaSerializer,
+)
 from apps.investigacion_formal.services.convocatoria_service import ConvocatoriaService
-from apps.investigacion_formal.permissions import ROLES_LECTURA_INVESTIGACION_FORMAL, combinar
+from apps.investigacion_formal.services.proyecto_x_convocatoria_service import (
+    ProyectoXConvocatoriaService,
+)
+from apps.investigacion_formal.permissions import (
+    ROLES_LECTURA_INVESTIGACION_FORMAL, ROLES_CREACION_PROYECTO, combinar,
+)
 from apps.usuarios.permissions import EsAsesor, EsCInterno, TieneAmbitoFormal
 
 
@@ -19,6 +27,10 @@ class ConvocatoriaViewSet(viewsets.ViewSet):
             permission_classes = [EsCInterno]
         elif self.action in ["list", "retrieve", "activas"]:
             return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL), TieneAmbitoFormal()]
+        elif self.action == "participar":
+            # Réplica de participarConvocatoria: solo FACULTAD/GRUPO postulan
+            # proyectos a convocatorias — mismo rol que ProyectoXConvocatoriaViewSet.create.
+            return [combinar(ROLES_CREACION_PROYECTO), TieneAmbitoFormal()]
         else:  # internas, externas
             permission_classes = [EsCInterno]
         return [permission() for permission in permission_classes] + [TieneAmbitoFormal()]
@@ -82,3 +94,31 @@ class ConvocatoriaViewSet(viewsets.ViewSet):
         page = paginator.paginate_queryset(convocatorias, request, view=self)
         serializer = self.serializer_class(page, many=True)
         return paginator.get_paginated_response(serializer.data)
+    
+    @action(detail=True, methods=["post"], url_path="participar")
+    def participar(self, request, pk=None):
+        """
+        Réplica de POST /proyecto/participarConvocatoria (Thymeleaf).
+        Crea el Proyecto + Monto + hasta 3 documentos + el vínculo
+        ProyectoXConvocatoria + las Calificaciones iniciales, todo en una
+        sola transacción atómica orquestada por
+        ProyectoXConvocatoriaService.participar_convocatoria().
+        """
+        vinculo = ProyectoXConvocatoriaService.participar_convocatoria(
+            convocatoria_id=pk,
+            titulo=request.data.get("titulo"),
+            alianza=request.data.get("alianza"),
+            financiado=request.data.get("financiado"),
+            unidad_ejecutora=request.data.get("unidad_ejecutora"),
+            linea_investigacion=request.data.get("linea_investigacion"),
+            valor_solicitado=request.data.get("valor_solicitado"),
+            doc_proyecto=request.FILES.get("doc_proyecto"),
+            doc_carta=request.FILES.get("doc_carta"),
+            doc_alianza=request.FILES.get("doc_alianza"),
+            ip_creacion=request.META.get("REMOTE_ADDR", "0.0.0.0"),
+            ejecutor=request.user,
+        )
+        return Response(
+            ProyectoXConvocatoriaSerializer(vinculo).data,
+            status=status.HTTP_201_CREATED,
+        )

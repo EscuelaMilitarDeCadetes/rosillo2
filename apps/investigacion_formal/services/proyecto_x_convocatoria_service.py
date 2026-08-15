@@ -1,5 +1,5 @@
 from django.db import transaction
-
+from rest_framework.exceptions import ValidationError
 from apps.investigacion_formal.models import ProyectoXConvocatoria
 from apps.investigacion_formal.selectors.proyecto_x_convocatoria_selector import (
     ProyectoXConvocatoriaSelector,
@@ -8,6 +8,13 @@ from apps.investigacion_formal.validators.proyecto_x_convocatoria_validator impo
     ProyectoXConvocatoriaValidator,
 )
 from apps.common.services.historial_service import HistorialService
+
+from apps.institucional.selectors.gerente_selector import GerenteSelector
+from apps.common.selectors.tipo_documento_selector import TipoDocumentoSelector
+from apps.common.services.documento_firma_service import DocumentoFirmaService
+from apps.investigacion_formal.services.monto_service import MontoService
+from apps.investigacion_formal.services.calificacion_service import CalificacionService
+from apps.investigacion_formal.selectors.tipo_calificacion_selector import TipoCalificacionSelector
 
 
 class ProyectoXConvocatoriaService:
@@ -175,3 +182,92 @@ class ProyectoXConvocatoriaService:
     @staticmethod
     def buscar_con_filtros(**filtros):
         return ProyectoXConvocatoriaSelector.buscar_con_filtros(**filtros)
+    
+    @staticmethod
+    @transaction.atomic
+    def participar_convocatoria(convocatoria_id, titulo, alianza, financiado,
+                                 unidad_ejecutora, linea_investigacion,
+                                 valor_solicitado, doc_proyecto, doc_carta, doc_alianza,
+                                 ip_creacion, ejecutor):
+        """
+        Réplica de ProyectoXConvocatoriaServicioImpl.participarConvocatoria()
+        (Thymeleaf). Orquestador delgado que encadena servicios ya existentes,
+        cada uno de un solo responsabilidad, dentro de UNA sola transacción
+        atómica — mismo patrón que ConvocatoriaService.crear_con_documento().
+        Secuencia (fiel al original):
+          1. Resolver el Gerente vigente (el original no lo pedía en el
+             formulario; el nuevo esquema exige gerente NOT NULL en Proyecto).
+          2. Crear el Proyecto (siempre interno=True: solo FACULTAD/GRUPO
+             postulan a convocatorias internas).
+          3. Crear el Monto SIEMPRE (igual que el original: si no hay
+             valor_solicitado, se crea con solicitado=0, no se omite).
+          4. Registrar hasta 3 documentos (docProyecto obligatorio,
+             docCarta y docAlianza opcionales) vía el punto de entrada único
+             DocumentoFirmaService.crear_desde_archivo().
+          5. Vincular el Proyecto a la Convocatoria (reutiliza
+             ProyectoXConvocatoriaService.crear(), que ya valida que la
+             convocatoria esté activa y que no exista un vínculo duplicado).
+          6. Crear una Calificacion por cada TipoCalificacion (fase) activa,
+             igual que el bucle sobre tipoCalificacionRepositorio.findAll().
+        """
+        from apps.investigacion_formal.services.proyecto_service import ProyectoService
+        if not doc_proyecto:
+            raise ValidationError(
+                {"doc_proyecto": "El documento del proyecto es obligatorio para participar en la convocatoria."}
+            )
+        gerente = GerenteSelector.obtener_actual()
+        if gerente is None:
+            raise ValidationError(
+                "No hay un Gerente vigente registrado en el sistema; no es posible "
+                "asignar responsable al proyecto."
+            )
+        proyecto = ProyectoService.crear(
+            usuario_id=ejecutor.pk,
+            gerente_id=gerente.pk,
+            titulo=titulo,
+            interno=True,
+            alianza=bool(alianza),
+            financiado=bool(financiado),
+            unidad_ejecutora=unidad_ejecutora,
+            linea_investigacion=linea_investigacion,
+            ejecutor=ejecutor,
+        )
+        MontoService.crear(
+            proyecto_id=proyecto.pk,
+            solicitado=valor_solicitado or 0,
+            ejecutor=ejecutor,
+        )
+        documentos_a_crear = [
+            ("Documento de Proyecto", doc_proyecto),
+            ("Carta de Compromiso", doc_carta),
+            ("Documento de Alianza", doc_alianza),
+        ]
+        for nombre_tipo, archivo in documentos_a_crear:
+            if not archivo:
+                continue
+            tipo_documento = TipoDocumentoSelector.obtener_por_nombre(nombre_tipo)
+            if tipo_documento is None:
+                raise ValidationError(
+                    f"No existe el TipoDocumento '{nombre_tipo}' "
+                    f"(seed pendiente: grupo='proyecto', nombre_documento='{nombre_tipo}')."
+                )
+            DocumentoFirmaService.crear_desde_archivo(
+                tipo_documento_id=tipo_documento.pk,
+                archivo=archivo,
+                ip_creacion=ip_creacion,
+                ejecutor=ejecutor,
+                objeto=proyecto,
+                carpeta='proyectos',
+            )
+        vinculo = ProyectoXConvocatoriaService.crear(
+            convocatoria_id=convocatoria_id,
+            proyecto_id=proyecto.pk,
+            ejecutor=ejecutor,
+        )
+        for tipo_calificacion in TipoCalificacionSelector.listar():
+            CalificacionService.crear(
+                fase_id=tipo_calificacion.pk,
+                aplicar_id=vinculo.pk,
+                ejecutor=ejecutor,
+            )
+        return vinculo

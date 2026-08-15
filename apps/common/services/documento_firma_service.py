@@ -92,6 +92,7 @@ class DocumentoFirmaService:
         `carpeta`: subcarpeta dentro de MEDIA_ROOT para organizar por
         dominio ('convocatorias', 'proyectos', 'presupuestos', ...).
         """
+        DocumentoFirmaValidator.validar_archivo_pdf(archivo)
         ruta_relativa = default_storage.save(f"{carpeta}/{archivo.name}", ContentFile(archivo.read()))
         ruta_documento = default_storage.path(ruta_relativa)
         return DocumentoFirmaService.crear(

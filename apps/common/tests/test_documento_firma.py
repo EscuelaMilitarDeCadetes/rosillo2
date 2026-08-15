@@ -195,7 +195,9 @@ class DocumentoFirmaServiceTests(CommonFixturesMixin, TestCase):
     
     def test_crear_desde_archivo_escribe_en_disco_y_asocia_objeto(self):
         from django.core.files.uploadedfile import SimpleUploadedFile
-        archivo = SimpleUploadedFile('convocatoria.pdf', b'contenido pdf de prueba')
+        archivo = SimpleUploadedFile(
+            'convocatoria.pdf', b'contenido pdf de prueba', content_type='application/pdf'
+        )
         documento = DocumentoFirmaService.crear_desde_archivo(
             tipo_documento_id=self.tipo_documento.pk,
             archivo=archivo,
@@ -212,7 +214,9 @@ class DocumentoFirmaServiceTests(CommonFixturesMixin, TestCase):
     
     def test_crear_desde_archivo_con_estado_firmado(self):
         from django.core.files.uploadedfile import SimpleUploadedFile
-        archivo = SimpleUploadedFile('historico.pdf', b'documento ya firmado en 2021')
+        archivo = SimpleUploadedFile(
+            'historico.pdf', b'documento ya firmado en 2021', content_type='application/pdf'
+        )
         documento = DocumentoFirmaService.crear_desde_archivo(
             tipo_documento_id=self.tipo_documento.pk,
             archivo=archivo,
@@ -222,3 +226,30 @@ class DocumentoFirmaServiceTests(CommonFixturesMixin, TestCase):
             carpeta='pruebas',
         )
         self.assertEqual(documento.estado, 'FIRMADO')
+        
+    def test_crear_desde_archivo_rechaza_no_pdf(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        archivo = SimpleUploadedFile('documento.docx', b'contenido', content_type='application/msword')
+        with self.assertRaises(ValidationError):
+            DocumentoFirmaService.crear_desde_archivo(
+                tipo_documento_id=self.tipo_documento.pk,
+                archivo=archivo,
+                ip_creacion='127.0.0.1',
+                ejecutor=self.ejecutor,
+                carpeta='pruebas',
+            )
+
+    def test_crear_desde_archivo_rechaza_tamano_excesivo(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        archivo = SimpleUploadedFile(
+            'grande.pdf', b'x' * 10, content_type='application/pdf'
+        )
+        archivo.size = 15_500_000  # simula >15MB (TAMANO_MAXIMO_PDF) sin escribir bytes reales
+        with self.assertRaises(ValidationError):
+            DocumentoFirmaService.crear_desde_archivo(
+                tipo_documento_id=self.tipo_documento.pk,
+                archivo=archivo,
+                ip_creacion='127.0.0.1',
+                ejecutor=self.ejecutor,
+                carpeta='pruebas',
+            )

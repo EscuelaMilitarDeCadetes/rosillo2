@@ -11,6 +11,7 @@ from apps.investigacion_formal.services.producto_x_grupo_service import Producto
 from apps.investigacion_formal.permissions import (
     ROLES_LECTURA_INVESTIGACION_FORMAL, ROLES_ESCRITURA_GESTION, ROLES_CREACION_OPERATIVA, combinar,
 )
+from apps.usuarios.permissions import EsSoporte
 
 
 class ProductoXGrupoViewSet(viewsets.ViewSet):
@@ -19,11 +20,11 @@ class ProductoXGrupoViewSet(viewsets.ViewSet):
     
     def get_permissions(self):
         if self.action == "create":
-            return [combinar(ROLES_CREACION_OPERATIVA), TieneAmbitoFormal()]
+            return [combinar(ROLES_CREACION_OPERATIVA + [EsSoporte]), TieneAmbitoFormal()]
         elif self.action in ["update", "destroy", "registrar_entrega", "subir_a_gruplac"]:
-            return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormal()]
+            return [combinar(ROLES_ESCRITURA_GESTION + [EsSoporte]), TieneAmbitoFormal()]
         else:  # list, retrieve, por_proyecto, pendientes, entregados
-            return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL), TieneAmbitoFormal()]
+            return [combinar(ROLES_LECTURA_CATALOGOS + [EsSoporte]), TieneAmbitoFormal()]
 
     def list(self, request):
         registros = ProductoXGrupoService.listar()
