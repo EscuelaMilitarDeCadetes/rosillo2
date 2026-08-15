@@ -8,6 +8,9 @@ from ..models import RolXUsuario
 from ..serializers.rol_x_usuario_serializer import RolXUsuarioSerializer
 from ..services.rol_x_usuario_service import RolXUsuarioService
 
+from django.db.models import Prefetch
+from apps.usuarios.models import UsuarioXPersona
+
 
 class RolXUsuarioViewSet(viewsets.ViewSet):
     serializer_class = RolXUsuarioSerializer
@@ -18,7 +21,19 @@ class RolXUsuarioViewSet(viewsets.ViewSet):
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
-        return RolXUsuario.objects.select_related('usuario', 'rol').filter(estado=True)
+        return (
+            RolXUsuario.objects
+            .select_related('usuario', 'rol')
+            .prefetch_related(
+                Prefetch(
+                    'usuario__asignaciones',
+                    queryset=UsuarioXPersona.objects
+                        .filter(estado=True)
+                        .select_related('persona', 'persona__grado'),
+                )
+            )
+            .filter(estado=True)
+        )        
 
     def list(self, request):
         queryset = self.get_queryset()
