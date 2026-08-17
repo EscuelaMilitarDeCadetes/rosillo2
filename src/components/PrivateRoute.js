@@ -1,34 +1,38 @@
-// e:\PROYECTO_ROSILLO\django_react\react_rosillo\src\components\PrivateRoute.js
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { Navigate, Outlet } from 'react-router-dom';
 
-const PrivateRoute = () => {
+/**
+ * Antes: adivinaba los roles requeridos parseando window.location.pathname
+ * y comparaba contra nombres tipo 'ROLE_CINTERNOS' (convención Spring
+ * Security del Thymeleaf viejo). Los roles reales en Django, definidos en
+ * RolPlataforma.nombre_rol, son SIN prefijo "ROLE_" y en singular:
+ *   ASESOR, CEXTERNO, CINTERNO, DECANO, ESTUDIANTE, FACULTAD, GERENTE,
+ *   GRUPO, JURADO, SOPORTE, SUPERVISOR, TUTOR
+ * (ver apps/usuarios/models/rol_plataforma.py y las clases EsAsesor,
+ * EsCInterno, etc. en apps/usuarios/permissions/).
+ *
+ * Ahora: allowedRoles se pasa como prop en la definición de cada <Route>,
+ * no se adivina desde la URL. Si allowedRoles no se especifica, la ruta
+ * solo exige estar autenticado (igual que antes por defecto).
+ *
+ * Uso en App.js:
+ *   <Route element={<PrivateRoute allowedRoles={['CINTERNO', 'SOPORTE']} />}>
+ *     <Route path="/convocatoria/administrar" element={<AdminConvocatoriasPage />} />
+ *   </Route>
+ */
+const PrivateRoute = ({ allowedRoles = [] }) => {
   const { isAuthenticated, roles } = useSelector((state) => state.auth);
-  
-  // Obtener los roles requeridos de la ruta actual
-  // Esto es una simplificación. En una aplicación real, los roles se definirían
-  // en la configuración de la ruta o se pasarían como prop.
-  // Por ahora, asumimos que si es una ruta protegida, el usuario debe tener al menos un rol.
-  const path = window.location.pathname; // Obtener la ruta actual
-  let requiredRoles = [];
-  if (path.startsWith('/convocatoria/')) { // Proteger ambas rutas de convocatoria
-    requiredRoles = ['ROLE_CINTERNOS'];
-  } else if (path.startsWith('/calificar')) {
-    requiredRoles = ['ROLE_CINTERNOS'];
-  } else if (path.startsWith('/convocatorias') || path.startsWith('/participar')) {
-    requiredRoles = ['ROLE_FACULTADES', 'ROLE_GRUPOS'];
-  } else if (path.startsWith('/proyectos')) {
-    requiredRoles = ['ROLE_CINTERNOS', 'ROLE_SUPERVISOR', 'ROLE_FACULTADES', 'ROLE_GRUPOS', 'ROLE_CEXTERNOS'];
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
   }
 
+  const tieneAcceso =
+    allowedRoles.length === 0 || allowedRoles.some((rol) => roles.includes(rol));
 
-  // Si no está autenticado, redirige a la página de login
-  if (!isAuthenticated) return <Navigate to="/login" />;
-
-  // Si hay roles requeridos y el usuario no tiene ninguno, redirige a una página de acceso denegado o inicio
-  if (requiredRoles.length > 0 && !requiredRoles.some(role => roles.includes(role))) {
-    return <Navigate to="/" />; // O a una página de "Acceso Denegado"
+  if (!tieneAcceso) {
+    return <Navigate to="/forbidden" replace />;
   }
 
   return <Outlet />;

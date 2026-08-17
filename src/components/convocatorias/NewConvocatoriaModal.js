@@ -1,25 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { Calendar } from 'primereact/calendar';
-import { Checkbox } from 'primereact/checkbox';
 import { FileUpload } from 'primereact/fileupload';
+import { Toast } from 'primereact/toast';
 import { createConvocatoria } from '../../features/convocatorias/convocatoriasSlice';
 import ConfirmationModal from '../common/ConfirmationModal';
 
 const NewConvocatoriaModal = ({ visible, onHide }) => {
   const dispatch = useDispatch();
   const { adminLoading, adminError } = useSelector((state) => state.convocatorias);
-
+  const toast = useRef(null);
   const [formData, setFormData] = useState({
     nombre_convocatoria: '',
     anio_convocatoria: new Date().getFullYear(),
     inicio: null,
     cierre: null,
     estado: true, // Por defecto activa
-    interno: false, // Se puede cambiar si hay convocatorias externas
+    interno: true, // Se puede cambiar si hay convocatorias externas
     documento_file: null, // Para el archivo
   });
   const [validationError, setValidationError] = useState('');
@@ -73,10 +73,26 @@ const NewConvocatoriaModal = ({ visible, onHide }) => {
     }
   };
 
+  // Punto 6C: al recibir respuesta, se cierran TODAS las modales
+  // (éxito o error) y se muestra un mensaje con el resultado.
   const handleConfirmCreate = () => {
+    const nombreCreado = formData.nombre_convocatoria;
     dispatch(createConvocatoria(formData)).then((result) => {
+      setIsConfirmVisible(false);
       if (createConvocatoria.fulfilled.match(result)) {
-        setIsConfirmVisible(false); // Cierra el modal de confirmación
+        toast.current?.show({
+          severity: 'success',
+          summary: 'Convocatoria creada',
+          detail: `Se registró la convocatoria "${nombreCreado}" correctamente.`,
+          life: 5000,
+        });
+      } else {
+        toast.current?.show({
+          severity: 'error',
+          summary: 'Error al crear la convocatoria',
+          detail: result.payload || 'Ocurrió un error inesperado.',
+          life: 6000,
+        });
       }
     });
   };
@@ -94,6 +110,7 @@ const NewConvocatoriaModal = ({ visible, onHide }) => {
 
   return (
     <>
+      <Toast ref={toast} />
       <Dialog header="Nueva Convocatoria" visible={visible} style={{ width: '50vw' }} footer={renderFooter} onHide={onHide}>
         <div className="p-fluid formgrid grid">
           <div className="field col-12">
@@ -120,20 +137,24 @@ const NewConvocatoriaModal = ({ visible, onHide }) => {
               <label htmlFor="anio_convocatoria">Año de la Convocatoria</label>
             </span>
           </div>
-          <div className="field col-12 md:col-6 d-flex align-items-center">
-            <Checkbox inputId="interno" checked={formData.interno} onChange={(e) => setFormData((prev) => ({ ...prev, interno: e.checked }))} />
-            <label htmlFor="interno" className="ms-2">Es Convocatoria Interna</label>
-          </div>
           <div className="field col-12">
             <label htmlFor="documento_file">Documento Principal de la Convocatoria</label>
-            <FileUpload name="documento_file" customUpload uploadHandler={handleFileUpload} chooseLabel="Seleccionar Archivo" mode="basic" auto accept=".pdf,.doc,.docx" maxFileSize={10000000} />
+            <FileUpload
+              name="documento_file"
+              customUpload
+              uploadHandler={handleFileUpload}
+              chooseLabel="Seleccionar Archivo"
+              mode="basic"
+              auto
+              accept="application/pdf"
+              maxFileSize={15000000}
+            />
             {formData.documento_file && <small className="p-text-secondary ms-2">{formData.documento_file.name}</small>}
           </div>
         </div>
         {validationError && <div className="alert alert-danger mt-3">{validationError}</div>}
         {adminError && <div className="alert alert-danger mt-3">{adminError}</div>}
       </Dialog>
-
       <ConfirmationModal
         visible={isConfirmVisible}
         onHide={() => setIsConfirmVisible(false)}

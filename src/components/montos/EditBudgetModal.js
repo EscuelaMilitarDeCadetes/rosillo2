@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { InputNumber } from 'primereact/inputnumber';
-import { updateBudget } from '../../features/projects/projectsSlice';
+import { updateBudget } from '../../features/proyectos/projectsSlice.js';
 
 const EditBudgetModal = ({ visible, onHide, monto }) => {
   const dispatch = useDispatch();

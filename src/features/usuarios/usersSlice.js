@@ -1,150 +1,339 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axiosInstance from '../../api/axiosInstance';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axiosInstance from "../../api/axiosInstance";
+import { fetchMetadata } from "../metadata/metadataSlice";
 
-// Thunk para obtener los usuarios con roles de plataforma
+/**
+ * Thunk para obtener los usuarios con roles de plataforma, con paginación
+ * REAL de backend (RolXUsuarioViewSet.list() siempre pagina, nunca devuelve
+ * un array plano -> {count, next, previous, results}).
+ *
+ * IMPORTANTE: este endpoint no soporta ningún parámetro de búsqueda/orden
+ * (revisar apps/usuarios/views/rol_x_usuario_viewset.py -> list()); por eso
+ * NO se expone un `search` aquí. Si se necesita búsqueda real sobre todo el
+ * dataset (no solo la página cargada), hay que añadir soporte de `search` en
+ * el backend primero — queda pendiente, no se asume que ya existe.
+ *
+ * `arg` = { page = 1, pageSize = 10 }
+ */
 export const fetchPlatformUsers = createAsyncThunk(
-  'users/fetchPlatformUsers',
-  async (_, { rejectWithValue }) => {
+  "users/fetchPlatformUsers",
+  async ({ page = 1, pageSize = 10 } = {}, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get('roles-x-usuario/');
-      return response.data;
+      // apps/usuarios/urls.py -> router.register(r'roles-usuario', RolXUsuarioViewSet)
+      const response = await axiosInstance.get("usuarios/roles-usuario/", {
+        params: { page, page_size: pageSize },
+      });
+      return response.data; // { count, next, previous, results }
     } catch (error) {
       return rejectWithValue(error.response?.data);
     }
-  }
+  },
 );
 
-// Thunk para obtener las personas en grupos/facultades
+/**
+ * Thunk para obtener las personas en grupos/facultades, con paginación real
+ * de backend (PersonaXGrupoViewSet.list() también pagina siempre).
+ * Mismo caso: el backend no soporta `search` todavía (ver
+ * apps/institucional/views/persona_x_grupo_viewset.py -> list()).
+ *
+ * `arg` = { page = 1, pageSize = 10 }
+ */
 export const fetchGroupUsers = createAsyncThunk(
-  'users/fetchGroupUsers',
-  async (_, { rejectWithValue }) => {
+  "users/fetchGroupUsers",
+  async ({ page = 1, pageSize = 10 } = {}, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get('personas-x-grupo/');
-      return response.data;
+      // apps/institucional/urls.py -> router.register(r'persona-grupo', PersonaXGrupoViewSet)
+      const response = await axiosInstance.get("institucional/persona-grupo/", {
+        params: { page, page_size: pageSize },
+      });
+      return response.data; // { count, next, previous, results }
     } catch (error) {
       return rejectWithValue(error.response?.data);
     }
-  }
+  },
 );
 
-// Thunk para crear un nuevo usuario (persona, usuario, y relaciones)
+/**
+ * Thunk para crear un nuevo usuario a través de VinculacionViewSet
+ * (apps/integracion). El backend NO tiene un único endpoint genérico de
+ * creación: son 12 endpoints, uno por rol de plataforma
+ * (POST /api/integracion/crear-<tipo>/), cada uno con su propia validación
+ * de campos obligatorios (ver VinculacionValidator).
+ *
+ * `arg` = { endpoint: string, payload: object }
+ *   - endpoint: sufijo del tipo (p. ej. 'crear-soporte', 'crear-decano'...),
+ *     ver features/usuarios/tipos_usuario_soporte.js -> TIPOS_USUARIO_SOPORTE.
+ *   - payload: datos de la Persona + rol_plataforma_id (+ facultad_id o
+ *     grupo_id + rol_grupo_id según el flujo). NO incluir username/password:
+ *     el backend los autogenera (VinculacionService._crear_usuario) y
+ *     programa el envío de credenciales por correo.
+ */
 export const createUser = createAsyncThunk(
-  'users/createUser',
-  async (userData, { dispatch, rejectWithValue }) => {
+  "users/createUser",
+  async ({ endpoint, payload }, { dispatch, rejectWithValue }) => {
     try {
-      // Tu `UsuarioViewSet.create` en Django ya está preparado para esta lógica
-      const response = await axiosInstance.post('usuarios/', userData);
+      const response = await axiosInstance.post(
+        `integracion/${endpoint}/`,
+        payload,
+      );
       // Después de crear, volvemos a cargar las listas para que se actualicen
       dispatch(fetchPlatformUsers());
       dispatch(fetchGroupUsers());
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.error || 'Error al crear el usuario.');
+      // VinculacionValidator devuelve errores como {campo: "mensaje"} (400) en
+      // vez de {error: "mensaje"}; cubrimos ambas formas para no perder el detalle.
+      const data = error.response?.data;
+      const mensaje =
+        typeof data === "string"
+          ? data
+          : data?.error ||
+            (data && Object.values(data).flat().join(" ")) ||
+            "Error al crear el usuario.";
+      return rejectWithValue(mensaje);
     }
-  }
+  },
 );
 
-// Thunk para agregar un nuevo rol a un usuario
+/**
+ * Thunk para agregar un nuevo rol de plataforma a un usuario.
+ *
+ * apps/usuarios/views/rol_x_usuario_viewset.py -> @action(detail=False,
+ * methods=['post'], url_path='agregar-rol') -> RolXUsuarioService
+ * .agregar_rol_a_usuario(usuario_id, rol_id, ejecutor). Solo necesita
+ * usuario_id y rol_id: NO existe facultad/grupo/vinculación en este flujo
+ * (eso es un concepto distinto -> PersonaXGrupo, ver assignResearcher).
+ *
+ * `arg` = { usuario_id, rol_id }
+ */
 export const addRoleToUser = createAsyncThunk(
-  'users/addRoleToUser',
-  async (roleData, { dispatch, rejectWithValue }) => {
+  "users/addRoleToUser",
+  async ({ usuario_id, rol_id }, { dispatch, rejectWithValue }) => {
     try {
-      // Asumimos que tienes un endpoint en Django para esto, ej. /api/roles-x-usuario/
-      const response = await axiosInstance.post('roles-x-usuario/', roleData);
-      // Después de agregar, volvemos a cargar la lista de usuarios de plataforma para ver el cambio
+      const response = await axiosInstance.post(
+        "usuarios/roles-usuario/agregar-rol/",
+        {
+          usuario_id,
+          rol_id,
+        },
+      );
       dispatch(fetchPlatformUsers());
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.error || 'Error al agregar el rol.');
+      return rejectWithValue(
+        error.response?.data?.error || "Error al agregar el rol.",
+      );
     }
-  }
+  },
+);
+
+/**
+ * Thunk para editar un rol de plataforma existente (nombre_rol y/o
+ * descripcion). apps/usuarios/views/rol_plataforma_viewset.py -> update()
+ * (PATCH /usuarios/roles/{id}/, acepta parcial).
+ *
+ * `arg` = { id, nombre_rol?, descripcion? }
+ */
+export const updateRole = createAsyncThunk(
+  "users/updateRole",
+  async ({ id, ...cambios }, { dispatch, rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.patch(
+        `usuarios/roles/${id}/`,
+        cambios,
+      );
+      // Los dropdowns de NewUserModal/AddRoleModal/DeleteRoleModal leen
+      // metadata.roles, así que hay que refrescar ese slice, no el de users.
+      dispatch(fetchMetadata());
+      return response.data;
+    } catch (error) {
+      const data = error.response?.data;
+      const mensaje =
+        typeof data === "string"
+          ? data
+          : (data && Object.values(data).flat().join(" ")) ||
+            "Error al editar el rol.";
+      return rejectWithValue(mensaje);
+    }
+  },
 );
 
 // Thunk para asignar una persona a un grupo/facultad como investigador
+// apps/institucional/views/persona_x_grupo_viewset.py -> create() ->
+// PersonaXGrupoService.crear(persona_id, rol_grupo_id, ejecutor, grupo_id,
+// facultad_id, vinculacion). Las claves del body van SIN sufijo "_id"
+// (persona, rol_grupo, grupo, facultad, vinculacion) porque el ViewSet las
+// lee así directamente de request.data.
 export const assignResearcher = createAsyncThunk(
-  'users/assignResearcher',
+  "users/assignResearcher",
   async (assignmentData, { dispatch, rejectWithValue }) => {
     try {
-      // El endpoint para crear una relación PersonaXGrupo
-      const response = await axiosInstance.post('personas-x-grupo/', assignmentData);
-      // Después de asignar, volvemos a cargar la lista para ver el nuevo registro
+      const response = await axiosInstance.post(
+        "institucional/persona-grupo/",
+        assignmentData,
+      );
       dispatch(fetchGroupUsers());
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.error || 'Error al asignar el investigador.');
+      // PersonaXGrupoValidator lanza ValidationError con distintas formas
+      // (string envuelto en lista, o dict {campo: [mensajes]}) según el caso
+      // -> cubrimos todas para no perder el detalle real del error.
+      const data = error.response?.data;
+      let mensaje = "Error al asignar el investigador.";
+      if (typeof data === "string") mensaje = data;
+      else if (Array.isArray(data)) mensaje = data.join(" ");
+      else if (data && typeof data === "object") {
+        mensaje = data.error || Object.values(data).flat().join(" ") || mensaje;
+      }
+      return rejectWithValue(mensaje);
     }
-  }
+  },
 );
 
-// Thunk para obtener los roles de un usuario específico
+/**
+ * Thunk para obtener los roles de un usuario específico.
+ *
+ * apps/usuarios/views/rol_x_usuario_viewset.py -> @action(detail=False,
+ * methods=['get'], url_path='ver-roles/(?P<usuario_id>[0-9]+)'). Devuelve un
+ * array plano ya serializado (NO pasa por el paginador, a diferencia de
+ * list()) con forma {id, usuario, rol, estado, usuario_nombre, rol_nombre}.
+ */
 export const fetchRolesForUser = createAsyncThunk(
-  'users/fetchRolesForUser',
+  "users/fetchRolesForUser",
   async (userId, { rejectWithValue }) => {
     try {
-      // Asumimos que tu API puede filtrar roles por usuario, ej: /api/roles-x-usuario/?usuario_id=123
-      const response = await axiosInstance.get(`roles-x-usuario/?usuario=${userId}`);
+      const response = await axiosInstance.get(
+        `usuarios/roles-usuario/ver-roles/${userId}/`,
+      );
       return response.data;
     } catch (error) {
-      return rejectWithValue('Error al cargar los roles del usuario.');
+      return rejectWithValue("Error al cargar los roles del usuario.");
     }
-  }
+  },
 );
 
-// Thunk para borrar un rol de un usuario (eliminar una instancia de RolXUsuario)
+/**
+ * Thunk para borrar (desactivar) un rol de un usuario.
+ *
+ * apps/usuarios/views/rol_x_usuario_viewset.py -> @action(detail=False,
+ * methods=['post'], url_path='borrar-rol') -> RolXUsuarioService
+ * .borrar_rol_de_usuario(usuario_id, rol_id, ejecutor). Identifica la
+ * relación por el PAR (usuario_id, rol_id), no por el id de RolXUsuario
+ * (no hay DELETE por pk en este ViewSet para esta operación).
+ *
+ * `arg` = { usuario_id, rol_id }
+ */
 export const deleteRoleFromUser = createAsyncThunk(
-  'users/deleteRoleFromUser',
-  async (rolXUsuarioId, { dispatch, rejectWithValue }) => {
+  "users/deleteRoleFromUser",
+  async ({ usuario_id, rol_id }, { dispatch, rejectWithValue }) => {
     try {
-      // El endpoint para borrar una relación RolXUsuario por su ID
-      await axiosInstance.delete(`roles-x-usuario/${rolXUsuarioId}/`);
-      // Después de borrar, volvemos a cargar la lista para ver el cambio
+      await axiosInstance.post("usuarios/roles-usuario/borrar-rol/", {
+        usuario_id,
+        rol_id,
+      });
       dispatch(fetchPlatformUsers());
-      return rolXUsuarioId;
+      return { usuario_id, rol_id };
     } catch (error) {
-      return rejectWithValue(error.response?.data?.error || 'Error al borrar el rol.');
+      return rejectWithValue(
+        error.response?.data?.error || "Error al borrar el rol.",
+      );
     }
-  }
+  },
 );
 
 // Thunk para obtener todas las asignaciones de investigadores a proyectos
 export const fetchInvestigatorAssignments = createAsyncThunk(
-  'users/fetchInvestigatorAssignments',
+  "users/fetchInvestigatorAssignments",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get('investigadores-x-proyecto/');
+      const response = await axiosInstance.get("investigadores-x-proyecto/");
       return response.data;
     } catch (error) {
-      return rejectWithValue('Error al cargar las asignaciones de investigadores.');
+      return rejectWithValue(
+        "Error al cargar las asignaciones de investigadores.",
+      );
     }
-  }
+  },
 );
 
-// Thunk para activar/desactivar un usuario
+/**
+ * Thunk para activar o desactivar un usuario.
+ * apps/usuarios/views/usuario_viewset.py expone dos acciones separadas
+ * (POST usuarios/{id}/activar/ y POST usuarios/{id}/desactivar/), ambas
+ * restringidas a EsSoporte. `arg` = { userId, activar: boolean }.
+ */
 export const toggleUserStatus = createAsyncThunk(
-  'users/toggleUserStatus',
-  async (userId, { rejectWithValue }) => {
+  "users/toggleUserStatus",
+  async ({ userId, activar }, { rejectWithValue }) => {
     try {
-      // Tu API de Django tiene una acción personalizada para esto
-      const response = await axiosInstance.post(`usuarios/${userId}/toggle_active/`);
-      return { userId, ...response.data }; // Devuelve el ID y la respuesta para actualizar el estado
+      const accion = activar ? "activar" : "desactivar";
+      const response = await axiosInstance.post(
+        `usuarios/${userId}/${accion}/`,
+      );
+      return { userId, activar, ...response.data };
     } catch (error) {
-      return rejectWithValue(error.response?.data);
+      return rejectWithValue(
+        error.response?.data?.error ||
+          "Error al cambiar el estado del usuario.",
+      );
     }
-  }
+  },
+);
+
+/**
+ * Thunk para desvincular (soft-delete) una persona de su grupo/facultad.
+ * apps/institucional/views/persona_x_grupo_viewset.py ->
+ * DELETE /institucional/persona-grupo/{id}/ (EsSoporte).
+ * `arg` = personaXGrupoId (id de la fila de PersonaXGrupo, no de la persona).
+ */
+export const borrarPersonaDeGrupo = createAsyncThunk(
+  "users/borrarPersonaDeGrupo",
+  async (personaXGrupoId, { rejectWithValue }) => {
+    try {
+      await axiosInstance.delete(
+        `institucional/persona-grupo/${personaXGrupoId}/`,
+      );
+      return { personaXGrupoId };
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.error || "Error al borrar del grupo.",
+      );
+    }
+  },
+);
+
+/**
+ * Thunk para reactivar una vinculación previamente desvinculada.
+ * apps/institucional/views/persona_x_grupo_viewset.py ->
+ * POST /institucional/persona-grupo/{id}/reactivar/ (EsSoporte).
+ */
+export const reactivarPersonaDeGrupo = createAsyncThunk(
+  "users/reactivarPersonaDeGrupo",
+  async (personaXGrupoId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(
+        `institucional/persona-grupo/${personaXGrupoId}/reactivar/`,
+      );
+      return { personaXGrupoId, ...response.data };
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.error || "Error al reactivar.",
+      );
+    }
+  },
 );
 
 const usersSlice = createSlice({
-  name: 'users',
+  name: "users",
   initialState: {
     platformUsers: [],
+    platformUsersTotal: 0,
     groupUsers: [],
+    groupUsersTotal: 0,
     investigatorAssignments: [],
-    userRoles: [], // Nuevo estado para guardar los roles del usuario seleccionado
+    userRoles: [],
     loading: false,
-     // Añadimos un estado de carga específico para acciones en filas
-    rowLoading: {
-      // Ejemplo: { 'userId123': true }
-    },
+    rowLoading: {},
     error: null,
   },
   reducers: {},
@@ -156,7 +345,8 @@ const usersSlice = createSlice({
       })
       .addCase(fetchPlatformUsers.fulfilled, (state, action) => {
         state.loading = false;
-        state.platformUsers = action.payload;
+        state.platformUsers = action.payload.results ?? [];
+        state.platformUsersTotal = action.payload.count ?? 0;
       })
       .addCase(fetchPlatformUsers.rejected, (state, action) => {
         state.loading = false;
@@ -164,11 +354,10 @@ const usersSlice = createSlice({
       })
       // Add Role to User
       .addCase(addRoleToUser.pending, (state) => {
-        state.loading = true; // O un estado de carga específico del modal
+        state.loading = true;
       })
       .addCase(addRoleToUser.fulfilled, (state) => {
         state.loading = false;
-        // El estado se actualizará con el fetchPlatformUsers despachado en el thunk
       })
       .addCase(addRoleToUser.rejected, (state, action) => {
         state.loading = false;
@@ -180,7 +369,6 @@ const usersSlice = createSlice({
       })
       .addCase(assignResearcher.fulfilled, (state) => {
         state.loading = false;
-        // El estado se actualizará con el fetchGroupUsers despachado en el thunk
       })
       .addCase(assignResearcher.rejected, (state, action) => {
         state.loading = false;
@@ -188,8 +376,8 @@ const usersSlice = createSlice({
       })
       // Fetch Roles for User
       .addCase(fetchRolesForUser.pending, (state) => {
-        state.loading = true; // O un estado de carga específico
-        state.userRoles = []; // Limpiar la lista anterior
+        state.loading = true;
+        state.userRoles = [];
       })
       .addCase(fetchRolesForUser.fulfilled, (state, action) => {
         state.loading = false;
@@ -205,8 +393,7 @@ const usersSlice = createSlice({
       })
       .addCase(deleteRoleFromUser.fulfilled, (state) => {
         state.loading = false;
-        // La lista se actualizará con el fetchPlatformUsers despachado en el thunk
-        state.userRoles = []; // Limpiar la lista de roles del modal
+        state.userRoles = [];
       })
       .addCase(deleteRoleFromUser.rejected, (state, action) => {
         state.loading = false;
@@ -218,7 +405,8 @@ const usersSlice = createSlice({
       })
       .addCase(fetchGroupUsers.fulfilled, (state, action) => {
         state.loading = false;
-        state.groupUsers = action.payload;
+        state.groupUsers = action.payload.results ?? [];
+        state.groupUsersTotal = action.payload.count ?? 0;
       })
       .addCase(fetchGroupUsers.rejected, (state, action) => {
         state.loading = false;
@@ -226,11 +414,11 @@ const usersSlice = createSlice({
       })
       // Create User
       .addCase(createUser.pending, (state) => {
-        state.loading = true; // Podríamos usar un estado de carga específico para el modal
+        state.loading = true;
+        state.error = null;
       })
       .addCase(createUser.fulfilled, (state) => {
         state.loading = false;
-        // El estado se actualizará con los fetchs que se despachan en el thunk
       })
       .addCase(createUser.rejected, (state, action) => {
         state.loading = false;
@@ -238,20 +426,15 @@ const usersSlice = createSlice({
       })
       // Toggle User Status
       .addCase(toggleUserStatus.pending, (state, action) => {
-        state.rowLoading[action.meta.arg] = true; // Pone en carga la fila específica por ID
+        state.rowLoading[action.meta.arg.userId] = true;
       })
       .addCase(toggleUserStatus.fulfilled, (state, action) => {
-        const { userId } = action.payload;
+        const { userId, activar } = action.payload;
         state.rowLoading[userId] = false;
-        // Actualiza el estado del usuario en la lista sin necesidad de volver a cargar todo
-        const userIndex = state.platformUsers.findIndex(u => u.usuario.id === userId);
-        if (userIndex !== -1) {
-          state.platformUsers[userIndex].usuario.estado = !state.platformUsers[userIndex].usuario.estado;
-        }
       })
       .addCase(toggleUserStatus.rejected, (state, action) => {
-        state.rowLoading[action.meta.arg] = false;
-        state.error = action.payload; // Puedes manejar este error en un toast/notificación
+        state.rowLoading[action.meta.arg.userId] = false;
+        state.error = action.payload;
       })
       // Fetch Investigator Assignments
       .addCase(fetchInvestigatorAssignments.pending, (state) => {
@@ -264,10 +447,29 @@ const usersSlice = createSlice({
       .addCase(fetchInvestigatorAssignments.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      });      
+      })
+      // Borrar / Reactivar persona de grupo
+      .addCase(borrarPersonaDeGrupo.pending, (state, action) => {
+        state.rowLoading[action.meta.arg] = true;
+      })
+      .addCase(borrarPersonaDeGrupo.fulfilled, (state, action) => {
+        state.rowLoading[action.payload.personaXGrupoId] = false;
+      })
+      .addCase(borrarPersonaDeGrupo.rejected, (state, action) => {
+        state.rowLoading[action.meta.arg] = false;
+        state.error = action.payload;
+      })
+      .addCase(reactivarPersonaDeGrupo.pending, (state, action) => {
+        state.rowLoading[action.meta.arg] = true;
+      })
+      .addCase(reactivarPersonaDeGrupo.fulfilled, (state, action) => {
+        state.rowLoading[action.payload.personaXGrupoId] = false;
+      })
+      .addCase(reactivarPersonaDeGrupo.rejected, (state, action) => {
+        state.rowLoading[action.meta.arg] = false;
+        state.error = action.payload;
+      });
   },
 });
-
-
 
 export default usersSlice.reducer;

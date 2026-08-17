@@ -1,30 +1,34 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchOpenConvocatorias } from '../features/convocatorias/convocatoriasSlice';
+import { fetchOpenConvocatorias } from '../../../features/convocatorias/convocatoriasSlice';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { ProgressSpinner } from 'primereact/progressspinner';
 
-const HomePage = () => {
+/**
+ * Antes: src/pages/HomePage.js, montada en "/" (pública).
+ * Ahora: home del dominio "investigación formal", montada en "/formal"
+ * dentro del bloque de rutas protegidas. El contenido es exactamente el
+ * mismo que ya tenías (tabla de convocatorias abiertas + video), solo
+ * cambió dónde vive y quién puede verla.
+ */
+const FormalHomePage = () => {
   const dispatch = useDispatch();
   const { items: convocatorias, loading, error } = useSelector((state) => state.convocatorias);
 
   useEffect(() => {
-    // Despacha la acción para obtener los datos cuando el componente se monta
     dispatch(fetchOpenConvocatorias());
   }, [dispatch]);
 
-  // Plantilla para el botón de descarga
   const downloadBodyTemplate = (rowData) => {
-    // Asumimos que tu API tiene un endpoint para descargar el documento de la convocatoria
     const downloadUrl = `http://localhost:8082/api/documentos-convocatoria/${rowData.id}/download/`;
     return (
-      <Button 
-        label="Descargar PDF" 
-        icon="pi pi-download" 
-        className="p-button-sm p-button-info" 
-        onClick={() => window.open(downloadUrl, '_blank')} 
+      <Button
+        label="Descargar PDF"
+        icon="pi pi-download"
+        className="p-button-sm p-button-info"
+        onClick={() => window.open(downloadUrl, '_blank')}
       />
     );
   };
@@ -32,7 +36,6 @@ const HomePage = () => {
   return (
     <div className="container mt-4">
       <div className="row g-5">
-        {/* Columna 1: Video (ahora responsivo) */}
         <div className="col-lg-6">
           <div className="ratio ratio-16x9">
             <iframe
@@ -43,19 +46,15 @@ const HomePage = () => {
             ></iframe>
           </div>
         </div>
-
-        {/* Columna 2: Convocatorias y Descripción */}
         <div className="col-lg-6">
           <h3>Convocatorias Internas Abiertas</h3>
-          
+
           {loading && (
             <div className="d-flex justify-content-center align-items-center" style={{ height: '200px' }}>
-              <ProgressSpinner style={{width: '50px', height: '50px'}} strokeWidth="8" />
+              <ProgressSpinner style={{ width: '50px', height: '50px' }} strokeWidth="8" />
             </div>
           )}
-
           {error && <div className="alert alert-danger">Error: {error}</div>}
-
           {!loading && !error && (
             <DataTable value={convocatorias} responsiveLayout="scroll" emptyMessage="No hay convocatorias abiertas en este momento.">
               <Column field="nombre_convocatoria" header="Nombre" sortable></Column>
@@ -64,11 +63,10 @@ const HomePage = () => {
               <Column header="Documento" body={downloadBodyTemplate}></Column>
             </DataTable>
           )}
-
         </div>
       </div>
     </div>
   );
 };
 
-export default HomePage;
+export default FormalHomePage;

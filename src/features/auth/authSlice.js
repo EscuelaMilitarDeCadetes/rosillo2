@@ -1,18 +1,42 @@
-// e:\PROYECTO_ROSILLO\django_react\react_rosillo\src\features\auth\authSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../api/axiosInstance';
 
-// Función asíncrona para el login
+// --- LOGIN ---
+// LoginView (apps/usuarios/views/auth_views.py) devuelve:
+//   { access, refresh, user: {id, username, email}, debe_cambiar_password }
+// NO devuelve roles, así que justo después de loguear se pide el perfil
+// propio a GET usuarios/me/ (ver MeView) para tener roles disponibles.
+//
+// 'sistema' ('formal' | 'formativa') es un concepto puramente de frontend:
+// el backend no lo conoce. Se guarda para que, tras un refresh de página,
+// Navbar y las rutas por defecto sepan a qué dominio volver.
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
-  async ({ username, password }, { rejectWithValue }) => {
+  async ({ username, password, sistema = 'formal' }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('login/', { username, password });
-      // Guardar el token en localStorage para persistencia
-      localStorage.setItem('authToken', response.data.token);
-      return response.data;
+      // Antes: siempre 'usuarios/login/' (endpoint que ya no existe).
+      // Ahora: el endpoint depende del sistema al que se está logueando.
+      const endpoint = sistema === 'formativa'
+        ? 'usuarios/login/formativa/'
+        : 'usuarios/login/formal/';
+
+      const { data: authData } = await axiosInstance.post(endpoint, {
+        username,
+        password,
+      });
+      localStorage.setItem('accessToken', authData.access);
+      localStorage.setItem('refreshToken', authData.refresh);
+      localStorage.setItem('sistemaActivo', sistema);
+      const { data: profile } = await axiosInstance.get('usuarios/me/');
+      return {
+        user: profile,
+        access: authData.access,
+        refresh: authData.refresh,
+        roles: profile.roles,
+        debeCambiarPassword: authData.debe_cambiar_password,
+        sistema,
+      };
     } catch (error) {
-      // Manejo de errores del backend
       if (error.response && error.response.data) {
         return rejectWithValue(error.response.data.error || 'Credenciales inválidas');
       }
@@ -21,75 +45,80 @@ export const loginUser = createAsyncThunk(
   }
 );
 
-// Función asíncrona para el logout (si tu backend tiene un endpoint de logout)
+// --- RESTAURAR SESIÓN AL RECARGAR LA PÁGINA ---
+export const loadSession = createAsyncThunk(
+  'auth/loadSession',
+  async (_, { rejectWithValue }) => {
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) {
+      return rejectWithValue('Sin sesión activa');
+    }
+    try {
+      const { data: profile } = await axiosInstance.get('usuarios/me/');
+      return {
+        user: profile,
+        access: accessToken,
+        refresh: localStorage.getItem('refreshToken'),
+        roles: profile.roles,
+        debeCambiarPassword: profile.debe_cambiar_password,
+        sistema: localStorage.getItem('sistemaActivo') || 'formal',
+      };
+    } catch (error) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('sistemaActivo');
+      return rejectWithValue('Sesión inválida o expirada');
+    }
+  }
+);
+
+// --- LOGOUT ---
 export const logoutUser = createAsyncThunk(
   'auth/logoutUser',
   async (_, { rejectWithValue }) => {
+    const refreshToken = localStorage.getItem('refreshToken');
     try {
-      // Si tienes un endpoint de logout en Django para invalidar el token
-      // await axiosInstance.post('logout/'); 
-      localStorage.removeItem('authToken');
+      if (refreshToken) {
+        await axiosInstance.post('usuarios/logout/', { refresh: refreshToken });
+      }
       return true;
     } catch (error) {
-      // Aunque el logout falle en el backend, en el frontend lo consideramos exitoso
-      localStorage.removeItem('authToken');
       return rejectWithValue(error.message);
+    } finally {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('sistemaActivo');
     }
   }
 );
 
-// Función asíncrona para confirmar el restablecimiento de contraseña
-export const resetPasswordConfirm = createAsyncThunk(
-  'auth/resetPasswordConfirm',
-  async ({ token, password }, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.post('password-reset/confirm/', { token, password });
-      return response.data;
-    } catch (error) {
-      if (error.response && error.response.data) {
-        return rejectWithValue(error.response.data.error || 'El enlace de restablecimiento es inválido o ha expirado.');
-      }
-      return rejectWithValue(error.message);
-    }
-  }
-);
+const initialState = {
+  user: null,
+  roles: [],
+  isAuthenticated: !!localStorage.getItem('accessToken'),
+  debeCambiarPassword: false,
+  sistemaActivo: localStorage.getItem('sistemaActivo') || null,
+  loading: false,
+  error: null,
+};
 
 const authSlice = createSlice({
   name: 'auth',
-  initialState: {
-    user: null,
-    token: localStorage.getItem('authToken') || null, // Cargar token al iniciar la app
-    roles: [],
-    isAuthenticated: !!localStorage.getItem('authToken'), // Verificar si hay token
-    loading: false,
-    error: null,
-    resetPasswordSuccess: false, // Nuevo estado para manejar el éxito del reset
-  },
+  initialState,
   reducers: {
-    // Reducer para inicializar el estado de autenticación al cargar la app
-    // Esto es útil si quieres cargar el usuario y roles al refrescar la página
-    setAuthData: (state, action) => {
-      state.user = action.payload.user;
-      state.token = action.payload.token;
-      state.roles = action.payload.roles;
-      state.isAuthenticated = !!action.payload.token;
-    },
-    // Reducer para limpiar el estado de autenticación (logout local)
     clearAuthData: (state) => {
       state.user = null;
-      state.token = null;
       state.roles = [];
       state.isAuthenticated = false;
-      localStorage.removeItem('authToken');
-    },
-    // Reducer para resetear el estado de éxito del cambio de contraseña
-    resetPasswordStatus: (state) => {
-      state.resetPasswordSuccess = false;
+      state.debeCambiarPassword = false;
+      state.sistemaActivo = null;
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('sistemaActivo');
     },
   },
   extraReducers: (builder) => {
     builder
-      // Manejo del login
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -97,53 +126,47 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.isAuthenticated = true;
-        state.user = { id: action.payload.user_id, username: action.payload.username };
-        state.token = action.payload.token;
+        state.user = action.payload.user;
         state.roles = action.payload.roles;
+        state.debeCambiarPassword = action.payload.debeCambiarPassword;
+        state.sistemaActivo = action.payload.sistema;
         state.error = null;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.isAuthenticated = false;
         state.user = null;
-        state.token = null;
         state.roles = [];
         state.error = action.payload || 'Fallo en el inicio de sesión';
       })
-      // Manejo del logout
+      .addCase(loadSession.fulfilled, (state, action) => {
+        state.isAuthenticated = true;
+        state.user = action.payload.user;
+        state.roles = action.payload.roles;
+        state.debeCambiarPassword = action.payload.debeCambiarPassword;
+        state.sistemaActivo = action.payload.sistema;
+      })
+      .addCase(loadSession.rejected, (state) => {
+        state.isAuthenticated = false;
+        state.user = null;
+        state.roles = [];
+        state.sistemaActivo = null;
+      })
       .addCase(logoutUser.fulfilled, (state) => {
-        state.loading = false;
         state.isAuthenticated = false;
         state.user = null;
-        state.token = null;
         state.roles = [];
+        state.debeCambiarPassword = false;
+        state.sistemaActivo = null;
         state.error = null;
       })
-      .addCase(logoutUser.rejected, (state, action) => {
-        // Aunque haya un error en el backend, el frontend ya se deslogueó
-        state.loading = false;
+      .addCase(logoutUser.rejected, (state) => {
         state.isAuthenticated = false;
         state.user = null;
-        state.token = null;
         state.roles = [];
-        state.error = action.payload || 'Error al cerrar sesión, pero se deslogueó localmente.';
-      })
-      // Manejo del reset de contraseña
-      .addCase(resetPasswordConfirm.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-        state.resetPasswordSuccess = false;
-      })
-      .addCase(resetPasswordConfirm.fulfilled, (state) => {
-        state.loading = false;
-        state.resetPasswordSuccess = true;
-      })
-      .addCase(resetPasswordConfirm.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
       });
   },
 });
 
-export const { setAuthData, clearAuthData, resetPasswordStatus } = authSlice.actions;
+export const { clearAuthData } = authSlice.actions;
 export default authSlice.reducer;

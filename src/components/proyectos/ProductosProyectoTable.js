@@ -9,7 +9,7 @@ import { Tag } from 'primereact/tag';
 import AddProductoProyectoModal from './AddProductoProyectoModal'; // Nuevo modal
 import ConfirmationModal from '../common/ConfirmationModal';
 
-const API_BASE_URL = 'http://localhost:8082/api/'; // Asegúrate de que este sea el puerto de tu backend Django
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082/api/';
 
 
 

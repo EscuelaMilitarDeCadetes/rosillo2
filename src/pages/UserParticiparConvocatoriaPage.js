@@ -3,6 +3,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchConvocatoria, createProyecto } from '../../features/convocatorias/convocatoriasSlice';
 import { InputText } from 'primereact/inputtext';
+import { InputNumber } from 'primereact/inputnumber';
+import { Checkbox } from 'primereact/checkbox';
 import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
 import { FileUpload } from 'primereact/fileupload';
@@ -17,7 +19,10 @@ const UserParticiparConvocatoriaPage = () => {
 
   const [formData, setFormData] = useState({
     titulo: '',
+    unidadEjecutora: '',
+    lineaInvestigacion: '',
     financiado: false,
+    valorSolicitado: 0,
     alianza: false,
     docProyecto: null,
     docCarta: null,
@@ -44,6 +49,14 @@ const UserParticiparConvocatoriaPage = () => {
       setValidationError('El título del proyecto y el documento del proyecto son obligatorios.');
       return false;
     }
+    if (!formData.unidadEjecutora || !formData.lineaInvestigacion) {
+      setValidationError('La unidad ejecutora y la línea de investigación son obligatorias.');
+      return false;
+    }
+    if (formData.financiado && (!formData.valorSolicitado || formData.valorSolicitado <= 0)) {
+      setValidationError('Si el proyecto es financiado, debe indicar el valor solicitado.');
+      return false;
+    }
     setValidationError('');
     return true;
   };
@@ -65,12 +78,8 @@ const UserParticiparConvocatoriaPage = () => {
 
   const header = <h2>Participar en Convocatoria: {convocatoriaActual?.nombre_convocatoria}</h2>;
 
-  if (loading) {
+  if (loading && !convocatoriaActual) {
     return <div className="container mt-5 text-center"><ProgressSpinner /></div>;
-  }
-
-  if (error) {
-    return <div className="container mt-5 alert alert-danger">{error}</div>;
   }
 
   return (
@@ -83,23 +92,78 @@ const UserParticiparConvocatoriaPage = () => {
               <label htmlFor="titulo">Título del Proyecto</label>
             </span>
           </div>
+
+          <div className="field col-6">
+            <span className="p-float-label">
+              <InputText id="unidadEjecutora" value={formData.unidadEjecutora} onChange={(e) => handleInputChange(e, 'unidadEjecutora')} required />
+              <label htmlFor="unidadEjecutora">Unidad Ejecutora</label>
+            </span>
+          </div>
+
+          <div className="field col-6">
+            <span className="p-float-label">
+              <InputText id="lineaInvestigacion" value={formData.lineaInvestigacion} onChange={(e) => handleInputChange(e, 'lineaInvestigacion')} required />
+              <label htmlFor="lineaInvestigacion">Línea de Investigación</label>
+            </span>
+          </div>
+
+          <div className="field col-6 flex align-items-center">
+            <Checkbox
+              inputId="alianza"
+              checked={formData.alianza}
+              onChange={(e) => setFormData((prev) => ({ ...prev, alianza: e.checked }))}
+            />
+            <label htmlFor="alianza" className="ms-2">¿Es un proyecto en alianza?</label>
+          </div>
+
+          <div className="field col-6 flex align-items-center">
+            <Checkbox
+              inputId="financiado"
+              checked={formData.financiado}
+              onChange={(e) => setFormData((prev) => ({ ...prev, financiado: e.checked, valorSolicitado: e.checked ? prev.valorSolicitado : 0 }))}
+            />
+            <label htmlFor="financiado" className="ms-2">¿Es un proyecto financiado?</label>
+          </div>
+
+          {formData.financiado && (
+            <div className="field col-12">
+              <span className="p-float-label">
+                <InputNumber
+                  id="valorSolicitado"
+                  value={formData.valorSolicitado}
+                  onValueChange={(e) => setFormData((prev) => ({ ...prev, valorSolicitado: e.value }))}
+                  mode="currency"
+                  currency="COP"
+                  locale="es-CO"
+                />
+                <label htmlFor="valorSolicitado">Valor Solicitado</label>
+              </span>
+            </div>
+          )}
+
           <div className="field col-12">
-            <label htmlFor="docProyecto">Documento del Proyecto</label>
-            <FileUpload name="docProyecto" customUpload uploadHandler={(e) => handleFileUpload(e, 'docProyecto')} chooseLabel="Seleccionar Archivo" mode="basic" auto accept=".pdf,.doc,.docx" />
+            <label htmlFor="docProyecto">Documento del Proyecto (obligatorio, solo PDF)</label>
+            <FileUpload name="docProyecto" customUpload uploadHandler={(e) => handleFileUpload(e, 'docProyecto')} chooseLabel="Seleccionar Archivo" mode="basic" auto accept=".pdf" />
             {formData.docProyecto && <small className="p-text-secondary ms-2">{formData.docProyecto.name}</small>}
           </div>
+
           <div className="field col-12">
-            <label htmlFor="docCarta">Carta de Presentación (Opcional)</label>
-            <FileUpload name="docCarta" customUpload uploadHandler={(e) => handleFileUpload(e, 'docCarta')} chooseLabel="Seleccionar Archivo" mode="basic" auto accept=".pdf,.doc,.docx" />
+            <label htmlFor="docCarta">Carta de Compromiso (Opcional, solo PDF)</label>
+            <FileUpload name="docCarta" customUpload uploadHandler={(e) => handleFileUpload(e, 'docCarta')} chooseLabel="Seleccionar Archivo" mode="basic" auto accept=".pdf" />
             {formData.docCarta && <small className="p-text-secondary ms-2">{formData.docCarta.name}</small>}
           </div>
+
           <div className="field col-12">
-            <label htmlFor="docAlianza">Documento de Alianza (Opcional)</label>
-            <FileUpload name="docAlianza" customUpload uploadHandler={(e) => handleFileUpload(e, 'docAlianza')} chooseLabel="Seleccionar Archivo" mode="basic" auto accept=".pdf,.doc,.docx" />
+            <label htmlFor="docAlianza">Documento de Alianza (Opcional, solo PDF)</label>
+            <FileUpload name="docAlianza" customUpload uploadHandler={(e) => handleFileUpload(e, 'docAlianza')} chooseLabel="Seleccionar Archivo" mode="basic" auto accept=".pdf" />
             {formData.docAlianza && <small className="p-text-secondary ms-2">{formData.docAlianza.name}</small>}
           </div>
         </div>
-        {validationError && <div className="alert alert-danger mt-3">{validationError}</div>}
+
+        {(validationError || error) && (
+          <div className="alert alert-danger mt-3">{validationError || JSON.stringify(error)}</div>
+        )}
+
         <div className="d-flex justify-content-end mt-4">
           <Button label="Participar" className="p-button-success" onClick={handleShowConfirmation} />
         </div>
@@ -115,8 +179,13 @@ const UserParticiparConvocatoriaPage = () => {
         <h6>Resumen de la participación:</h6>
         <ul>
           <li><strong>Título del Proyecto:</strong> {formData.titulo}</li>
+          <li><strong>Unidad Ejecutora:</strong> {formData.unidadEjecutora}</li>
+          <li><strong>Línea de Investigación:</strong> {formData.lineaInvestigacion}</li>
+          <li><strong>¿Alianza?:</strong> {formData.alianza ? 'Sí' : 'No'}</li>
+          <li><strong>¿Financiado?:</strong> {formData.financiado ? 'Sí' : 'No'}</li>
+          {formData.financiado && <li><strong>Valor Solicitado:</strong> {formData.valorSolicitado}</li>}
           <li><strong>Documento del Proyecto:</strong> {formData.docProyecto?.name || 'N/A'}</li>
-          <li><strong>Carta de Presentación:</strong> {formData.docCarta?.name || 'N/A'}</li>
+          <li><strong>Carta de Compromiso:</strong> {formData.docCarta?.name || 'N/A'}</li>
           <li><strong>Documento de Alianza:</strong> {formData.docAlianza?.name || 'N/A'}</li>
         </ul>
       </ConfirmationModal>

@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { Dialog } from 'primereact/dialog';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
-import { Button } from 'primereact/button';
 import { ProgressSpinner } from 'primereact/progressspinner';
+import { Tag } from 'primereact/tag';
 import { fetchProjectsByConvocatoria } from '../../features/convocatorias/convocatoriasSlice';
 
 const ProjectsByConvocatoriaModal = ({ visible, onHide, convocatoria }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { projectsInConvocatoria, projectsLoading, projectsError } = useSelector((state) => state.convocatorias);
   const [globalFilter, setGlobalFilter] = useState('');
 
@@ -29,10 +31,69 @@ const ProjectsByConvocatoriaModal = ({ visible, onHide, convocatoria }) => {
     </div>
   );
 
-  const actionBodyTemplate = (rowData) => {
+  const estadoBodyTemplate = (rowData) => (
+    <Tag
+      severity={rowData.estado_finalizado_calificacion ? 'success' : 'warning'}
+      value={rowData.estado_finalizado_calificacion ? 'FINALIZADO' : 'EN PROCESO'}
+    />
+  );
+
+  const montoAprobadoBodyTemplate = (rowData) => {
+    if (!rowData.monto_aprobado) {
+      return <span className="text-muted">sin aprobar</span>;
+    }
+    return Number(rowData.monto_aprobado).toLocaleString('es-CO', { minimumFractionDigits: 2 });
+  };
+
+  const responsableBodyTemplate = (rowData) => rowData.responsable || '—';
+
+  // Réplica de los 4 th:if del fragmento modalProyectosPorConvocatoria.html:
+  //   1) FINALIZADO + NO_APROBADO      -> texto plano, sin navegación
+  //   2) FINALIZADO + APROBADO         -> ver información completa del proyecto
+  //   3) EN PROCESO + sin corrección   -> ir a calificar
+  //   4) EN PROCESO + corrección habilitada -> texto plano, esperando corrección
+  const tituloBodyTemplate = (rowData) => {
+    const {
+      estado_finalizado_calificacion: finalizado,
+      calificacion_ultimo_filtro_calificacion: resultado,
+      modificacion_documento_proyecto: enCorreccion,
+      proyecto,
+      proyecto_titulo: titulo,
+      id: vinculoId,
+    } = rowData;
+
+    if (finalizado && resultado === 'NO_APROBADO') {
+      return <span>{titulo}</span>;
+    }
+    if (finalizado && resultado === 'APROBADO') {
+      return (
+        <span
+          role="link"
+          title="Click aquí para visualizar la información de este proyecto"
+          style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
+          onClick={() => navigate(`/proyectos/${proyecto}`)}
+        >
+          {titulo}
+        </span>
+      );
+    }
+    if (!finalizado && !enCorreccion) {
+      return (
+        <span
+          role="link"
+          title="Click aquí para calificar este proyecto"
+          style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
+          onClick={() => navigate(`/calificar/${vinculoId}`)}
+        >
+          {titulo}
+        </span>
+      );
+    }
+    // !finalizado && enCorreccion
     return (
-      <Button icon="pi pi-eye" className="p-button-rounded p-button-info p-button-sm" tooltip="Ver Detalles" />
-      // Aquí podrías añadir más botones como "Calificar", "Ver Documentos", etc.
+      <span title="Espere a que se habilite nuevamente la calificación del proyecto">
+        {titulo}
+      </span>
     );
   };
 
@@ -43,9 +104,7 @@ const ProjectsByConvocatoriaModal = ({ visible, onHide, convocatoria }) => {
           <ProgressSpinner style={{ width: '50px', height: '50px' }} strokeWidth="8" />
         </div>
       )}
-
       {projectsError && <div className="alert alert-danger mt-3">Error: {projectsError}</div>}
-
       {!projectsLoading && !projectsError && (
         <DataTable
           value={projectsInConvocatoria}
@@ -53,14 +112,15 @@ const ProjectsByConvocatoriaModal = ({ visible, onHide, convocatoria }) => {
           rows={10}
           rowsPerPageOptions={[5, 10, 25]}
           globalFilter={globalFilter}
-          emptyMessage="No se encontraron proyectos para esta convocatoria."
+          emptyMessage="No se encontraron proyectos vinculados a esta convocatoria."
           responsiveLayout="scroll"
         >
-          <Column field="proyecto.titulo" header="Título del Proyecto" sortable />
-          <Column field="proyecto.codigo" header="Código" sortable />
-          <Column field="estado" header="Estado Participación" sortable />
-          <Column field="calificacion_ultimo_filtro_calificacion" header="Calificación" sortable />
-          <Column header="Acciones" body={actionBodyTemplate} />
+          <Column header="Proyecto" body={tituloBodyTemplate} sortable sortField="proyecto_titulo" />
+          <Column header="Monto Aprobado" body={montoAprobadoBodyTemplate} sortable sortField="monto_aprobado" />
+          <Column header="Responsable" body={responsableBodyTemplate} sortable sortField="responsable" />
+          <Column field="ultimo_filtro_calificacion" header="Última fase calificada" sortable />
+          <Column field="calificacion_ultimo_filtro_calificacion" header="Resultado última fase calificada" sortable />
+          <Column header="Estado de calificación" body={estadoBodyTemplate} sortable />
         </DataTable>
       )}
     </Dialog>

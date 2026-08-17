@@ -1,147 +1,77 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
-import { Calendar } from "primereact/calendar";
-import { addRoleToUser } from '../../features/users/usersSlice';
-import ConfirmationModal from '../common/ConfirmationModal';
+import { Message } from "primereact/message";
+import { addRoleToUser } from "../../features/usuarios/usersSlice.js";
+import ConfirmationModal from "../common/ConfirmationModal";
 
+/**
+ * Modal para agregar un rol de plataforma a un usuario existente.
+ *
+ * apps/usuarios/views/rol_x_usuario_viewset.py -> @action 'agregar-rol'
+ * -> RolXUsuarioService.agregar_rol_a_usuario(usuario_id, rol_id, ejecutor).
+ *
+ * A diferencia de la versión anterior: se quitaron los campos de Facultad,
+ * Grupo y Fecha de Vinculación. El backend real de esta acción SOLO acepta
+ * usuario_id y rol_id — no existe tal cosa como "agregar el rol GRUPO con
+ * fecha de vinculación X" en este endpoint. Vincular a una persona a un
+ * grupo/facultad es un concepto distinto (tabla PersonaXGrupo), que ya
+ * cubre AssignResearcherModal.js posteando a institucional/persona-grupo/.
+ * La versión anterior mezclaba ambos conceptos y esos campos nunca habrían
+ * llegado a ningún lado en el backend real.
+ */
 const AddRoleModal = ({ visible, onHide }) => {
   const dispatch = useDispatch();
-  // Obtener todos los datos necesarios del store de metadata
-  const {
-    usuarios,
-    roles,
-    rolesGrupo, // Aunque no se usa directamente aquí, es bueno tenerlo si se necesitara
-    facultades,
-    grupos,
-    loading: metadataLoading,
-  } = useSelector((state) => state.metadata);
-  const { loading: actionLoading, error: actionError } = useSelector(
-    (state) => state.users
-  );
+  const { usuarios, roles, loading: metadataLoading } = useSelector((state) => state.metadata);
+  const { loading: actionLoading, error: actionError } = useSelector((state) => state.usuarios);
 
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedRole, setSelectedRole] = useState(null);
-  const [selectedFaculty, setSelectedFaculty] = useState(null);
-  const [selectedGroup, setSelectedGroup] = useState(null);
-  const [vinculacionDate, setVinculacionDate] = useState(null);
-  const [validationError, setValidationError] = useState('');
-
-  // Estados para controlar la visibilidad de los campos condicionales
-  const [showFaculty, setShowFaculty] = useState(false);
-  const [showGroup, setShowGroup] = useState(false);
-
-  // Estado para el modal de confirmación
+  const [validationError, setValidationError] = useState("");
   const [isConfirmVisible, setIsConfirmVisible] = useState(false);
 
-  // Limpiar el formulario cuando el modal se cierra
   useEffect(() => {
     if (!visible) {
       setSelectedUser(null);
       setSelectedRole(null);
-      setSelectedFaculty(null);
-      setSelectedGroup(null);
-      setVinculacionDate(null);
-      setShowFaculty(false);
-      setShowGroup(false);
+      setValidationError("");
     }
   }, [visible]);
 
-  // Lógica para mostrar/ocultar campos cuando cambia el rol seleccionado
-  useEffect(() => {
-    // Asumimos que los roles de Facultad y Grupo tienen nombres específicos o IDs conocidos.
-    // Aquí usamos nombres para que sea más legible.
-    const role = roles.find((r) => r.id === selectedRole);
-    if (role) {
-      // Asumiendo que los roles de facultad y grupo tienen IDs 5 y 6 respectivamente,
-      // como se infiere de tu código Thymeleaf original (ddlRol.value==5, ddlRol.value==6)
-      setShowFaculty(role.id === 5); // ID para ROLE_FACULTADES
-      setShowGroup(role.id === 6); // ID para ROLE_GRUPOS
-    } else {
-      setShowFaculty(false);
-      setShowGroup(false);
-    }
-  }, [selectedRole, roles]);
-
-  // Validar antes de mostrar la confirmación
   const validateForm = () => {
     if (!selectedUser || !selectedRole) {
-      setValidationError('Debe seleccionar un usuario y un rol.');
+      setValidationError("Debe seleccionar un usuario y un rol.");
       return false;
     }
-    if (showFaculty && !selectedFaculty) {
-      setValidationError('Debe seleccionar una facultad.'); return false;
-    }
-    if (showGroup && !selectedGroup) {
-      setValidationError('Debe seleccionar un grupo de investigación.'); return false;
-    }
+    setValidationError("");
     return true;
   };
 
   const handleShowConfirmation = () => {
-    // Antes de mostrar la confirmación, oculta el formulario principal
+    if (!validateForm()) return;
     onHide();
     setIsConfirmVisible(true);
   };
 
   const handleConfirmAddRole = () => {
-    if (!validateForm()) {
-      setIsConfirmVisible(false); // Oculta la confirmación si la validación falla
-      return;
-    }
-
-    // Formatear la fecha a YYYY-MM-DD si es necesario
-    const formattedDate = vinculacionDate ? vinculacionDate.toISOString().split('T')[0] : null;
-
-    const payload = {
-      usuario: selectedUser,
-      rol: selectedRole,
-      ...(showFaculty && { facultad: selectedFaculty }), // Incluir solo si aplica
-      ...(showGroup && { grupo: selectedGroup }),       // Incluir solo si aplica
-      ...((showFaculty || showGroup) && { vinculacion: formattedDate }), // Incluir solo si aplica
-      estado: true, // Asumimos que el rol se agrega como activo
-    };
-
-    dispatch(addRoleToUser(payload)).then((result) => {
+    dispatch(addRoleToUser({ usuario_id: selectedUser, rol_id: selectedRole })).then((result) => {
       if (addRoleToUser.fulfilled.match(result)) {
-        setIsConfirmVisible(false); // Cierra el modal de confirmación
+        setIsConfirmVisible(false);
       }
     });
   };
 
-  const handleAddRole = () => {
-    if (validateForm()) {
-      handleShowConfirmation();
-    }
-  };
-
   const footer = (
     <div>
-      <Button
-        label="Cancelar"
-        icon="pi pi-times"
-        onClick={onHide}
-        className="p-button-text"
-      />
-      <Button
-        label="Agregar Rol"
-        icon="pi pi-check"
-        onClick={handleShowConfirmation}
-        autoFocus
-      />
+      <Button label="Cancelar" icon="pi pi-times" onClick={onHide} className="p-button-text" />
+      <Button label="Agregar Rol" icon="pi pi-check" onClick={handleShowConfirmation} autoFocus />
     </div>
   );
 
   return (
-    <Dialog
-      header="Agregar Rol a Usuario"
-      visible={visible}
-      style={{ width: "40vw" }}
-      footer={footer}
-      onHide={onHide}
-    >
+    <Dialog header="Agregar Rol a Usuario" visible={visible} style={{ width: "40vw" }} footer={footer} onHide={onHide}>
       <div className="p-fluid">
         <div className="field mb-3">
           <label htmlFor="user">Usuario</label>
@@ -171,97 +101,31 @@ const AddRoleModal = ({ visible, onHide }) => {
             loading={metadataLoading}
           />
         </div>
-
-        {/* Campos Condicionales */}
-        {showFaculty && (
-          <div className="field mb-3">
-            <label htmlFor="faculty">Facultad</label>
-            <Dropdown
-              inputId="faculty"
-              value={selectedFaculty}
-              options={facultades}
-              onChange={(e) => setSelectedFaculty(e.value)}
-              optionLabel="nombre_facultad"
-              optionValue="id"
-              filter
-              placeholder="Seleccione una facultad"
-              loading={metadataLoading}
-            />
-          </div>
-        )}
-        {showGroup && (
-          <div className="field mb-3">
-            <label htmlFor="group">Grupo de Investigación</label>
-            <Dropdown
-              inputId="group"
-              value={selectedGroup}
-              options={grupos}
-              onChange={(e) => setSelectedGroup(e.value)}
-              optionLabel="nombre_grupo"
-              optionValue="id"
-              filter
-              placeholder="Seleccione un grupo"
-              loading={metadataLoading}
-            />
-          </div>
-        )}
-        {(showFaculty || showGroup) && (
-          <div className="field mb-3">
-            <label htmlFor="vinculacion">Fecha de Vinculación</label>
-            <Calendar
-              inputId="vinculacion"
-              value={vinculacionDate}
-              onChange={(e) => setVinculacionDate(e.value)}
-              dateFormat="yy-mm-dd"
-            />
-          </div>
-        )}
-
-        {validationError && <div className="alert alert-danger mt-3">{validationError}</div>}
+        {validationError && <Message severity="error" className="mt-3 w-full" text={validationError} />}
         {actionError && (
-          <div className="alert alert-danger mt-3">{actionError}</div>
+          <Message
+            severity="error"
+            className="mt-3 w-full"
+            text={typeof actionError === "string" ? actionError : "Error al agregar el rol."}
+          />
         )}
       </div>
-      {/* Modal de Confirmación */}
+
       <ConfirmationModal
         visible={isConfirmVisible}
-        onHide={() => {
-          setIsConfirmVisible(false);
-          // Si el modal principal ya se ocultó, podrías querer mostrarlo de nuevo aquí
-          // para que el usuario pueda corregir el formulario.
-          // O simplemente dejar que el usuario cierre el modal de confirmación y luego el principal.
-        }}
-        onConfirm={handleConfirmAddRole} // Llama a la función que despacha la acción
+        onHide={() => setIsConfirmVisible(false)}
+        onConfirm={handleConfirmAddRole}
         header="¿Deseas confirmar la acción?"
         loading={actionLoading}
       >
         <h6>Resumen de datos ingresados:</h6>
-        <ul>          
+        <ul>
           <li>
-            <strong>Usuario:</strong>{" "}
-            {usuarios.find((u) => u.id === selectedUser)?.username || "N/A"}
+            <strong>Usuario:</strong> {usuarios.find((u) => u.id === selectedUser)?.username || "N/A"}
           </li>
           <li>
-            <strong>Rol:</strong>{" "}
-            {roles.find((r) => r.id === selectedRole)?.nombre_rol || "N/A"} (ID: {selectedRole})
+            <strong>Rol:</strong> {roles.find((r) => r.id === selectedRole)?.nombre_rol || "N/A"}
           </li>
-          {showFaculty && (
-            <li>
-              <strong>Facultad:</strong>{" "}
-              {facultades.find((f) => f.id === selectedFaculty)?.nombre_facultad || "N/A"} (ID: {selectedFaculty})
-            </li>
-          )}
-          {showGroup && (
-            <li>
-              <strong>Grupo:</strong>{" "}              
-              {grupos.find((g) => g.id === selectedGroup)?.nombre_grupo || "N/A"} (ID: {selectedGroup})
-            </li>
-          )}
-          {(showFaculty || showGroup) && vinculacionDate && (
-            <li>
-              <strong>Fecha de Vinculación:</strong> {vinculacionDate.toLocaleDateString()}
-            </li>
-          )}
         </ul>
       </ConfirmationModal>
     </Dialog>

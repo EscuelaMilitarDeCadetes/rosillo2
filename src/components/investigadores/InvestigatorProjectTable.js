@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchInvestigatorAssignments } from '../../features/users/usersSlice';
+import { fetchInvestigatorAssignments } from '../../features/usuarios/usersSlice.js';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
@@ -8,7 +8,7 @@ import { Button } from 'primereact/button';
 
 const InvestigatorProjectTable = () => {
   const dispatch = useDispatch();
-  const { investigatorAssignments, loading } = useSelector((state) => state.users);
+  const { investigatorAssignments, loading } = useSelector((state) => state.usuarios);
   const [globalFilter, setGlobalFilter] = useState('');
 
   useEffect(() => {

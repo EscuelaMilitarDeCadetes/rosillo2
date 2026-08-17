@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchProjectsWithBudgets } from '../../features/projects/projectsSlice';
+import { fetchProjectsWithBudgets } from '../../features/proyectos/projectsSlice.js';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
