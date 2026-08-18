@@ -1,6 +1,6 @@
 
 from rest_framework.routers import DefaultRouter
-
+from django.urls import path
 from apps.institucional.views import (
     PersonaViewSet,
     GradoEstudiosViewSet,
@@ -10,6 +10,7 @@ from apps.institucional.views import (
     PersonaXGrupoViewSet,
     RolGrupoViewSet,
     GerenteViewSet,
+    MiPerfilView,
 )
 
 router = DefaultRouter()
@@ -22,4 +23,6 @@ router.register(r'persona-grupo', PersonaXGrupoViewSet, basename='persona-x-grup
 router.register(r'roles-grupo', RolGrupoViewSet, basename='rol-grupo')
 router.register(r'gerentes', GerenteViewSet, basename='gerente')
 
-urlpatterns = router.urls
+urlpatterns = router.urls + [
+    path("mi-perfil/", MiPerfilView.as_view(), name="mi-perfil"),
+]
