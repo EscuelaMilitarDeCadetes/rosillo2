@@ -1,3 +1,4 @@
+# apps/common/selectors/historial_selector.py
 from django.contrib.contenttypes.models import ContentType
 from apps.common.models import Historial
 
@@ -65,3 +66,22 @@ class HistorialSelector:
             .filter(accion__icontains=texto)
             .order_by('-fecha_creacion')
         )
+        
+    @staticmethod
+    def buscar_con_filtros(texto=None, usuario_id=None, fecha_inicio=None,
+                            fecha_fin=None, solo_sistema=False):
+        """
+        Combina en una sola consulta lo que antes eran 3 acciones separadas
+        (buscar, por_usuario, por_rango_fechas). Todos los filtros son
+        opcionales y se aplican en conjunto (AND), no exclusivos entre sí.
+        """
+        qs = Historial.objects.select_related('usuario', 'content_type').all()
+        if texto:
+            qs = qs.filter(accion__icontains=texto)
+        if usuario_id:
+            qs = qs.filter(usuario_id=usuario_id)
+        if solo_sistema:
+            qs = qs.filter(usuario__isnull=True)
+        if fecha_inicio and fecha_fin:
+            qs = qs.filter(fecha_creacion__range=(fecha_inicio, fecha_fin))
+        return qs.order_by('-fecha_creacion')

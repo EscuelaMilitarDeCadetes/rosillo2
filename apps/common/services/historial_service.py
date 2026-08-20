@@ -1,3 +1,4 @@
+# apps/common/services/historial_service.py
 from django.utils import timezone
 from ..models import Historial
 from django.contrib.contenttypes.models import ContentType
@@ -57,3 +58,13 @@ class HistorialService:
     @staticmethod
     def buscar_por_accion(texto):
         return HistorialSelector.buscar_por_accion(texto)
+
+    @staticmethod
+    def buscar_con_filtros(filtros):
+        return HistorialSelector.buscar_con_filtros(
+            texto=filtros.get("texto"),
+            usuario_id=filtros.get("usuario_id"),
+            fecha_inicio=filtros.get("fecha_inicio"),
+            fecha_fin=filtros.get("fecha_fin"),
+            solo_sistema=filtros.get("solo_sistema", False),
+        )

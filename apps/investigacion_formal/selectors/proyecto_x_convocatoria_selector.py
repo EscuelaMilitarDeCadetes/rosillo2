@@ -1,3 +1,4 @@
+# apps/investigacion_formal/selectors/proyecto_x_convocatoria_selector.py
 from apps.investigacion_formal.models import ProyectoXConvocatoria
 
 
@@ -48,7 +49,7 @@ class ProyectoXConvocatoriaSelector:
     def listar_por_usuario(usuario_id):
         return (
             ProyectoXConvocatoria.objects
-            .select_related('convocatoria', 'proyecto')
+            .select_related("proyecto", "convocatoria")
             .filter(proyecto__usuario_id=usuario_id)
         )
 
@@ -151,12 +152,25 @@ class ProyectoXConvocatoriaSelector:
     def buscar_con_filtros(convocatoria=None, codigo=None, titulo=None,
                             financiado=None, alianza=None, responsable=None,
                             calificacion=None, anio_inicio=None, anio_fin=None,
-                            interno=None, gruplac=None, estado=None):
+                            interno=None, gruplac=None, estado=None,
+                            facultad_id=None, grupo_id=None,
+                            estado_finalizado_calificacion=None,
+                            anio_convocatoria=None):
         """
-        Réplica de ProyectoXConvocatoriaSpecification.conFiltros() del
-        Thymeleaf original: todos los parámetros son opcionales y
-        combinables (AND); solo se añade un filtro si su valor no es None
-        (o no vacío, para los de texto), igual que el original.
+        'responsable' filtra por persona (nombre/apellido) — el
+        responsable real de un proyecto es la Facultad o el Grupo, no la
+        persona (ver ProyectoXConvocatoriaSerializer.get_responsable, que ya
+        devuelve facultad.abreviatura / grupo.sigla_grupo, no un nombre).
+        Ahora replica el mismo encoding del dropdown original de Thymeleaf:
+        'FAC:'+abreviatura / 'GRU:'+sigla_grupo.
+        'anio_convocatoria' filtra Convocatoria.anio_convocatoria
+        (año de la convocatoria), distinto de anio_inicio/anio_fin que
+        filtran las fechas del PROYECTO.
+        se agregan facultad_id/grupo_id/estado_finalizado_calificacion
+        para dar soporte server-side (con paginación real) a
+        calificarProyectosXFacultad.html / calificarProyectosXGrupo.html, que
+        antes solo tenían por-facultad/{id}/ y por-grupo/{id}/ (sin filtros
+        combinables ni paginación). El resto de la firma no cambia.
         """
         from django.db.models import Q
         qs = ProyectoXConvocatoria.objects.select_related(
@@ -174,26 +188,46 @@ class ProyectoXConvocatoriaSelector:
         if alianza is not None:
             filtros &= Q(proyecto__alianza=alianza)
         if responsable:
-            filtros &= (
-                # CORREGIDO: Usuario no tiene campo 'persona' directo, solo la
-                # relación inversa 'asignaciones' (UsuarioXPersona.usuario,
-                # related_name='asignaciones'); y Persona.nombre/apellido son
-                # singulares, no 'nombres'/'apellidos'.
-                Q(proyecto__usuario__asignaciones__estado=True,
-                  proyecto__usuario__asignaciones__persona__nombre__icontains=responsable)
-                | Q(proyecto__usuario__asignaciones__estado=True,
-                    proyecto__usuario__asignaciones__persona__apellido__icontains=responsable)
+            base = Q(
+                proyecto__usuario__asignaciones__estado=True,
+                proyecto__usuario__asignaciones__persona__personaxgrupo__estado=True,
+            )
+            if responsable.startswith('FAC:'):
+                abreviatura = responsable[len('FAC:'):]
+                filtros &= base & Q(
+                    proyecto__usuario__asignaciones__persona__personaxgrupo__facultad__abreviatura=abreviatura
+                )
+            elif responsable.startswith('GRU:'):
+                sigla = responsable[len('GRU:'):]
+                filtros &= base & Q(
+                    proyecto__usuario__asignaciones__persona__personaxgrupo__grupo__sigla_grupo=sigla
+                )
+        if facultad_id is not None:
+            filtros &= Q(
+                proyecto__usuario__asignaciones__estado=True,
+                proyecto__usuario__asignaciones__persona__personaxgrupo__estado=True,
+                proyecto__usuario__asignaciones__persona__personaxgrupo__facultad_id=facultad_id,
+            )
+        if grupo_id is not None:
+            filtros &= Q(
+                proyecto__usuario__asignaciones__estado=True,
+                proyecto__usuario__asignaciones__persona__personaxgrupo__estado=True,
+                proyecto__usuario__asignaciones__persona__personaxgrupo__grupo_id=grupo_id,
             )
         if calificacion:
             filtros &= Q(calificacion_ultimo_filtro_calificacion=calificacion)
+        if estado_finalizado_calificacion is not None:
+            filtros &= Q(estado_finalizado_calificacion=estado_finalizado_calificacion)
         if anio_inicio:
             filtros &= Q(proyecto__fecha_inicio__year=anio_inicio)
         if anio_fin:
             filtros &= Q(proyecto__fecha_fin__year=anio_fin)
+        if anio_convocatoria:
+            filtros &= Q(convocatoria__anio_convocatoria=anio_convocatoria)
         if interno is not None:
             filtros &= Q(convocatoria__interno=interno)
         if gruplac is not None:
             filtros &= Q(proyecto__gruplac=gruplac)
         if estado is not None:
             filtros &= Q(estado=estado)
-        return qs.filter(filtros).order_by('-proyecto__fecha_inicio')
+        return qs.filter(filtros).distinct().order_by('-proyecto__fecha_inicio')

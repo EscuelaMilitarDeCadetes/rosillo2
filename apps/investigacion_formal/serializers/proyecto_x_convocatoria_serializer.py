@@ -4,23 +4,13 @@ from apps.institucional.models import PersonaXGrupo
 
 
 class ProyectoXConvocatoriaSerializer(serializers.ModelSerializer):
-    proyecto_titulo = serializers.CharField(
-        source='proyecto.titulo',
-        read_only=True
-    )
-    proyecto_codigo = serializers.CharField(
-        source='proyecto.codigo',
-        read_only=True
-    )
-    convocatoria_nombre = serializers.CharField(
-        source='convocatoria.nombre_convocatoria',
-        read_only=True
-    )
-    convocatoria_interno = serializers.BooleanField(
-        source='convocatoria.interno',
-        read_only=True
-    )
+    proyecto_titulo = serializers.CharField(source='proyecto.titulo', read_only=True)
+    proyecto_codigo = serializers.CharField(source='proyecto.codigo', read_only=True)
+    proyecto_fecha_inicio = serializers.DateField(source='proyecto.fecha_inicio', read_only=True)
+    convocatoria_nombre = serializers.CharField(source='convocatoria.nombre_convocatoria', read_only=True)
+    convocatoria_interno = serializers.BooleanField(source='convocatoria.interno', read_only=True)
     monto_aprobado = serializers.SerializerMethodField()
+    monto_solicitado = serializers.SerializerMethodField()
     responsable = serializers.SerializerMethodField()
 
     class Meta:
@@ -38,6 +28,13 @@ class ProyectoXConvocatoriaSerializer(serializers.ModelSerializer):
         if monto is None or not monto.aprobado:
             return None
         return monto.aprobado
+    
+    def get_monto_solicitado(self, obj):
+        """Réplica de proyecto.montoFk.solicitado (columna 'Valor Solicitado')."""
+        monto = Monto.objects.filter(proyecto_id=obj.proyecto_id).first()
+        if monto is None or not monto.solicitado:
+            return None
+        return monto.solicitado
 
     def get_responsable(self, obj):
         """

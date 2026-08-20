@@ -1,3 +1,4 @@
+# apps/investigacion_formal/services/proyecto_x_convocatoria_service.py
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from apps.investigacion_formal.models import ProyectoXConvocatoria
@@ -50,6 +51,10 @@ class ProyectoXConvocatoriaService:
     @staticmethod
     def listar_por_grupo(grupo_id):
         return ProyectoXConvocatoriaSelector.listar_por_grupo(grupo_id)
+    
+    @staticmethod
+    def listar_por_usuario(usuario_id):
+        return ProyectoXConvocatoriaSelector.listar_por_usuario(usuario_id)
 
     @staticmethod
     @transaction.atomic

@@ -1,3 +1,4 @@
+# apps/investigacion_formal/views/proyecto_x_convocatoria_viewset.py
 from apps.investigacion_formal.pagination import InvestigacionFormalPageNumberPagination
 from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormal
 from rest_framework import viewsets, status
@@ -115,21 +116,25 @@ class ProyectoXConvocatoriaViewSet(viewsets.ViewSet):
             convocatoria=request.query_params.get("convocatoria"),
             codigo=request.query_params.get("codigo"),
             titulo=request.query_params.get("titulo"),
+            financiado=self._parse_bool(request.query_params.get("financiado")),
+            alianza=self._parse_bool(request.query_params.get("alianza")),
             responsable=request.query_params.get("responsable"),
             calificacion=request.query_params.get("calificacion"),
+            anio_inicio=request.query_params.get("anio_inicio"),
+            anio_fin=request.query_params.get("anio_fin"),
+            interno=self._parse_bool(request.query_params.get("interno")),
+            gruplac=self._parse_bool(request.query_params.get("gruplac")),
+            estado=self._parse_bool(request.query_params.get("estado")),
+            facultad_id=request.query_params.get("facultad_id"),
+            grupo_id=request.query_params.get("grupo_id"),
+            estado_finalizado_calificacion=self._parse_bool(
+                request.query_params.get("estado_finalizado_calificacion")
+            ),
+            anio_convocatoria=request.query_params.get("anio_convocatoria"),
         )
-        for campo_booleano in ("financiado", "alianza", "interno", "gruplac", "estado"):
-            valor = request.query_params.get(campo_booleano)
-            filtros[campo_booleano] = (
-                None if valor is None else valor.lower() == "true"
-            )
-        for campo_anio in ("anio_inicio", "anio_fin"):
-            valor = request.query_params.get(campo_anio)
-            filtros[campo_anio] = int(valor) if valor else None
-
-        resultados = ProyectoXConvocatoriaService.buscar_con_filtros(**filtros)
+        registros = ProyectoXConvocatoriaService.buscar_con_filtros(**filtros)
         paginator = self.pagination_class()
-        page = paginator.paginate_queryset(resultados, request, view=self)
+        page = paginator.paginate_queryset(registros, request, view=self)
         serializer = self.serializer_class(page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
@@ -170,4 +175,10 @@ class ProyectoXConvocatoriaViewSet(viewsets.ViewSet):
         buffer = ExportacionService.exportar_pdf(queryset)
         response = HttpResponse(buffer.read(), content_type="application/pdf")
         response["Content-Disposition"] = "attachment; filename=proyectos.pdf"
-        return response    
+        return response
+    
+    @action(detail=False, methods=["get"], url_path="mis-proyectos")
+    def mis_proyectos(self, request):
+        registros = ProyectoXConvocatoriaService.listar_por_usuario(request.user.id)
+        serializer = self.serializer_class(registros, many=True)
+        return Response(serializer.data)

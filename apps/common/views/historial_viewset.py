@@ -1,11 +1,7 @@
+# apps/common/views/historial_viewset.py
 from apps.common.pagination import CommonPageNumberPagination
-from apps.usuarios.permissions.es_asesor import EsAsesor
-from apps.usuarios.permissions.es_cexterno import EsCExterno
 from apps.usuarios.permissions.es_cinterno import EsCInterno
-from apps.usuarios.permissions.es_decano import EsDecano
-from apps.usuarios.permissions.es_gerente import EsGerente
 from apps.usuarios.permissions.es_soporte import EsSoporte
-from apps.usuarios.permissions.es_supervisor import EsSupervisor
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -18,9 +14,9 @@ class HistorialViewSet(viewsets.ViewSet):
     pagination_class = CommonPageNumberPagination
 
     def get_permissions(self):
-        acciones_autoservicio = ['list', 'retrieve', 'por_usuario', 'por_rango_fechas', 'buscar', 'acciones_sistema']
-        if self.action in acciones_autoservicio:
-            permission_classes = [EsSupervisor | EsAsesor | EsCInterno | EsCExterno | EsDecano | EsGerente]
+        acciones_lectura = ['list', 'retrieve', 'por_usuario', 'por_rango_fechas', 'buscar', 'acciones_sistema']
+        if self.action in acciones_lectura:
+            permission_classes = [EsCInterno | EsSoporte]
         else:
             permission_classes = [EsSoporte]
         return [permission() for permission in permission_classes]
@@ -60,6 +56,15 @@ class HistorialViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["get"], url_path="buscar")
     def buscar(self, request):
-        texto = request.query_params.get("q", "")
-        registros = HistorialService.buscar_por_accion(texto)
-        return Response(self.serializer_class(registros, many=True).data)
+        filtros = dict(
+            texto=request.query_params.get("q"),
+            usuario_id=request.query_params.get("usuario_id"),
+            fecha_inicio=request.query_params.get("fecha_inicio"),
+            fecha_fin=request.query_params.get("fecha_fin"),
+            solo_sistema=request.query_params.get("solo_sistema", "false").lower() == "true",
+        )
+        registros = HistorialService.buscar_con_filtros(filtros)
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(registros, request, view=self)
+        serializer = self.serializer_class(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
