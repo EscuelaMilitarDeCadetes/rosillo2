@@ -1,7 +1,7 @@
 # apps/common/views/historial_viewset.py
 from apps.common.pagination import CommonPageNumberPagination
-from apps.usuarios.permissions.es_cinterno import EsCInterno
 from apps.usuarios.permissions.es_soporte import EsSoporte
+from apps.usuarios.permissions.es_supervisor import EsSupervisor
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -16,7 +16,7 @@ class HistorialViewSet(viewsets.ViewSet):
     def get_permissions(self):
         acciones_lectura = ['list', 'retrieve', 'por_usuario', 'por_rango_fechas', 'buscar', 'acciones_sistema']
         if self.action in acciones_lectura:
-            permission_classes = [EsCInterno | EsSoporte]
+            permission_classes = [EsSupervisor | EsSoporte]
         else:
             permission_classes = [EsSoporte]
         return [permission() for permission in permission_classes]
