@@ -1,17 +1,29 @@
 """
 Validador de integración.
+
+NOTA (fix 2026-08-21): se eliminó validar_datos_usuario() y sus 3 llamadas
+en los flujos administrativo/facultad/grupo. Exigía 'username'/'password'
+obligatorios en el payload, pero VinculacionService._crear_usuario() ya
+auto-genera ambos cuando no vienen en `data`:
+
+    password = data.get('password') or VinculacionService._generar_password()
+    username = data.get('username') or VinculacionService._generar_username(persona.correo)
+
+Como esta validación corría ANTES de _crear_usuario, cualquier request sin
+username/password explícitos (como el que envía NewUserModal.js a propósito,
+según su propio comentario de diseño) fallaba con 400 antes de llegar al
+fallback de auto-generación, dejándolo inalcanzable en la práctica.
 """
 from rest_framework.exceptions import ValidationError
+
 from apps.integracion.selectors.vinculacion_selector import VinculacionSelector
 
 
 class VinculacionValidator:
 
-
     # ------------------------------------------------------------------ #
     # Datos obligatorios por flujo
     # ------------------------------------------------------------------ #
-
     @staticmethod
     def validar_datos_persona(data: dict):
         requeridos = ['grado_id', 'nombre', 'apellido', 'documento', 'celular', 'correo']
@@ -20,17 +32,9 @@ class VinculacionValidator:
                 raise ValidationError({campo: f"El campo '{campo}' es obligatorio."})
 
     @staticmethod
-    def validar_datos_usuario(data: dict):
-        requeridos = ['username', 'password']
-        for campo in requeridos:
-            if not data.get(campo):
-                raise ValidationError({campo: f"El campo '{campo}' es obligatorio."})
-
-    @staticmethod
     def validar_datos_flujo_administrativo(data: dict):
         """Flujo 1: Persona + Usuario, sin PersonaXGrupo."""
         VinculacionValidator.validar_datos_persona(data)
-        VinculacionValidator.validar_datos_usuario(data)
         if not data.get('rol_plataforma_id'):
             raise ValidationError(
                 {"rol_plataforma_id": "El rol de plataforma es obligatorio."}
@@ -40,7 +44,6 @@ class VinculacionValidator:
     def validar_datos_flujo_facultad(data: dict):
         """Flujo 2: Persona + Usuario + PersonaXGrupo(facultad)."""
         VinculacionValidator.validar_datos_persona(data)
-        VinculacionValidator.validar_datos_usuario(data)
         if not data.get('rol_plataforma_id'):
             raise ValidationError(
                 {"rol_plataforma_id": "El rol de plataforma es obligatorio."}
@@ -58,7 +61,6 @@ class VinculacionValidator:
     def validar_datos_flujo_grupo(data: dict):
         """Flujo 3: Persona + Usuario + PersonaXGrupo(grupo)."""
         VinculacionValidator.validar_datos_persona(data)
-        VinculacionValidator.validar_datos_usuario(data)
         if not data.get('rol_plataforma_id'):
             raise ValidationError(
                 {"rol_plataforma_id": "El rol de plataforma es obligatorio."}
@@ -75,7 +77,6 @@ class VinculacionValidator:
     # ------------------------------------------------------------------ #
     # Reemplazo y retiro
     # ------------------------------------------------------------------ #
-
     @staticmethod
     def validar_reemplazo(usuario_id: int):
         if not VinculacionSelector.usuario_activo(usuario_id):
