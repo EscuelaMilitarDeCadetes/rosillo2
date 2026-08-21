@@ -1,25 +1,43 @@
-import React, { useState } from 'react';
+// src/domains/usuarios/pages/ForgotPasswordPage.js
+import React, { useState, useRef } from 'react';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
-import axiosInstance from '../api/axiosInstance';
+import ReCAPTCHA from 'react-google-recaptcha';
+import axiosInstance from '../../../api/axiosInstance';
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const recaptchaRef = useRef(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const recaptcha = recaptchaRef.current?.getValue();
+    if (!recaptcha) {
+      setError('Por favor confirma que no eres un robot.');
+      return;
+    }
     setLoading(true);
     setMessage('');
     setError('');
     try {
-      const response = await axiosInstance.post('password-reset/', { email });
+      // ForgotPasswordSerializer exige 'email' y 'recaptcha'.
+      const response = await axiosInstance.post('usuarios/password/forgot-password/', {
+        email,
+        recaptcha,
+      });
       setMessage(response.data.message);
     } catch (err) {
-      setError('Ocurrió un error. Por favor, inténtalo de nuevo.');
+      const detalle = err.response?.data;
+      setError(
+        detalle && typeof detalle === 'object'
+          ? Object.values(detalle).flat().join(' ')
+          : 'Ocurrió un error. Por favor, inténtalo de nuevo.'
+      );
     } finally {
+      recaptchaRef.current?.reset();
       setLoading(false);
     }
   };
@@ -37,6 +55,9 @@ const ForgotPasswordPage = () => {
                 <label htmlFor="email">Correo Institucional</label>
               </span>
             </div>
+          </div>
+          <div className="d-flex justify-content-center mb-3">
+            <ReCAPTCHA ref={recaptchaRef} sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY} />
           </div>
           {message && <div className="alert alert-success">{message}</div>}
           {error && <div className="alert alert-danger">{error}</div>}

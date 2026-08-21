@@ -1,3 +1,4 @@
+// src/domains/formal/pages/AdminConvocatoriasPage.js
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Button } from 'primereact/button';

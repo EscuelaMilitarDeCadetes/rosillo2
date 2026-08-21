@@ -1,5 +1,7 @@
+// src/components/convocatorias/ConvocatoriaTable.js
 import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
@@ -7,14 +9,11 @@ import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
 import { Tooltip } from 'primereact/tooltip';
 import { Toast } from 'primereact/toast';
-import {
-  fetchAllConvocatorias,
-  toggleConvocatoriaStatus,
-  descargarDocumentoConvocatoria,
-} from '../../features/convocatorias/convocatoriasSlice';
+import { fetchAllConvocatorias, descargarDocumentoConvocatoria } from '../../features/convocatorias/convocatoriasSlice';
 
 const ConvocatoriaTable = ({ onViewProjects }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { adminItems: convocatorias, adminLoading, adminTotalRecords, adminRows } = useSelector((state) => state.convocatorias);
   const { roles } = useSelector((state) => state.auth);
   const [globalFilter, setGlobalFilter] = useState('');
@@ -37,12 +36,7 @@ const ConvocatoriaTable = ({ onViewProjects }) => {
     dispatch(descargarDocumentoConvocatoria(rowData.id))
       .then((result) => {
         if (!descargarDocumentoConvocatoria.fulfilled.match(result)) {
-          toast.current?.show({
-            severity: 'error',
-            summary: 'No se pudo descargar',
-            detail: result.payload || 'Error al descargar el documento.',
-            life: 6000,
-          });
+          toast.current?.show({ severity: 'error', summary: 'No se pudo descargar', detail: result.payload, life: 6000 });
         }
       })
       .finally(() => setDownloadingId(null));
@@ -81,28 +75,19 @@ const ConvocatoriaTable = ({ onViewProjects }) => {
     </>
   );
 
-  const actionBodyTemplate = (rowData) => {
-    const toggleText = rowData.estado ? 'Desactivar' : 'Activar';
-    const toggleClass = rowData.estado ? 'p-button-danger' : 'p-button-success';
-    return (
-      <div className="d-flex gap-2">
-        <Button
-          icon="pi pi-download"
-          className="p-button-rounded p-button-info p-button-sm"
-          tooltip="Descargar documento"
-          loading={downloadingId === rowData.id}
-          onClick={() => handleDownload(rowData)}
-        />
-        {roles?.includes('CINTERNO') && (
-          <Button
-            label={toggleText}
-            className={`p-button-sm ${toggleClass}`}
-            onClick={() => dispatch(toggleConvocatoriaStatus({ id: rowData.id, estado: !rowData.estado }))}
-          />
-        )}
-      </div>
-    );
-  };
+  const actionBodyTemplate = (rowData) => (
+    <div className="d-flex gap-2">
+      <Button
+        icon="pi pi-download"
+        className="p-button-rounded p-button-secondary p-button-sm"
+        tooltip="Descargar documento"
+        loading={downloadingId === rowData.id}
+        onClick={() => handleDownload(rowData)}
+      />
+      <Button icon="pi pi-plus" className="p-button-rounded p-button-success p-button-sm" tooltip="Participar" onClick={() => navigate(`/participar/${rowData.id}`)} />
+    </div>
+  );
+
 
   return (
     <>

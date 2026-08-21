@@ -1,3 +1,4 @@
+// src/components/layout/Navbar.js
 import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -29,7 +30,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     dispatch(logoutUser());
-    navigate('/login');
+    navigate(`/login/${sistemaActivo || 'formal'}`);
   };
 
   useNotificacionesWebSocket(); // abre y mantiene la conexión mientras el Navbar está montado
@@ -82,16 +83,16 @@ const Navbar = () => {
                         <li><Link className="dropdown-item" to="/catalogos/grados">Grados de Estudio</Link></li>
                         <li><Link className="dropdown-item" to="/catalogos/facultades">Facultades / Escuelas</Link></li>
                         <li><Link className="dropdown-item" to="/catalogos/grupos">Grupos de Investigación</Link></li>
-                        <li><Link className="dropdown-item" to="/catalogos/facultad-grupo">Facultades por Grupo</Link></li>
-                        <li><Link className="dropdown-item" to="/catalogos/roles-grupo">Roles de Grupo</Link></li>
-                        <li><Link className="dropdown-item" to="/catalogos/roles-investigador">Roles de Investigador</Link></li>
-                        <li><Link className="dropdown-item" to="/catalogos/tipos-documento">Tipos de Documento</Link></li>
-                        <li><Link className="dropdown-item" to="/catalogos/tipos-calificacion">Tipos de Calificación</Link></li>
-                        <li><Link className="dropdown-item" to="/catalogos/productos-minciencias">Productos Minciencias</Link></li>
-                        <li><Link className="dropdown-item" to="/catalogos/grupos-minciencias">Grupos Minciencias</Link></li>
-                        <li><Link className="dropdown-item" to="/catalogos/tipos-producto">Tipos de Producto</Link></li>
-                        <li><Link className="dropdown-item" to="/catalogos/productos-grupo">Productos por Grupo</Link></li>
-                        <li><Link className="dropdown-item" to="/catalogos/tipos-rubro">Tipos de Rubro</Link></li>
+                        <li><Link className="dropdown-item" to="/catalogos/facultad-x-grupo">Facultades por Grupo</Link></li>
+                        <li><Link className="dropdown-item" to="/catalogos/rol-x-grupo">Roles de Grupo</Link></li>
+                        <li><Link className="dropdown-item" to="/catalogos/rol-x-investigador">Roles de Investigador</Link></li>
+                        <li><Link className="dropdown-item" to="/catalogos/tipo-documento">Tipos de Documento</Link></li>
+                        <li><Link className="dropdown-item" to="/catalogos/tipo-calificacion">Tipos de Calificación</Link></li>
+                        <li><Link className="dropdown-item" to="/catalogos/producto-minciencias">Productos Minciencias</Link></li>
+                        <li><Link className="dropdown-item" to="/catalogos/grupo-minciencias">Grupos Minciencias</Link></li>
+                        <li><Link className="dropdown-item" to="/catalogos/tipo-producto">Tipos de Producto</Link></li>
+                        <li><Link className="dropdown-item" to="/catalogos/producto-x-grupo">Productos por Grupo</Link></li>
+                        <li><Link className="dropdown-item" to="/catalogos/tipo-rubro">Tipos de Rubro</Link></li>
                       </ul>
                     </li>
                   )}                  
@@ -197,11 +198,16 @@ const Navbar = () => {
                       </ul>
                     </li>
                   )}
+                  {(roles.includes('CINTERNO') || roles.includes('SOPORTE')) && (
+                    <li className="nav-item">
+                      <Link className="nav-link" to="/historial">Historial</Link>
+                    </li>
+                  )}
  
                   <Button label="Cerrar Sesión" icon="pi pi-sign-out" className="p-button-text p-button-sm nav-item nav-link" onClick={handleLogout} />
                 </>
               ) : (
-                <Link className="nav-item nav-link" to="/login">Iniciar Sesión</Link>
+                <Link className="nav-item nav-link" to="/">Iniciar Sesión</Link>
               )}
             </div>
           </div>

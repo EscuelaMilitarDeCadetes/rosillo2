@@ -1,3 +1,4 @@
+// src/features/proyectos/projectsSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../../api/axiosInstance";
 
@@ -118,13 +119,23 @@ export const fetchProductosPorProyecto = createAsyncThunk(
   }
 );
 
+// --- Documentos del proyecto (DocumentoFirma vía GenericForeignKey) ---
+// Migración real: DocumentoXProyecto (Spring) -> DocumentoFirma (common),
+// Ver documento_firma_service.py / documento_firma_viewset.py.
 // Thunk para obtener los documentos de un proyecto específico
 export const fetchDocumentosPorProyecto = createAsyncThunk(
   "proyectos/fetchDocumentosPorProyecto",
   async (proyectoId, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get(
-        `documentos-x-proyecto/?proyecto=${proyectoId}`
+        "common/documento-firma/por-objeto/",
+        {
+          params: {
+            content_type_app_label: "investigacion_formal",
+            content_type_model: "proyecto",
+            object_id: proyectoId,
+          },
+        }
       );
       return response.data;
     } catch (error) {
@@ -215,23 +226,24 @@ export const addDocumentoProyecto = createAsyncThunk(
   async ({ proyectoId, data }, { dispatch, rejectWithValue }) => {
     try {
       const formData = new FormData();
-      formData.append("proyecto", proyectoId);
+      formData.append("content_type_app_label", "investigacion_formal");
+      formData.append("content_type_model", "proyecto");
+      formData.append("object_id", proyectoId);
       formData.append("tipo_documento", data.tipo_documento);
-      formData.append(
-        "documento_file",
-        data.documento_file,
-        data.documento_file.name
-      );
-      formData.append("estado", "ENTREGADO"); // Por defecto al subir
-
-      await axiosInstance.post("documentos-x-proyecto/", formData, {
+      formData.append("archivo", data.documento_file, data.documento_file.name);
+      // Sin 'estado': el backend lo pone en BORRADOR por defecto
+      // (DocumentoFirmaViewSet.create -> request.data.get('estado', 'BORRADOR')).
+      await axiosInstance.post("common/documento-firma/", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      dispatch(fetchDocumentosPorProyecto(proyectoId)); // Refrescar la lista de documentos
+      dispatch(fetchDocumentosPorProyecto(proyectoId));
       return true;
     } catch (error) {
+      const errData = error.response?.data;
       return rejectWithValue(
-        error.response?.data?.error || "Error al agregar el documento."
+        typeof errData === "string"
+          ? errData
+          : errData?.error || "Error al agregar el documento."
       );
     }
   }
@@ -240,10 +252,13 @@ export const addDocumentoProyecto = createAsyncThunk(
 // Thunk para borrar un documento del proyecto
 export const deleteDocumentoProyecto = createAsyncThunk(
   "proyectos/deleteDocumentoProyecto",
-  async (documentoId, { dispatch, rejectWithValue }) => {
+  async ({ documentoId, proyectoId }, { dispatch, rejectWithValue }) => {
     try {
-      await axiosInstance.delete(`documentos-x-proyecto/${documentoId}/`);
-      // No necesitamos recargar toda la lista, el estado se actualizará automáticamente
+      await axiosInstance.delete(`common/documento-firma/${documentoId}/`);
+      // A diferencia del original, sí recargamos: DocumentosProyectoTable
+      // reconstruye la lista combinando "requeridos" + "existentes" en cada
+      // fetch, no solo filtra localmente por id.
+      dispatch(fetchDocumentosPorProyecto(proyectoId));
       return documentoId;
     } catch (error) {
       return rejectWithValue(
@@ -380,6 +395,53 @@ export const deleteEjecucion = createAsyncThunk(
   }
 );
 
+// Catálogo real de tipos de documento de proyecto: TipoDocumento.grupo='proyecto'.
+export const fetchTiposDocumentoProyecto = createAsyncThunk(
+  "proyectos/fetchTiposDocumentoProyecto",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get('common/tipos-documento/por-grupo/', {
+        params: { grupo: 'proyecto' },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.detail || "Error al cargar los tipos de documento."
+      );
+    }
+  }
+);
+
+// Descarga blob + Bearer (mismo patrón que descargarDocumentoConvocatoria).
+export const descargarDocumentoProyecto = createAsyncThunk(
+  "proyectos/descargarDocumentoProyecto",
+  async (documentoId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`common/documento-firma/${documentoId}/descargar/`, {
+        responseType: 'blob',
+      });
+      const disposition = response.headers['content-disposition'];
+      let filename = 'documento-proyecto';
+      if (disposition) {
+        const match = disposition.match(/filename="?([^"]+)"?/);
+        if (match && match[1]) filename = match[1];
+      }
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      return { documentoId };
+    } catch (error) {
+      return rejectWithValue("No se pudo descargar el documento.");
+    }
+  }
+);
+
+
 const projectsSlice = createSlice({
   name: "projects",
   initialState: {
@@ -389,9 +451,12 @@ const projectsSlice = createSlice({
     investigadores: [],
     objetivos: [],
     productos: [],
-    documentos: [],
+    documentos: [], 
+    tiposDocumentoProyecto: [],
     gastos: [],
     montoProyecto: null,
+    loadingDocumentos: false, 
+    errorDocumentos: null,
     loading: false,
     error: null,
   },
@@ -488,16 +553,19 @@ const projectsSlice = createSlice({
       })
       // Fetch Documentos Por Proyecto
       .addCase(fetchDocumentosPorProyecto.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.loadingDocumentos = true;
+        state.errorDocumentos = null;
       })
       .addCase(fetchDocumentosPorProyecto.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loadingDocumentos = false;
         state.documentos = action.payload;
       })
       .addCase(fetchDocumentosPorProyecto.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+        state.loadingDocumentos = false;
+        state.errorDocumentos = action.payload;
+      })
+      .addCase(fetchTiposDocumentoProyecto.fulfilled, (state, action) => {
+        state.tiposDocumentoProyecto = action.payload;
       })
       // Fetch Gastos Por Proyecto
       .addCase(fetchGastosPorProyecto.pending, (state) => {
@@ -546,25 +614,24 @@ const projectsSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      .addCase(addDocumentoProyecto.pending, (state) => {
-        state.loading = true;
+      .addCase(addDocumentoProyecto.pending, (state) => { 
+        state.loadingDocumentos = true; state.errorDocumentos = null; 
       })
-      .addCase(addDocumentoProyecto.fulfilled, (state) => {
-        state.loading = false;
+      .addCase(addDocumentoProyecto.fulfilled, (state) => { 
+        state.loadingDocumentos = false; 
       })
-      .addCase(addDocumentoProyecto.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+      .addCase(addDocumentoProyecto.rejected, (state, action) => { 
+        state.loadingDocumentos = false; state.errorDocumentos = action.payload; 
       })
-      .addCase(deleteDocumentoProyecto.pending, (state) => {
-        state.loading = true;
+      .addCase(deleteDocumentoProyecto.pending, (state) => { 
+        state.loadingDocumentos = true; 
       })
-      .addCase(deleteDocumentoProyecto.fulfilled, (state) => {
-        state.loading = false;
+      .addCase(deleteDocumentoProyecto.fulfilled, (state, action) => {
+        state.loadingDocumentos = false;
+        state.documentos = state.documentos.filter((d) => d.id !== action.payload);
       })
-      .addCase(deleteDocumentoProyecto.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+      .addCase(deleteDocumentoProyecto.rejected, (state, action) => { 
+        state.loadingDocumentos = false; state.errorDocumentos = action.payload; 
       })
       .addCase(addProductoProyecto.pending, (state) => {
         state.loading = true;

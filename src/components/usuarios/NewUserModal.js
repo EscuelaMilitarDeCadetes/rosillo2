@@ -1,3 +1,4 @@
+// src/components/usuarios/NewUserModal.js
 import React, { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Dialog } from "primereact/dialog";
@@ -41,7 +42,7 @@ const NewUserModal = ({ visible, onHide }) => {
     loading: metadataLoading,
   } = useSelector((state) => state.metadata);
   const { loading: userCreationLoading, error: userCreationError } = useSelector(
-    (state) => state.users
+    (state) => state.usuarios
   );
 
   const [tipoKey, setTipoKey] = useState(null);

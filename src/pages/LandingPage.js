@@ -22,7 +22,7 @@ const LandingPage = () => {
           <h1 className="fw-bold">Sistema de Investigación José María Rosillo</h1>
           <p className="lead mt-3">
             Plataforma institucional para la gestión de proyectos, convocatorias
-            y procesos de investigación de la institución. Desde aquí puedes
+            y procesos de investigación formal y formativa desarrollados dentro de la institución. Desde aquí puedes
             acceder al sistema de <strong>Investigación Formal</strong>{' '}
             (convocatorias, proyectos, calificaciones y seguimiento) o al de{' '}
             <strong>Investigación Formativa</strong> (procesos formativos,
@@ -39,7 +39,7 @@ const LandingPage = () => {
               Convocatorias, proyectos, calificaciones, presupuestos y
               seguimiento de proyectos de investigación.
             </p>
-            <Link to="/login?sistema=formal">
+            <Link to="/login/formal">
               <Button label="Ingresar a Investigación Formal" className="w-100" />
             </Link>
           </div>
@@ -52,7 +52,7 @@ const LandingPage = () => {
               Procesos formativos, postulaciones, tutorías y evaluación de
               trabajos de grado.
             </p>
-            <Link to="/login?sistema=formativa">
+            <Link to="/login/formativa">
               <Button
                 label="Ingresar a Investigación Formativa"
                 className="w-100 p-button-outlined"

@@ -1,3 +1,4 @@
+// src/features/usuarios/usersSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../../api/axiosInstance";
 import { fetchMetadata } from "../metadata/metadataSlice";
@@ -246,7 +247,7 @@ export const fetchInvestigatorAssignments = createAsyncThunk(
   "users/fetchInvestigatorAssignments",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get("investigadores-x-proyecto/");
+      const response = await axiosInstance.get("investigacion-formal/investigadores/");
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -323,16 +324,43 @@ export const reactivarPersonaDeGrupo = createAsyncThunk(
   },
 );
 
+/*
+  Thunk para obtener el historial completo (activo e inactivo) de
+  vinculaciones a grupo/facultad de una persona.
+  apps/institucional/views/persona_x_grupo_viewset.py ->
+  GET /institucional/persona-grupo/persona/{persona_id}/ (historial_persona)
+  -> PersonaXGrupoSelector.historial_persona(persona_id), que NO filtra por
+  estado (a diferencia de list(), que solo trae estado=True). Es la única
+  vía para encontrar el id de una vinculación desvinculada y así poder
+  llamar a reactivarPersonaDeGrupo.
+*/
+export const fetchHistorialPersona = createAsyncThunk(
+  "users/fetchHistorialPersona",
+  async (personaId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(
+        `institucional/persona-grupo/persona/${personaId}/`
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue("Error al cargar el historial de la persona.");
+    }
+  },
+);
+
+
 const usersSlice = createSlice({
   name: "users",
   initialState: {
     platformUsers: [],
-    platformUsersTotal: 0,
-    groupUsers: [],
-    groupUsersTotal: 0,
     investigatorAssignments: [],
+    groupUsers: [],
     userRoles: [],
+    historialPersona: [],
+    platformUsersTotal: 0,
+    groupUsersTotal: 0,
     loading: false,
+    historialPersonaLoading: false,
     rowLoading: {},
     error: null,
   },
@@ -467,6 +495,17 @@ const usersSlice = createSlice({
       })
       .addCase(reactivarPersonaDeGrupo.rejected, (state, action) => {
         state.rowLoading[action.meta.arg] = false;
+        state.error = action.payload;
+      })
+      .addCase(fetchHistorialPersona.pending, (state) => {
+        state.historialPersonaLoading = true;
+      })
+      .addCase(fetchHistorialPersona.fulfilled, (state, action) => {
+        state.historialPersonaLoading = false;
+        state.historialPersona = action.payload;
+      })
+      .addCase(fetchHistorialPersona.rejected, (state, action) => {
+        state.historialPersonaLoading = false;
         state.error = action.payload;
       });
   },

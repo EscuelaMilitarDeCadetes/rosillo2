@@ -1,3 +1,4 @@
+// src/features/convocatorias/convocatoriasSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../../api/axiosInstance";
 
@@ -49,8 +50,15 @@ export const fetchOpenConvocatorias = createAsyncThunk(
   'convocatorias/fetchOpen',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`${BASE}internas/?estado=true`);
-      return response.data;
+      // internas/ SIEMPRE pagina en servidor ({count, next, previous, results}).
+      // ConvocatoriasAbiertasTable pagina en CLIENTE sobre el arreglo completo
+      // (no usa `lazy`), así que se pide una página grande (mismo patrón que
+      // metadataSlice.SIN_PAGINAR) y se devuelve solo `results`, nunca el
+      // objeto de paginación completo.
+      const response = await axiosInstance.get(`${BASE}internas/`, {
+        params: { estado: true, page_size: 200 },
+      });
+      return response.data.results ?? [];
     } catch (error) {
       return rejectWithValue(error.response?.data?.detail || "Error al cargar las convocatorias");
     }
@@ -135,21 +143,19 @@ export const fetchProjectsByConvocatoria = createAsyncThunk(
   }
 );
 
-// OJO: no encontré una acción "por usuario" en ProyectoXConvocatoriaViewSet
-// (solo por-proyecto, por-convocatoria, por-facultad, por-grupo, buscar).
-// Dejo el thunk tal cual estaba para no romper ProyectosUsuarioTable.js,
-// pero esta ruta sigue sin existir en el backend — pendiente decidir si se
-// resuelve con /buscar?responsable=<id> o si falta una acción nueva.
+// apps/investigacion_formal/views/proyecto_x_convocatoria_viewset.py ->
+// GET investigacion-formal/proyecto-convocatoria/mis-proyectos/ (nueva acción,
+// filtra por proyecto__usuario_id=request.user directamente en el backend).
 export const fetchProyectosPorUsuario = createAsyncThunk(
   "convocatorias/fetchProyectosPorUsuario",
-  async (userId, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get(
-        `proyectos-x-convocatoria/?usuario_id=${userId}`
+        "investigacion-formal/proyecto-convocatoria/mis-proyectos/"
       );
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.detail || "Error al cargar los proyectos del usuario.");
+      return rejectWithValue(error.response?.data?.detail || "Error al cargar tus proyectos.");
     }
   }
 );
@@ -201,6 +207,39 @@ export const descargarDocumentoConvocatoria = createAsyncThunk(
   }
 );
 
+// common/documento-firma/ (DocumentoFirmaViewSet.create) acepta un objeto
+// genérico vía content_type_app_label/content_type_model/object_id — aquí
+// apuntando al Proyecto. Reemplaza a la función rota
+// "Cargue documento corregido" del userConvocatoria.html original.
+export const subirDocumentoCorregidoProyecto = createAsyncThunk(
+  'convocatorias/subirDocumentoCorregido',
+  async ({ proyectoId, tipoDocumentoId, archivo }, { dispatch, rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append('content_type_app_label', 'investigacion_formal');
+      formData.append('content_type_model', 'proyecto');
+      formData.append('object_id', proyectoId);
+      formData.append('tipo_documento', tipoDocumentoId);
+      formData.append('archivo', archivo, archivo.name);
+      // 'ENTREGADO' no existe en DocumentoFirma.ESTADO_CHOICES (BORRADOR,
+      // EN_FIRMAS, RECHAZADO, FIRMADO) -> DocumentoFirmaValidator._validar_estado()
+      // rechazaba TODO envío con 400. Se omite el campo y se deja que
+      // DocumentoFirmaViewSet.create() aplique su default real: 'BORRADOR'.
+      const response = await axiosInstance.post('common/documento-firma/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      dispatch(fetchProyectosPorUsuario());
+      return response.data;
+    } catch (error) {
+      const data = error.response?.data;
+      return rejectWithValue(
+        typeof data === 'string' ? data : data?.error || 'Error al subir el documento corregido.'
+      );
+    }
+  }
+);
+
+
 const convocatoriasSlice = createSlice({
   name: 'convocatorias',
   initialState: {
@@ -248,6 +287,9 @@ const convocatoriasSlice = createSlice({
       .addCase(fetchProyectosPorUsuario.pending, (state) => { state.proyectosUsuarioLoading = true; state.proyectosUsuarioError = null; })
       .addCase(fetchProyectosPorUsuario.fulfilled, (state, action) => { state.proyectosUsuarioLoading = false; state.proyectosUsuario = action.payload; })
       .addCase(fetchProyectosPorUsuario.rejected, (state, action) => { state.proyectosUsuarioLoading = false; state.proyectosUsuarioError = action.payload; })
+      .addCase(subirDocumentoCorregidoProyecto.pending, (state) => { state.proyectosUsuarioLoading = true; })
+      .addCase(subirDocumentoCorregidoProyecto.fulfilled, (state) => { state.proyectosUsuarioLoading = false; })
+      .addCase(subirDocumentoCorregidoProyecto.rejected, (state, action) => { state.proyectosUsuarioLoading = false; state.proyectosUsuarioError = action.payload; })
       .addCase(fetchConvocatoria.pending, (state) => { state.loading = true; state.error = null; })
       .addCase(fetchConvocatoria.fulfilled, (state, action) => { state.loading = false; state.convocatoriaActual = action.payload; })
       .addCase(fetchConvocatoria.rejected, (state, action) => { state.loading = false; state.error = action.payload; })

@@ -1,3 +1,4 @@
+// src/components/usuarios/GroupUsersTable.js
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchGroupUsers, borrarPersonaDeGrupo } from "../../features/usuarios/usersSlice.js";
@@ -6,6 +7,7 @@ import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { Message } from "primereact/message";
 import ConfirmationModal from "../common/ConfirmationModal";
+import ReactivarVinculacionModal from "./ReactivarVinculacionModal";
 
 /**
  * Tabla de personas vinculadas a Grupos/Facultades, con paginación REAL de
@@ -41,6 +43,7 @@ const GroupUsersTable = () => {
   const [lazyParams, setLazyParams] = useState({ first: 0, rows: 10, page: 1 });
   const [filaSeleccionada, setFilaSeleccionada] = useState(null);
   const [isConfirmVisible, setIsConfirmVisible] = useState(false);
+  const [isReactivarModalVisible, setIsReactivarModalVisible] = useState(false);
 
   const cargarPagina = () => {
     dispatch(fetchGroupUsers({ page: lazyParams.page, pageSize: lazyParams.rows }));
@@ -81,7 +84,17 @@ const GroupUsersTable = () => {
     />
   );
 
-  const header = <h5 className="m-0">Personas en Grupos y Facultades</h5>;
+  const header = (
+    <div className="d-flex justify-content-between align-items-center">
+      <h5 className="m-0">Personas en Grupos y Facultades</h5>
+      <Button
+        label="Ver Historial / Reactivar"
+        icon="pi pi-history"
+        className="p-button-sm p-button-outlined"
+        onClick={() => setIsReactivarModalVisible(true)}
+      />
+    </div>
+  );
 
   return (
     <>
@@ -127,6 +140,10 @@ const GroupUsersTable = () => {
           </p>
         )}
       </ConfirmationModal>
+      <ReactivarVinculacionModal
+        visible={isReactivarModalVisible}
+        onHide={() => setIsReactivarModalVisible(false)}
+      />
     </>
   );
 };

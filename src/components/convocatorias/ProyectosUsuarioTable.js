@@ -1,23 +1,27 @@
+// src/components/convocatorias/ProyectosUsuarioTable.js
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { fetchProyectosPorUsuario } from '../../features/convocatorias/convocatoriasSlice';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
+import CargarDocumentoCorregidoModal from './CargarDocumentoCorregidoModal';
 
 const ProyectosUsuarioTable = () => {
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
-  const { proyectosUsuario, proyectosUsuarioLoading, proyectosUsuarioError } = useSelector((state) => state.convocatorias);
+  const navigate = useNavigate();
+  const { proyectosUsuario, proyectosUsuarioLoading } = useSelector((state) => state.convocatorias);
   const [globalFilter, setGlobalFilter] = useState('');
+  const [modalProyectoId, setModalProyectoId] = useState(null);
 
   useEffect(() => {
-    if (user) {
-      dispatch(fetchProyectosPorUsuario(user.id));
-    }
-  }, [dispatch, user]);
+    // (B/backend) ya no depende del usuario logueado como parámetro:
+    // mis-proyectos/ lo resuelve del request.user en el backend.
+    dispatch(fetchProyectosPorUsuario());
+  }, [dispatch]);
 
   const header = (
     <div className="d-flex justify-content-between align-items-center">
@@ -29,38 +33,84 @@ const ProyectosUsuarioTable = () => {
     </div>
   );
 
+  // A) Estado real de calificación, igual que en ProjectsByConvocatoriaModal.js
+  // (mismos campos del mismo serializer: estado_finalizado_calificacion,
+  // calificacion_ultimo_filtro_calificacion).
   const statusBodyTemplate = (rowData) => {
-    // Adapta esto a tu modelo de datos
-    const severity = rowData.estado ? 'success' : 'danger';
-    const value = rowData.estado ? 'Activo' : 'Inactivo';
-    return <Tag severity={severity} value={value}></Tag>;
-  };
-
-  const actionBodyTemplate = (rowData) => {
+    if (!rowData.estado_finalizado_calificacion) {
+      return <Tag severity="warning" value="EN PROCESO" />;
+    }
+    const severity = rowData.calificacion_ultimo_filtro_calificacion === 'APROBADO' ? 'success' : 'danger';
     return (
-      <div className="d-flex gap-2">
-        <Button icon="pi pi-eye" className="p-button-rounded p-button-info p-button-sm" tooltip="Ver Detalles" />
-      </div>
+      <Tag
+        severity={severity}
+        value={`FINALIZADO — ${rowData.calificacion_ultimo_filtro_calificacion || 'SIN RESULTADO'}`}
+      />
     );
   };
 
+  // B) Botón "Ver Detalles" con onClick real. Réplica de la misma regla de
+  // navegación de ProjectsByConvocatoriaModal.js: solo se puede ver la
+  // información completa si la calificación finalizó y fue aprobada.
+  const actionBodyTemplate = (rowData) => {
+  const puedeVerDetalle =
+    rowData.estado_finalizado_calificacion &&
+    rowData.calificacion_ultimo_filtro_calificacion === 'APROBADO';
   return (
-    <DataTable
-      value={proyectosUsuario}
-      header={header}
-      loading={proyectosUsuarioLoading}
-      paginator
-      rows={10}
-      globalFilter={globalFilter}
-      emptyMessage="No tienes proyectos registrados."
-      responsiveLayout="scroll"
-    >
-      <Column field="proyecto.titulo" header="Título del Proyecto" sortable />
-      <Column field="convocatoria.nombre_convocatoria" header="Convocatoria" sortable />
-      <Column field="fecha_presentacion" header="Fecha Presentación" sortable />
-      <Column field="estado" header="Estado" body={statusBodyTemplate} sortable />
-      <Column header="Acciones" body={actionBodyTemplate} />
-    </DataTable>
+    <Button
+      icon="pi pi-eye"
+      className="p-button-rounded p-button-info p-button-sm"
+      tooltip={puedeVerDetalle ? 'Ver Detalles' : 'Disponible cuando el proyecto sea aprobado'}
+      disabled={!puedeVerDetalle}
+      onClick={() => navigate(`/proyectos/${rowData.proyecto}`)}
+    />
+  );
+};
+
+  // C) "Cargue documento corregido": botón habilitado solo si
+  // modificacion_documento_proyecto === true, igual que el original.
+  const cargueDocumentoTemplate = (rowData) => {
+    if (rowData.modificacion_documento_proyecto) {
+      return (
+        <Button
+          label="Cargar Documento"
+          icon="pi pi-upload"
+          className="p-button-sm p-button-primary"
+          onClick={() => setModalProyectoId(rowData.proyecto)}
+        />
+      );
+    }
+    return <span className="text-color-secondary" style={{ fontSize: '0.85rem' }}>No habilitado para actualización</span>;
+  };
+
+  const estadoBodyTemplate = (rowData) => (
+    <Tag severity={rowData.estado ? 'success' : 'danger'} value={rowData.estado ? 'Activo' : 'Inactivo'} />
+  );
+
+  return (
+    <>
+      <DataTable
+        value={proyectosUsuario}
+        header={header}
+        loading={proyectosUsuarioLoading}
+        paginator
+        rows={10}
+        globalFilter={globalFilter}
+        emptyMessage="No tienes proyectos registrados."
+        responsiveLayout="scroll"
+      >
+        <Column field="proyecto_titulo" header="Título del Proyecto" sortable />
+        <Column field="convocatoria_nombre" header="Convocatoria" sortable />
+        <Column header="Estado" body={statusBodyTemplate} sortable sortField="estado_finalizado_calificacion" />
+        <Column header="Cargue documento corregido" body={cargueDocumentoTemplate} />
+        <Column header="Acciones" body={actionBodyTemplate} />
+      </DataTable>
+      <CargarDocumentoCorregidoModal
+        visible={modalProyectoId !== null}
+        onHide={() => setModalProyectoId(null)}
+        proyectoId={modalProyectoId}
+      />
+    </>
   );
 };
 

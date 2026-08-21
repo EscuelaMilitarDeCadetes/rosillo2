@@ -1,6 +1,9 @@
+// src/components/PrivateRoute.js
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+
+const RUTA_CAMBIAR_PASSWORD = '/cambiar-password';
 
 /**
  * Antes: adivinaba los roles requeridos parseando window.location.pathname
@@ -22,10 +25,11 @@ import { Navigate, Outlet } from 'react-router-dom';
  *   </Route>
  */
 const PrivateRoute = ({ allowedRoles = [] }) => {
-  const { isAuthenticated, roles } = useSelector((state) => state.auth);
+  const { isAuthenticated, roles, debeCambiarPassword } = useSelector((state) => state.auth);
+  const location = useLocation();
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   const tieneAcceso =
@@ -33,6 +37,14 @@ const PrivateRoute = ({ allowedRoles = [] }) => {
 
   if (!tieneAcceso) {
     return <Navigate to="/forbidden" replace />;
+  }
+
+  // Fuerza el cambio de la contraseña temporal (ver PasswordService /
+  // Usuario.debe_cambiar_password) antes de permitir cualquier otra
+  // pantalla protegida. Se compara contra location.pathname para no
+  // generar un loop de redirección dentro de /cambiar-password mismo.
+  if (debeCambiarPassword && location.pathname !== RUTA_CAMBIAR_PASSWORD) {
+    return <Navigate to={RUTA_CAMBIAR_PASSWORD} replace />;
   }
 
   return <Outlet />;

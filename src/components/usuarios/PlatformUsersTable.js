@@ -1,3 +1,4 @@
+// src/components/usuarios/PlatformUsersTable.js
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { DataTable } from 'primereact/datatable';
@@ -10,25 +11,15 @@ import ConfirmationModal from '../common/ConfirmationModal';
 /**
  * Tabla de usuarios de plataforma con paginación REAL de backend.
  *
- * apps/usuarios/views/rol_x_usuario_viewset.py -> RolXUsuarioViewSet.list()
- * SIEMPRE pagina (nunca devuelve un array plano), así que esta tabla usa el
- * modo `lazy` de PrimeReact: cada cambio de página dispara
- * fetchPlatformUsers({ page, pageSize }), que pide esa página exacta al
- * backend en vez de traer todo el dataset y paginar en el cliente (como
- * hacía la versión anterior, que además ya no funcionaba: el backend nunca
- * devolvió un array plano para empezar).
+ * Columnas: RolXUsuarioSerializer sí expone también los datos de la
+ * Persona asociada (persona_grado, persona_nombre, persona_apellido,
+ * persona_documento, persona_celular, persona_correo), confirmado en el
+ * backend (apps/usuarios/serializers/rol_x_usuario_serializer.py) — por
+ * eso se muestran junto a usuario_nombre/rol_nombre/estado, igual que en
+ * la tabla "Usuarios Activos registrados" del usuarios.html original.
  *
- * Columnas: SOLO lo que RolXUsuarioSerializer expone hoy
- * (usuario_nombre, rol_nombre, estado). Decisión explícita: no se agregó
- * nombre/apellido/documento/grado de la Persona porque eso requeriría
- * extender el serializer en el backend (fuera de alcance de esta tarea).
- *
- * Se removió el botón Activar/Desactivar: togglea Usuario.is_active, un
- * dato que este endpoint no expone (el 'estado' que sí trae es el de la
- * asignación RolXUsuario, que además el propio queryset ya filtra a
- * estado=True siempre, así que en esta tabla es constante). Gestionarlo
- * bien requiere el mismo trabajo de backend mencionado arriba — queda para
- * cuando se aborde el CRUD de roles / estado de usuario.
+ * El botón Activar/Desactivar SÍ aplica aquí (usuario_is_active también
+ * viene del serializer) y se mantiene en accionesTemplate más abajo.
  *
  * Se removió el cuadro de búsqueda: el endpoint no soporta ningún parámetro
  * de búsqueda (ver list() en el backend), así que un filtro de texto solo
@@ -36,6 +27,8 @@ import ConfirmationModal from '../common/ConfirmationModal';
  * confuso que útil como "buscador". Si se necesita búsqueda real sobre
  * todo el dataset, hay que agregar soporte de `search` en el backend primero.
  */
+
+
 const PlatformUsersTable = () => {
   const dispatch = useDispatch();
   // Corregido: el store registra este slice bajo la clave 'usuarios'

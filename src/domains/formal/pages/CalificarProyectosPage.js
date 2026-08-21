@@ -1,5 +1,6 @@
+// src/domains/formal/pages/CalificarProyectosPage.js
 import React from 'react';
-import CalificacionTable from '../components/calificaciones/CalificacionTable';
+import CalificacionTable from '../../../components/calificaciones/CalificacionTable';
 
 const CalificarProyectosPage = () => {
   return (

@@ -8,6 +8,8 @@ import projectsReducer from '../features/proyectos/projectsSlice.js'; // Importa
 import notificacionesReducer from '../features/notificaciones/notificacionesSlice';
 import procesosFormativosReducer from '../features/procesosFormativos/procesosFormativosSlice';
 import catalogosReducer from '../features/catalogos/catalogosSlice';
+import calificacionResponsableReducer from '../features/calificaciones/calificacionResponsableSlice';
+import historialReducer from '../features/historial/historialSlice';
 
 
 export const store = configureStore({
@@ -21,5 +23,7 @@ export const store = configureStore({
     notificaciones: notificacionesReducer, // Añade el reducer de notificaciones
     procesosFormativos: procesosFormativosReducer, // Añade el reducer de procesos formativos
     catalogos: catalogosReducer, // Añade el reducer de catálogos
+    calificacionResponsable: calificacionResponsableReducer, // Añade el reducer de calificaciones por responsable
+    historial: historialReducer, // Añade el reducer de historial
   },
 });

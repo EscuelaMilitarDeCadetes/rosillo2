@@ -68,7 +68,7 @@ axiosInstance.interceptors.response.use(
       if (!refreshToken) {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
+        window.location.href = `/login/${localStorage.getItem('sistemaActivo') || 'formal'}`;
         return Promise.reject(error);
       }
 
@@ -84,7 +84,7 @@ axiosInstance.interceptors.response.use(
         resolvePending(refreshError, null);
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
+        window.location.href = `/login/${localStorage.getItem('sistemaActivo') || 'formal'}`;
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

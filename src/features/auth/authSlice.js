@@ -1,3 +1,4 @@
+// src/features/auth/authSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../api/axiosInstance';
 
@@ -33,6 +34,8 @@ export const loginUser = createAsyncThunk(
         access: authData.access,
         refresh: authData.refresh,
         roles: profile.roles,
+        facultadId: profile.facultad_id,
+        grupoId: profile.grupo_id,
         debeCambiarPassword: authData.debe_cambiar_password,
         sistema,
       };
@@ -60,6 +63,8 @@ export const loadSession = createAsyncThunk(
         access: accessToken,
         refresh: localStorage.getItem('refreshToken'),
         roles: profile.roles,
+        facultadId: profile.facultad_id,
+        grupoId: profile.grupo_id,
         debeCambiarPassword: profile.debe_cambiar_password,
         sistema: localStorage.getItem('sistemaActivo') || 'formal',
       };
@@ -92,6 +97,26 @@ export const logoutUser = createAsyncThunk(
   }
 );
 
+// --- CAMBIAR CONTRASEÑA (usuario autenticado, con o sin debe_cambiar_password) ---
+// PasswordViewSet.change_password (usuarios/password/change-password/) exige
+// old_password + new_password y ya limpia debe_cambiar_password en el backend;
+// acá solo replicamos ese estado en el redux local para que PrivateRoute deje
+// de redirigir sin necesidad de otro roundtrip a usuarios/me/.
+export const changePassword = createAsyncThunk(
+  'auth/changePassword',
+  async ({ old_password, new_password }, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.post('usuarios/password/change-password/', {
+        old_password,
+        new_password,
+      });
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || { error: error.message });
+    }
+  }
+);
+
 const initialState = {
   user: null,
   roles: [],
@@ -109,6 +134,8 @@ const authSlice = createSlice({
     clearAuthData: (state) => {
       state.user = null;
       state.roles = [];
+      state.facultadId = null;
+      state.grupoId = null;
       state.isAuthenticated = false;
       state.debeCambiarPassword = false;
       state.sistemaActivo = null;
@@ -139,10 +166,15 @@ const authSlice = createSlice({
         state.roles = [];
         state.error = action.payload || 'Fallo en el inicio de sesión';
       })
+      .addCase(changePassword.fulfilled, (state) => {
+        state.debeCambiarPassword = false;
+      })
       .addCase(loadSession.fulfilled, (state, action) => {
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.roles = action.payload.roles;
+        state.facultadId = action.payload.facultadId;
+        state.grupoId = action.payload.grupoId;
         state.debeCambiarPassword = action.payload.debeCambiarPassword;
         state.sistemaActivo = action.payload.sistema;
       })
@@ -150,6 +182,8 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.user = null;
         state.roles = [];
+        state.facultadId = null;
+        state.grupoId = null;
         state.sistemaActivo = null;
       })
       .addCase(logoutUser.fulfilled, (state) => {
@@ -164,6 +198,8 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.user = null;
         state.roles = [];
+        state.facultadId = null;
+        state.grupoId = null;
       });
   },
 });

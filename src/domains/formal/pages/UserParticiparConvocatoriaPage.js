@@ -1,7 +1,8 @@
+// src/domains/formal/pages/UserParticiparConvocatoriaPage.js
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchConvocatoria, createProyecto } from '../../features/convocatorias/convocatoriasSlice';
+import { fetchConvocatoria, createProyecto } from '../../../features/convocatorias/convocatoriasSlice';
 import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
 import { Checkbox } from 'primereact/checkbox';
@@ -9,14 +10,13 @@ import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
 import { FileUpload } from 'primereact/fileupload';
 import { ProgressSpinner } from 'primereact/progressspinner';
-import ConfirmationModal from '../components/common/ConfirmationModal';
+import ConfirmationModal from '../../../components/common/ConfirmationModal';
 
 const UserParticiparConvocatoriaPage = () => {
   const { id } = useParams(); // Obtener el ID de la convocatoria de la URL
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { convocatoriaActual, loading, error } = useSelector((state) => state.convocatorias);
-
   const [formData, setFormData] = useState({
     titulo: '',
     unidadEjecutora: '',
@@ -71,9 +71,24 @@ const UserParticiparConvocatoriaPage = () => {
     dispatch(createProyecto({ convocatoriaId: id, data: formData })).then((result) => {
       if (createProyecto.fulfilled.match(result)) {
         setIsConfirmVisible(false);
-        navigate('/mis-proyectos'); // Redirigir a la lista de proyectos del usuario
+        // Con la separación de responsabilidades, el destino natural tras
+        // participar es la vista dedicada de proyectos del usuario.
+        navigate('/mis-proyectos');
       }
     });
+  };
+
+  const formatApiError = (err) => {
+    if (!err) return '';
+    if (typeof err === 'string') return err;
+    if (err.detail) return err.detail;
+    // DRF ValidationError con dict de campos: { campo: ["msg1", "msg2"], ... }
+    return Object.entries(err)
+      .map(([campo, mensajes]) => {
+        const texto = Array.isArray(mensajes) ? mensajes.join(' ') : mensajes;
+        return `${campo}: ${texto}`;
+      })
+      .join(' | ');
   };
 
   const header = <h2>Participar en Convocatoria: {convocatoriaActual?.nombre_convocatoria}</h2>;
@@ -92,21 +107,32 @@ const UserParticiparConvocatoriaPage = () => {
               <label htmlFor="titulo">Título del Proyecto</label>
             </span>
           </div>
-
           <div className="field col-6">
             <span className="p-float-label">
-              <InputText id="unidadEjecutora" value={formData.unidadEjecutora} onChange={(e) => handleInputChange(e, 'unidadEjecutora')} required />
+              <InputText
+                id="unidadEjecutora"
+                value={formData.unidadEjecutora}
+                onChange={(e) => handleInputChange(e, 'unidadEjecutora')}
+                maxLength={10}
+                required
+              />
               <label htmlFor="unidadEjecutora">Unidad Ejecutora</label>
             </span>
+            <small className="p-text-secondary">{formData.unidadEjecutora.length}/10 caracteres</small>
           </div>
-
           <div className="field col-6">
             <span className="p-float-label">
-              <InputText id="lineaInvestigacion" value={formData.lineaInvestigacion} onChange={(e) => handleInputChange(e, 'lineaInvestigacion')} required />
+              <InputText
+                id="lineaInvestigacion"
+                value={formData.lineaInvestigacion}
+                onChange={(e) => handleInputChange(e, 'lineaInvestigacion')}
+                maxLength={100}
+                required
+              />
               <label htmlFor="lineaInvestigacion">Línea de Investigación</label>
             </span>
+            <small className="p-text-secondary">{formData.lineaInvestigacion.length}/100 caracteres</small>
           </div>
-
           <div className="field col-6 flex align-items-center">
             <Checkbox
               inputId="alianza"
@@ -115,7 +141,6 @@ const UserParticiparConvocatoriaPage = () => {
             />
             <label htmlFor="alianza" className="ms-2">¿Es un proyecto en alianza?</label>
           </div>
-
           <div className="field col-6 flex align-items-center">
             <Checkbox
               inputId="financiado"
@@ -124,7 +149,6 @@ const UserParticiparConvocatoriaPage = () => {
             />
             <label htmlFor="financiado" className="ms-2">¿Es un proyecto financiado?</label>
           </div>
-
           {formData.financiado && (
             <div className="field col-12">
               <span className="p-float-label">
@@ -140,35 +164,29 @@ const UserParticiparConvocatoriaPage = () => {
               </span>
             </div>
           )}
-
           <div className="field col-12">
             <label htmlFor="docProyecto">Documento del Proyecto (obligatorio, solo PDF)</label>
             <FileUpload name="docProyecto" customUpload uploadHandler={(e) => handleFileUpload(e, 'docProyecto')} chooseLabel="Seleccionar Archivo" mode="basic" auto accept=".pdf" />
             {formData.docProyecto && <small className="p-text-secondary ms-2">{formData.docProyecto.name}</small>}
           </div>
-
           <div className="field col-12">
             <label htmlFor="docCarta">Carta de Compromiso (Opcional, solo PDF)</label>
             <FileUpload name="docCarta" customUpload uploadHandler={(e) => handleFileUpload(e, 'docCarta')} chooseLabel="Seleccionar Archivo" mode="basic" auto accept=".pdf" />
             {formData.docCarta && <small className="p-text-secondary ms-2">{formData.docCarta.name}</small>}
           </div>
-
           <div className="field col-12">
             <label htmlFor="docAlianza">Documento de Alianza (Opcional, solo PDF)</label>
             <FileUpload name="docAlianza" customUpload uploadHandler={(e) => handleFileUpload(e, 'docAlianza')} chooseLabel="Seleccionar Archivo" mode="basic" auto accept=".pdf" />
             {formData.docAlianza && <small className="p-text-secondary ms-2">{formData.docAlianza.name}</small>}
           </div>
         </div>
-
         {(validationError || error) && (
-          <div className="alert alert-danger mt-3">{validationError || JSON.stringify(error)}</div>
+          <div className="alert alert-danger mt-3">{validationError || formatApiError(error)}</div>
         )}
-
         <div className="d-flex justify-content-end mt-4">
           <Button label="Participar" className="p-button-success" onClick={handleShowConfirmation} />
         </div>
       </Card>
-
       <ConfirmationModal
         visible={isConfirmVisible}
         onHide={() => setIsConfirmVisible(false)}
