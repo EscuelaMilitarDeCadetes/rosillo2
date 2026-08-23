@@ -4,6 +4,7 @@ from .test_control_cambios import ControlCambiosServiceTests
 from .test_convocatoria import ConvocatoriaServiceTests
 from .test_ejecucion import EjecucionServiceTests
 from .test_grupo_minciencias import GrupoMincienciasServiceTests
+from .test_investigador_completo_service import InvestigadorCompletoServiceTests
 from .test_investigador_x_proyecto import InvestigadorXProyectoServiceTests
 from .test_monto import MontoServiceTests
 from .test_objetivo_x_punto import ObjetivoXPuntoServiceTests

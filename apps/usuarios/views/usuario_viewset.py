@@ -37,7 +37,7 @@ class UsuarioViewSet(viewsets.ViewSet):
                 EsSoporte | EsAsesor | EsFacultad | EsSupervisor |
                 EsGrupo | EsCInterno | EsCExterno | EsDecano
             ]
-            return [permission() for permission in permission_classes]
+        return [permission() for permission in permission_classes]
 
     def get_queryset(self):
         return (

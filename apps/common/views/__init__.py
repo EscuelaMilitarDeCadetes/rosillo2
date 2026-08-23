@@ -4,5 +4,6 @@ from .documento_firmante_viewset import DocumentoFirmanteViewSet
 from .historial_viewset import HistorialViewSet
 from .notificacion_viewset import NotificacionViewSet
 from .plantilla_documento_viewset import PlantillaDocumentoViewSet
+from .soporte_viewset import SoporteViewSet
 from .tarea_viewset import TareaViewSet
 from .tipo_documento_viewset import TipoDocumentoViewSet

@@ -6,6 +6,7 @@ from apps.common.views import (
     HistorialViewSet,
     NotificacionViewSet,
     PlantillaDocumentoViewSet,
+    SoporteViewSet,
     TareaViewSet,
     TipoDocumentoViewSet,
 )
@@ -17,6 +18,7 @@ router.register(r'documento-firmante', DocumentoFirmanteViewSet, basename='docum
 router.register(r'historial', HistorialViewSet, basename='historial')
 router.register(r'notificacion', NotificacionViewSet, basename='notificacion')
 router.register(r'plantilla-documento', PlantillaDocumentoViewSet, basename='plantilla-documento')
+router.register(r'soporte', SoporteViewSet, basename='soporte')
 router.register(r'tarea', TareaViewSet, basename='tarea')
 router.register(r'tipos-documento', TipoDocumentoViewSet, basename='tipos-documento')
 

@@ -1,10 +1,8 @@
 """
 Validador de PersonaXGrupo.
-
 Implementa la validación dura confirmada explícitamente: la facultad de
 una Persona determina a qué único GrupoInvestigacion puede vincularse
 como investigador, según la correspondencia definida en FacultadXGrupo.
-
 Tres tipos de vinculación válidos (confirmados explícitamente):
   1. Administrativo puro: facultad=None, grupo=None (solo rol SOPORTE
      puede crear este tipo — ese chequeo de rol vive en el ViewSet/
@@ -15,15 +13,22 @@ Tres tipos de vinculación válidos (confirmados explícitamente):
   3. Vinculación de investigador: grupo=<algo> (con o sin facultad en
      la MISMA fila). Se valida así:
        a. Si esta misma fila ya trae 'facultad' poblada, esa es la
-          facultad de referencia.
+          facultad de referencia y se persiste tal cual.
        b. Si no, se busca la facultad activa de esta Persona en otra
           fila (PersonaXGrupoSelector.obtener_facultad_activa_de_persona).
-          Si no tiene ninguna, se rechaza: "toda Persona debe tener
-          facultad antes de poder ser investigador" (confirmado
-          explícitamente).
-       c. El grupo debe coincidir EXACTAMENTE con el grupo que
-          FacultadXGrupo asocia a esa facultad de referencia.
-
+          Si la tiene, esa facultad se usa como referencia y SÍ se
+          persiste en la fila (queda registrada como la facultad de la
+          persona en esta vinculación de grupo).
+       c. Si no tiene ninguna facultad activa y el caller lo pide
+          explícitamente (derivar_facultad_de_grupo=True — caso de alta
+          de investigador nuevo desde VinculacionService), se deriva una
+          facultad de referencia desde FacultadXGrupo únicamente para
+          validar que el grupo indicado es coherente. Esa facultad
+          derivada NO se persiste: la fila queda con facultad=None,
+          porque la persona en sí nunca tuvo una facultad propia.
+       d. En cualquier caso, el grupo debe coincidir EXACTAMENTE con el
+          grupo que FacultadXGrupo asocia a la facultad de referencia
+          usada en la validación.
 NO existe validar_eliminacion() en el sentido de bloqueo — PersonaXGrupo
 SÍ permite soft-delete libremente (desvinculación), a diferencia de los
 catálogos estructurales. El Service es quien aplica estado=False.
@@ -47,11 +52,13 @@ class PersonaXGrupoValidator:
         PersonaXGrupoValidator._validar_referencias_opcionales(grupo_id, facultad_id)
         PersonaXGrupoValidator._validar_vinculacion(vinculacion)
         PersonaXGrupoValidator._validar_unicidad(persona_id, rol_grupo_id, grupo_id, facultad_id)
+        facultad_final_id = facultad_id
         if grupo_id:
-            PersonaXGrupoValidator._validar_correspondencia_grupo_facultad(
+            facultad_final_id = PersonaXGrupoValidator._validar_correspondencia_grupo_facultad(
                 persona_id, grupo_id, facultad_id,
                 derivar_facultad_de_grupo=derivar_facultad_de_grupo,
             )
+        return facultad_final_id
 
     @staticmethod
     def validar_actualizacion(persona_x_grupo_id, persona_id, rol_grupo_id, grupo_id, facultad_id, vinculacion,
@@ -63,11 +70,13 @@ class PersonaXGrupoValidator:
         PersonaXGrupoValidator._validar_unicidad(
             persona_id, rol_grupo_id, grupo_id, facultad_id, excluir_id=persona_x_grupo_id
         )
+        facultad_final_id = facultad_id
         if grupo_id:
-            PersonaXGrupoValidator._validar_correspondencia_grupo_facultad(
+            facultad_final_id = PersonaXGrupoValidator._validar_correspondencia_grupo_facultad(
                 persona_id, grupo_id, facultad_id, excluir_id=persona_x_grupo_id,
                 derivar_facultad_de_grupo=derivar_facultad_de_grupo,
             )
+        return facultad_final_id
 
     @staticmethod
     def validar_desvinculacion(persona_x_grupo, desvinculacion):
@@ -81,7 +90,6 @@ class PersonaXGrupoValidator:
             )
 
     # -- Reglas atómicas ---------------------------------------------------
-
     @staticmethod
     def _validar_persona_existe(persona_id):
         if not persona_id:
@@ -121,16 +129,35 @@ class PersonaXGrupoValidator:
     @staticmethod
     def _validar_correspondencia_grupo_facultad(persona_id, grupo_id, facultad_id, excluir_id=None,
                                                 derivar_facultad_de_grupo=False):
+        """
+        Determina la facultad de referencia contra la que se valida la
+        correspondencia grupo-facultad (vía FacultadXGrupo) y, por
+        separado, la facultad que efectivamente debe quedar persistida
+        en la fila de PersonaXGrupo.
+
+        Ambos valores coinciden salvo en un único caso: cuando la
+        facultad de referencia tuvo que derivarse desde el grupo
+        (derivar_facultad_de_grupo=True) porque la persona es nueva y
+        no tiene ninguna facultad activa propia. En ese caso la
+        derivación es solo un mecanismo de validación — no representa
+        una facultad real de la persona — así que NO se persiste.
+        """
         facultad_referencia_id = facultad_id
+        facultad_para_guardar = facultad_id
+
         if not facultad_referencia_id:
             facultad_activa = PersonaXGrupoSelector.obtener_facultad_activa_de_persona(persona_id)
             if facultad_activa is not None:
                 facultad_referencia_id = facultad_activa.pk
+                facultad_para_guardar = facultad_activa.pk
             elif derivar_facultad_de_grupo:
                 # Solo permitido cuando el caller (VinculacionService, alta de
                 # investigador nuevo) lo pide explícitamente: deriva la
                 # facultad desde el grupo vía FacultadXGrupo en vez de exigir
-                # que la persona ya tenga una.
+                # que la persona ya tenga una. Es puramente para validar la
+                # correspondencia grupo-facultad; la persona sigue sin tener
+                # facultad propia, así que facultad_para_guardar NO se toca
+                # y la fila queda con facultad=None.
                 facultad_derivada = FacultadXGrupoService.obtener_facultad_de_grupo(grupo_id)
                 if facultad_derivada is None:
                     raise ValidationError(
@@ -155,6 +182,7 @@ class PersonaXGrupoValidator:
                 f"grupo de investigación asociado en FacultadXGrupo. No se "
                 f"puede determinar a qué grupo puede vincularse esta persona."
             )
+
         if grupo_permitido.pk != int(grupo_id):
             raise ValidationError(
                 {"grupo": (
@@ -164,3 +192,5 @@ class PersonaXGrupoValidator:
                     f"facultad, y no al grupo id={grupo_id}."
                 )}
             )
+
+        return facultad_para_guardar

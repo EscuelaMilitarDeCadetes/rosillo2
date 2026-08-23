@@ -44,7 +44,7 @@ class PersonaXGrupoService:
     def crear(persona_id, rol_grupo_id, ejecutor, grupo_id=None, facultad_id=None,
             vinculacion=None, derivar_facultad_de_grupo=False):
         vinculacion = vinculacion or timezone.now().date()
-        PersonaXGrupoValidator.validar_creacion(
+        facultad_id_final = PersonaXGrupoValidator.validar_creacion(
             persona_id, rol_grupo_id, grupo_id, facultad_id, vinculacion,
             derivar_facultad_de_grupo=derivar_facultad_de_grupo,
         )
@@ -52,7 +52,7 @@ class PersonaXGrupoService:
             persona_id=persona_id,
             rol_grupo_id=rol_grupo_id,
             grupo_id=grupo_id,
-            facultad_id=facultad_id,
+            facultad_id=facultad_id_final,   # <-- antes: facultad_id
             vinculacion=vinculacion,
             estado=True,
         )
@@ -74,15 +74,13 @@ class PersonaXGrupoService:
         nuevo_grupo_id = grupo_id if grupo_id is not None else vinculo.grupo_id
         nueva_facultad_id = facultad_id if facultad_id is not None else vinculo.facultad_id
         nueva_vinculacion = vinculacion if vinculacion is not None else vinculo.vinculacion
-
-        PersonaXGrupoValidator.validar_actualizacion(
+        facultad_id_final = PersonaXGrupoValidator.validar_actualizacion(
             persona_x_grupo_id, vinculo.persona_id, nuevo_rol_grupo_id,
             nuevo_grupo_id, nueva_facultad_id, nueva_vinculacion,
         )
-
         vinculo.rol_grupo_id = nuevo_rol_grupo_id
         vinculo.grupo_id = nuevo_grupo_id
-        vinculo.facultad_id = nueva_facultad_id
+        vinculo.facultad_id = facultad_id_final
         vinculo.vinculacion = nueva_vinculacion
         vinculo.save(update_fields=["rol_grupo", "grupo", "facultad", "vinculacion"])
 

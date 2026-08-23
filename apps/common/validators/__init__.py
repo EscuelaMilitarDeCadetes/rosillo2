@@ -4,6 +4,7 @@ from .documento_firmante_validator import DocumentoFirmanteValidator
 from .historial_validator import HistorialValidator
 from .notificacion_validator import NotificacionValidator
 from .plantilla_documento_validator import PlantillaDocumentoValidator
+from .soporte_validator import SoporteValidator
 from .tarea_validator import TareaValidator
 from .tipo_documento_validator import TipoDocumentoValidator
 
@@ -14,6 +15,7 @@ __all__ = [
     "HistorialValidator",
     "NotificacionValidator",
     "PlantillaDocumentoValidator",
+    "SoporteValidator",
     "TareaValidator",
     "TipoDocumentoValidator",
 ]

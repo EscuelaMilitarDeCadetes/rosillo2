@@ -4,5 +4,6 @@ from .documento_firmante_serializer import DocumentoFirmanteSerializer
 from .historial_serializer import HistorialSerializer
 from .notificacion_serializer import NotificacionSerializer
 from .plantilla_documento_serializer import PlantillaDocumentoSerializer
+from .soporte_serializer import SoporteSolicitudSerializer
 from .tarea_serializer import TareaSerializer
 from .tipo_documento_serializer import TipoDocumentoSerializer

@@ -6,6 +6,7 @@ from .ejecucion_service import EjecucionService
 from .estadisticas_service import EstadisticasService
 from .exportacion_service import ExportacionService
 from .grupo_minciencias_service import GrupoMincienciasService
+from .investigador_completo_service import InvestigadorCompletoService
 from .investigador_x_proyecto_service import InvestigadorXProyectoService
 from .monto_service import MontoService
 from .objetivo_x_punto_service import ObjetivoXPuntoService
@@ -31,6 +32,7 @@ __all__ = [
     "EstadisticasService",
     "ExportacionService",
     "GrupoMincienciasService",
+    "InvestigadorCompletoService",
     "InvestigadorXProyectoService",
     "MontoService",
     "ObjetivoXPuntoService",

@@ -224,6 +224,8 @@ EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'notificacionesrosillo@esmic.edu.co')
+EMAIL_SOPORTE = os.getenv('EMAIL_SOPORTE', 'notificacionesrosillo@esmic.edu.co')
+PQRS_SUBJECT_PREFIX = "Solicitud de soporte"
 
 # 5.1 Configuración de Celery (colas de tareas asíncronas — envío de
 # correo y job de recordatorios de tareas)
