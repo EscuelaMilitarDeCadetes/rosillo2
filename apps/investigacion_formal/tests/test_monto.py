@@ -61,12 +61,28 @@ class MontoServiceTests(InvestigacionFormalFixturesMixin, TestCase):
             proyecto_id=self.proyecto.pk, solicitado=1000000, ejecutor=self.ejecutor,
         )
         MontoService.asignar_aprobado(
-            monto_id=monto.pk, aprobado=800000, contrapartida=0, ejecutor=self.ejecutor,
+            monto_id=monto.pk, aprobado=800000, contrapartida=100000, ejecutor=self.ejecutor,
         )
         actualizado = MontoService.editar_valor_aprobado(
             monto_id=monto.pk, nuevo_aprobado=900000, ejecutor=self.ejecutor,
         )
         self.assertEqual(actualizado.aprobado, 900000)
+        # NUEVO: total debe reflejar el nuevo aprobado + la contrapartida ya asignada.
+        self.assertEqual(actualizado.total, 1000000)  # 900000 + 100000
+        
+    def test_editar_valor_aprobado_recalcula_total_sin_contrapartida(self):
+        """NUEVO: si nunca se asignó contrapartida (monto.contrapartida es None),
+        el cálculo no debe romperse (None + numero -> TypeError sin el 'or 0')."""
+        monto = MontoService.crear(
+            proyecto_id=self.proyecto.pk, solicitado=1000000, ejecutor=self.ejecutor,
+        )
+        MontoService.asignar_aprobado(
+            monto_id=monto.pk, aprobado=800000, contrapartida=0, ejecutor=self.ejecutor,
+        )
+        actualizado = MontoService.editar_valor_aprobado(
+            monto_id=monto.pk, nuevo_aprobado=850000, ejecutor=self.ejecutor,
+        )
+        self.assertEqual(actualizado.total, 850000)
 
     def test_editar_valor_aprobado_menor_a_ejecutado_falla(self):
         monto = MontoService.crear(

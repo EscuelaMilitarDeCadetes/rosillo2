@@ -1,5 +1,7 @@
 # apps/investigacion_formal/selectors/proyecto_x_convocatoria_selector.py
 from apps.investigacion_formal.models import ProyectoXConvocatoria
+from django.db.models import Exists, OuterRef
+from apps.investigacion_formal.models import InvestigadorXProyecto, ProductoXProyecto
 
 
 class ProyectoXConvocatoriaSelector:
@@ -230,4 +232,12 @@ class ProyectoXConvocatoriaSelector:
             filtros &= Q(proyecto__gruplac=gruplac)
         if estado is not None:
             filtros &= Q(estado=estado)
+        qs = qs.annotate(
+            tiene_investigadores=Exists(
+                InvestigadorXProyecto.objects.filter(proyecto_id=OuterRef('proyecto_id'), estado=True)
+            ),
+            tiene_productos=Exists(
+                ProductoXProyecto.objects.filter(proyecto_id=OuterRef('proyecto_id'))
+            ),
+        )
         return qs.filter(filtros).distinct().order_by('-proyecto__fecha_inicio')

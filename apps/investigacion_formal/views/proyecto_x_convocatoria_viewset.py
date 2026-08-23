@@ -1,5 +1,7 @@
 # apps/investigacion_formal/views/proyecto_x_convocatoria_viewset.py
+from apps.investigacion_formal.models.convocatoria import Convocatoria
 from apps.investigacion_formal.pagination import InvestigacionFormalPageNumberPagination
+from apps.investigacion_formal.selectors.proyecto_selector import ProyectoSelector
 from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormal
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -182,3 +184,18 @@ class ProyectoXConvocatoriaViewSet(viewsets.ViewSet):
         registros = ProyectoXConvocatoriaService.listar_por_usuario(request.user.id)
         serializer = self.serializer_class(registros, many=True)
         return Response(serializer.data)
+    
+    @action(detail=False, methods=["get"], url_path="opciones-filtro")
+    def opciones_filtro(self, request):
+        return Response({
+            "convocatorias": list(
+                Convocatoria.objects.order_by('nombre_convocatoria')
+                .values_list('nombre_convocatoria', flat=True).distinct()
+            ),
+            "anios_inicio": [d.year for d in ProyectoSelector.listar_anios_inicio_distintos()],
+            "anios_fin": [d.year for d in ProyectoSelector.listar_anios_fin_distintos()],
+            "anios_convocatoria": [
+                c.anio_convocatoria for c in Convocatoria.objects.exclude(anio_convocatoria__isnull=True)
+                .order_by('-anio_convocatoria').distinct('anio_convocatoria')
+            ],
+        })

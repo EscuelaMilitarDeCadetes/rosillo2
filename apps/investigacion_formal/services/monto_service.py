@@ -82,14 +82,20 @@ class MontoService:
     @staticmethod
     @transaction.atomic
     def editar_valor_aprobado(monto_id, nuevo_aprobado, ejecutor):
-        """Réplica de MontoServicio.editarMontoXProyecto: modifica el aprobado
-        sin tocar contrapartida/total. Exclusivo de CINTERNO/CEXTERNO."""
+        """Réplica de MontoServicio.editarMontoXProyecto: modifica el aprobado.
+
+        CORREGIDO: además de 'aprobado', recalcula 'total' con la
+        contrapartida ya existente (total = nuevo_aprobado + contrapartida).
+        Antes solo se actualizaba 'aprobado' y 'total' quedaba con el valor
+        calculado en la asignación inicial (asignar_aprobado), desincronizado
+        de cualquier edición posterior. 'total' se usa en ExportacionService
+        para reportes, así que debe reflejar siempre aprobado+contrapartida.
+        """
         monto = MontoSelector.obtener(monto_id)
         MontoValidator.validar_edicion_gasto(monto, nuevo_aprobado)
-
         monto.aprobado = nuevo_aprobado
-        monto.save(update_fields=['aprobado'])
-
+        monto.total = nuevo_aprobado + (monto.contrapartida or 0)
+        monto.save(update_fields=['aprobado', 'total'])
         HistorialService.registrar(
             ejecutor,
             f"Se modificó el valor aprobado del proyecto "

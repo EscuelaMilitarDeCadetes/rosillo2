@@ -7,11 +7,18 @@ class ProyectoXConvocatoriaSerializer(serializers.ModelSerializer):
     proyecto_titulo = serializers.CharField(source='proyecto.titulo', read_only=True)
     proyecto_codigo = serializers.CharField(source='proyecto.codigo', read_only=True)
     proyecto_fecha_inicio = serializers.DateField(source='proyecto.fecha_inicio', read_only=True)
+    proyecto_financiado = serializers.BooleanField(source='proyecto.financiado', read_only=True)
+    proyecto_gruplac = serializers.BooleanField(source='proyecto.gruplac', read_only=True)
     convocatoria_nombre = serializers.CharField(source='convocatoria.nombre_convocatoria', read_only=True)
     convocatoria_interno = serializers.BooleanField(source='convocatoria.interno', read_only=True)
+    convocatoria_anio = serializers.IntegerField(source='convocatoria.anio_convocatoria', read_only=True)
     monto_id = serializers.SerializerMethodField()
     monto_aprobado = serializers.SerializerMethodField()
     monto_solicitado = serializers.SerializerMethodField()
+    monto_contrapartida = serializers.SerializerMethodField()
+    monto_total = serializers.SerializerMethodField()
+    tiene_investigadores = serializers.BooleanField(read_only=True)
+    tiene_productos = serializers.BooleanField(read_only=True)
     responsable = serializers.SerializerMethodField()
 
     class Meta:
@@ -27,7 +34,7 @@ class ProyectoXConvocatoriaSerializer(serializers.ModelSerializer):
         original hacía dos consultas separadas; se agrega monto_id sin
         sumar una tercera).
 
-        Nota de rendimiento pendiente: esto no resuelve el N+1 a través de
+        Nota de rendimiento pendiente: esto no resuelve el N1 a través de
         las FILAS de un listado paginado (20 filas = 20 consultas de Monto).
         Si se confirma que es un problema real en producción, la solución
         de fondo es un prefetch_related/Prefetch en
@@ -60,7 +67,21 @@ class ProyectoXConvocatoriaSerializer(serializers.ModelSerializer):
         if monto is None or not monto.solicitado:
             return None
         return monto.solicitado
+    
+    def get_monto_contrapartida(self, obj):
+        """Réplica de proyecto.montoFk.contrapartida (columna 'Valor contrapartida')."""
+        monto = self._monto(obj)
+        if monto is None or not monto.contrapartida:
+            return None
+        return monto.contrapartida
 
+    def get_monto_total(self, obj):
+        """Réplica de proyecto.montoFk.total (columna 'Valor total')."""
+        monto = self._monto(obj)
+        if monto is None or not monto.total:
+            return None
+        return monto.total
+    
     def get_responsable(self, obj):
         """
         Réplica de usuarioFk.personaFk.personaXGrupoList[0] del original:
