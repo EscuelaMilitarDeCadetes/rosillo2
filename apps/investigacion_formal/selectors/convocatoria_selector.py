@@ -78,3 +78,39 @@ class ConvocatoriaSelector:
         return Convocatoria.objects.filter(
             nombre_convocatoria=nombre_convocatoria
         ).first()
+    
+    @staticmethod
+    def listar_calificadas(interno):
+        """
+        Réplica de ConvocatoriaInternaRepositorio.getQualifiedConvocatories(interno):
+        solo convocatorias que tengan al menos un proyecto con calificación
+        finalizada y aprobada, del tipo (interno/externo) solicitado.
+        Usado por ProyectoXConvocatoriaViewSet.opciones_filtro para poblar el
+        filtro "Convocatoria" de adminProyectosExternos / proyectosAprobados /
+        proyectosRechazados (a diferencia de segProyectos.html, que usa la
+        lista sin filtrar `listar()`).
+        """
+        return (
+            Convocatoria.objects
+            .filter(
+                proyectoxconvocatoria__estado_finalizado_calificacion=True,
+                proyectoxconvocatoria__proyecto__estado_aprobado='APROBADO',
+                proyectoxconvocatoria__proyecto__interno=interno,
+            )
+            .order_by('nombre_convocatoria')
+            .distinct()
+        )
+ 
+    @staticmethod
+    def listar_anios_calificadas(interno):
+        """
+        Réplica de ConvocatoriaInternaRepositorio.getYearsOfQualifiedConvocatories(interno):
+        años de convocatoria de esas mismas convocatorias calificadas.
+        """
+        return (
+            ConvocatoriaSelector.listar_calificadas(interno)
+            .exclude(anio_convocatoria__isnull=True)
+            .order_by('-anio_convocatoria')
+            .values_list('anio_convocatoria', flat=True)
+            .distinct()
+        )

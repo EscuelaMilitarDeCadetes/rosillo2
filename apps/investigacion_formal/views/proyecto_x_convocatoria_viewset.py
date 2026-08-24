@@ -21,6 +21,7 @@ from apps.investigacion_formal.services.exportacion_service import ExportacionSe
 from apps.investigacion_formal.selectors.proyecto_x_convocatoria_selector import (
     ProyectoXConvocatoriaSelector,
 )
+from apps.investigacion_formal.selectors.convocatoria_selector import ConvocatoriaSelector
 
 ACCIONES_SOLO_CINTERNO_CEXTERNO = [
     "destroy", "habilitar_correccion", "deshabilitar_correccion", "finalizar_calificacion",
@@ -187,15 +188,63 @@ class ProyectoXConvocatoriaViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=["get"], url_path="opciones-filtro")
     def opciones_filtro(self, request):
-        return Response({
-            "convocatorias": list(
+        """
+        Alimenta los dropdowns de filtro del frontend.
+         Comportamiento dual, según si viene o no el query param `interno`:
+         - SIN `interno` (uso de segProyectos.html / SegProyectosTable.js):
+          listas SIN filtrar, igual que antes — este módulo muestra proyectos
+          internos y externos mezclados, con su propio filtro "Tipo de
+          convocatoria" aparte. Réplica de
+          ConvocatoriaInternaServicio.getAllConvocatoria() +
+          ProyectoServicio.findDistinctAniosInicio()/findDistinctAniosFin().
+ 
+        - CON `interno=true|false` (uso de adminProyectosExternos.html /
+          proyectosAprobados.html / proyectosRechazados.html vía
+          ProjectsListPage.js): listas filtradas a convocatorias/años que
+          efectivamente tienen proyectos calificados (estado_finalizado_
+          calificacion=True) y aprobados del tipo solicitado. Réplica exacta
+          de ConvocatoriaInternaServicio.listarConvocatoriasCalificadas(interno)
+          / listarAniosConvocatoriasCalificadas(interno) y de
+          ProyectoServicio.listarAniosInicioProyectosCalificados(interno) /
+          listarAniosFinProyectosCalificados(interno). Antes este endpoint
+          devolvía SIEMPRE la variante sin filtrar para todo el mundo, lo que
+          permitía elegir en el filtro convocatorias/años que no existen
+          entre los proyectos externos (o internos) aprobados que se están
+          listando.
+        """
+        interno_param = request.query_params.get("interno")
+
+        if interno_param is not None:
+            interno = interno_param.lower() in ("true", "1")
+ 
+            convocatorias = list(
+                ConvocatoriaSelector.listar_calificadas(interno)
+                .values_list('nombre_convocatoria', flat=True)
+            )
+            anios_convocatoria = list(
+                ConvocatoriaSelector.listar_anios_calificadas(interno)
+            )
+            anios_inicio = [
+                d.year for d in ProyectoSelector.listar_anios_inicio_proyectos_calificados(interno)
+            ]
+            anios_fin = [
+                d.year for d in ProyectoSelector.listar_anios_fin_proyectos_calificados(interno)
+            ]
+        else:
+            convocatorias = list(
                 Convocatoria.objects.order_by('nombre_convocatoria')
                 .values_list('nombre_convocatoria', flat=True).distinct()
-            ),
-            "anios_inicio": [d.year for d in ProyectoSelector.listar_anios_inicio_distintos()],
-            "anios_fin": [d.year for d in ProyectoSelector.listar_anios_fin_distintos()],
-            "anios_convocatoria": [
+            )
+            anios_inicio = [d.year for d in ProyectoSelector.listar_anios_inicio_distintos()]
+            anios_fin = [d.year for d in ProyectoSelector.listar_anios_fin_distintos()]
+            anios_convocatoria = [
                 c.anio_convocatoria for c in Convocatoria.objects.exclude(anio_convocatoria__isnull=True)
                 .order_by('-anio_convocatoria').distinct('anio_convocatoria')
-            ],
+            ]
+
+        return Response({
+            "convocatorias": convocatorias,
+            "anios_inicio": anios_inicio,
+            "anios_fin": anios_fin,
+            "anios_convocatoria": anios_convocatoria,
         })
