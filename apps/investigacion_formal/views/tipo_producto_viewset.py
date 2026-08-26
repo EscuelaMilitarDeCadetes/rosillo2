@@ -9,6 +9,9 @@ from apps.investigacion_formal.services.tipo_producto_service import TipoProduct
 from apps.investigacion_formal.permissions import ROLES_LECTURA_CATALOGOS, combinar
 from apps.usuarios.permissions import EsSoporte
 
+from django.http import HttpResponse
+from apps.investigacion_formal.services.exportacion_service import ExportacionService
+
 
 class TipoProductoViewSet(viewsets.ViewSet):
     serializer_class = TipoProductoSerializer
@@ -17,7 +20,7 @@ class TipoProductoViewSet(viewsets.ViewSet):
     def get_permissions(self):
         if self.action in ["create", "update"]:
             return [EsSoporte(), TieneAmbitoFormal()]
-        else:  # list, retrieve, aplicables
+        else:  # list, retrieve, aplicables, export_excel, export_pdf
             return [combinar(ROLES_LECTURA_CATALOGOS), TieneAmbitoFormal()]
 
     def list(self, request):
@@ -52,3 +55,22 @@ class TipoProductoViewSet(viewsets.ViewSet):
     def aplicables(self, request):
         tipos = TipoProductoService.listar_aplicables()
         return Response(self.serializer_class(tipos, many=True).data)
+    
+    @action(detail=False, methods=["get"], url_path="export/excel")
+    def export_excel(self, request):
+        tipos = TipoProductoService.listar()
+        buffer = ExportacionService.exportar_excel_tipos_producto(tipos)
+        response = HttpResponse(
+            buffer.read(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = "attachment; filename=tipos_producto.xlsx"
+        return response
+
+    @action(detail=False, methods=["get"], url_path="export/pdf")
+    def export_pdf(self, request):
+        tipos = TipoProductoService.listar()
+        buffer = ExportacionService.exportar_pdf_tipos_producto(tipos)
+        response = HttpResponse(buffer.read(), content_type="application/pdf")
+        response["Content-Disposition"] = "attachment; filename=tipos_producto.pdf"
+        return response

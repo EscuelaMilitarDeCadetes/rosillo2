@@ -2,7 +2,7 @@ from apps.investigacion_formal.pagination import InvestigacionFormalPageNumberPa
 from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormal
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-
+from rest_framework.decorators import action
 from apps.investigacion_formal.serializers.tipo_rubro_serializer import TipoRubroSerializer
 from apps.investigacion_formal.services.tipo_rubro_service import TipoRubroService
 from apps.investigacion_formal.permissions import ROLES_LECTURA_CATALOGOS, combinar
@@ -16,7 +16,7 @@ class TipoRubroViewSet(viewsets.ViewSet):
     def get_permissions(self):
         if self.action in ["create", "update"]:
             return [EsSoporte(), TieneAmbitoFormal()]
-        else:  # list, retrieve (+ por_proyecto / evaluables / aplicables / por_producto_minciencias / etc. según el archivo)
+        else:  # list, retrieve, aplicables
             return [combinar(ROLES_LECTURA_CATALOGOS), TieneAmbitoFormal()]
 
     def list(self, request):
@@ -33,6 +33,7 @@ class TipoRubroViewSet(viewsets.ViewSet):
     def create(self, request):
         rubro = TipoRubroService.crear(
             nombre_rubro=request.data.get("nombre_rubro"),
+            aplica=request.data.get("aplica"),
             ejecutor=request.user,
         )
         return Response(self.serializer_class(rubro).data, status=status.HTTP_201_CREATED)
@@ -41,6 +42,12 @@ class TipoRubroViewSet(viewsets.ViewSet):
         rubro = TipoRubroService.actualizar(
             tipo_rubro_id=pk,
             nombre_rubro=request.data.get("nombre_rubro"),
+            aplica=request.data.get("aplica"),
             ejecutor=request.user,
         )
         return Response(self.serializer_class(rubro).data)
+
+    @action(detail=False, methods=["get"], url_path="aplicables")
+    def aplicables(self, request):
+        rubros = TipoRubroService.listar_aplicables()
+        return Response(self.serializer_class(rubros, many=True).data)
