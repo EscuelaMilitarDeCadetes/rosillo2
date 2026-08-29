@@ -33,23 +33,12 @@ class ConvocatoriaSelector:
         return qs.exists()
 
     @staticmethod
-    def listar_activas():
-        return Convocatoria.objects.filter(estado=True).order_by('-anio_convocatoria')
-
-    @staticmethod
     def listar_inactivas():
         return Convocatoria.objects.filter(estado=False).order_by('-anio_convocatoria')
 
     @staticmethod
     def listar_internas(estado=None):
         qs = Convocatoria.objects.filter(interno=True)
-        if estado is not None:
-            qs = qs.filter(estado=estado)
-        return qs.order_by('-anio_convocatoria')
-
-    @staticmethod
-    def listar_externas(estado=None):
-        qs = Convocatoria.objects.filter(interno=False)
         if estado is not None:
             qs = qs.filter(estado=estado)
         return qs.order_by('-anio_convocatoria')

@@ -196,8 +196,8 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # 2. Configuración de django-axes (Equivalente a LoginAttemptService)
-AXES_FAILURE_LIMIT = 5 # Máximo 6 intentos fallidos
-AXES_COOLOFF_TIME = 1 # Bloquea por 2 horas
+AXES_FAILURE_LIMIT = 5 # Máximo 5 intentos fallidos, al 6 intento se bloquea
+AXES_COOLOFF_TIME = 1 # Bloquea por 1 hora
 AXES_LOCKOUT_CALLABLE = 'config.axes_handlers.lockout_response' # Opcional: una plantilla para mostrar si está bloqueado
 AXES_USERNAME_FORM_FIELD = 'username' # El campo del formulario que contiene el username
 

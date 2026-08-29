@@ -5,14 +5,14 @@ Interfaz estándar definitiva + métodos de negocio específicos:
     listar(), obtener(id), crear(...), actualizar(id, ...), eliminar(id),
     listar_facultades_usuario(usuario_id), listar_facultades_grupo(grupo_id)
 
-Migrado desde: FacultadEscuelaServicio (Thymeleaf)
+Metodos existentes
     listarFacultadEscuela() -> listar()
     listarFacultadesXUsuario(id) -> listar_facultades_usuario(usuario_id)
     listarFacultadesEscuelaGrupoCM() -> listar_facultades_grupo(grupo_id)
 
-Nombres ajustados según el consenso final (punto 9 y punto 14): el nombre
-del método ya no contiene 'cm' ni filtra el conocimiento de negocio;
-DEFAULT_GRUPO_CM_ID vive como constante en el Selector.
+grupo_id NO tiene un valor por defecto — debe pasarse explícitamente en cada 
+llamada. Ningún caller actual (backend ni React) invoca este método
+sin el parámetro.
 """
 from django.db import transaction
 
@@ -68,6 +68,8 @@ class FacultadEscuelaService:
 
     @staticmethod
     def listar_facultades_grupo(grupo_id=None):
-        # Antes: si grupo_id era None, se llamaba al selector SIN argumento
-        # y explotaba con TypeError antes de llegar al ValidationError intencional.
+        # grupo_id=None por defecto aquí para que, si se omite,
+        # la llamada llegue limpia al Selector y se resuelva
+        # en el ValidationError intencional de "Debe especificar el
+        # grupo." en vez de un TypeError por argumento faltante.
         return FacultadEscuelaSelector.listar_facultades_grupo(grupo_id)

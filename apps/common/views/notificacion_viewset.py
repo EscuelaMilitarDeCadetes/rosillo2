@@ -15,7 +15,7 @@ class NotificacionViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         acciones_lectura_ampliada = ['list', 'retrieve']
-        acciones_autoservicio = ['por_usuario', 'no_leidas', 'marcar_leida', 'marcar_todas_leidas']
+        acciones_autoservicio = ['por_usuario', 'marcar_leida', 'marcar_todas_leidas']
         if self.action in acciones_lectura_ampliada:
             permission_classes = [EsSoporte | EsSupervisor]
         elif self.action in acciones_autoservicio:
@@ -72,13 +72,6 @@ class NotificacionViewSet(viewsets.ViewSet):
         solo_no_leidas = request.query_params.get("solo_no_leidas", "false").lower() == "true"
         notificaciones = NotificacionService.listar_por_usuario(usuario_id, solo_no_leidas=solo_no_leidas)
         return Response(self.serializer_class(notificaciones, many=True).data)
-
-    @action(detail=False, methods=["get"], url_path="no-leidas/(?P<usuario_id>[^/.]+)")
-    def no_leidas(self, request, usuario_id=None):
-        if str(request.user.pk) != str(usuario_id) and not request.user.has_role('SOPORTE'):
-            return Response(status=status.HTTP_403_FORBIDDEN)
-        cantidad = NotificacionService.contar_no_leidas(usuario_id)
-        return Response({"no_leidas": cantidad})
 
     @action(
         detail=False, methods=["post"], url_path="enviar-recordatorios",

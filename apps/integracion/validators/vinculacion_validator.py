@@ -1,18 +1,5 @@
 """
 Validador de integración.
-
-NOTA (fix 2026-08-21): se eliminó validar_datos_usuario() y sus 3 llamadas
-en los flujos administrativo/facultad/grupo. Exigía 'username'/'password'
-obligatorios en el payload, pero VinculacionService._crear_usuario() ya
-auto-genera ambos cuando no vienen en `data`:
-
-    password = data.get('password') or VinculacionService._generar_password()
-    username = data.get('username') or VinculacionService._generar_username(persona.correo)
-
-Como esta validación corría ANTES de _crear_usuario, cualquier request sin
-username/password explícitos (como el que envía NewUserModal.js a propósito,
-según su propio comentario de diseño) fallaba con 400 antes de llegar al
-fallback de auto-generación, dejándolo inalcanzable en la práctica.
 """
 from rest_framework.exceptions import ValidationError
 
@@ -90,4 +77,39 @@ class VinculacionValidator:
         if not VinculacionSelector.usuario_activo(usuario_id):
             raise ValidationError(
                 f"El usuario id={usuario_id} ya está inactivo."
+            )
+    
+    @staticmethod
+    def validar_persona_para_rol_institucional(usuario_id: int, persona, nombre_rol: str):
+        """
+        Usado por VinculacionService.asignar_rol_existente() cuando el rol
+        a asignar pertenece a ROLES_CON_FACULTAD o ROLES_CON_GRUPO: ese tipo
+        de rol no tiene sentido sin una Persona real detrás del Usuario.
+        """
+        if persona is None:
+            raise ValidationError(
+                f"El usuario id={usuario_id} no tiene una Persona activa "
+                f"asignada (UsuarioXPersona). No se puede asignar el rol "
+                f"'{nombre_rol}', que requiere vínculo institucional."
+            )
+
+    @staticmethod
+    def validar_datos_asignacion_rol_existente(data: dict, requiere: str):
+        """
+        requiere: 'facultad' o 'grupo'.
+        Mismos campos obligatorios que validar_datos_flujo_facultad()/
+        validar_datos_flujo_grupo(), pero sin exigir los datos de Persona
+        (el usuario y la persona ya existen).
+        """
+        if not data.get('rol_grupo_id'):
+            raise ValidationError(
+                {"rol_grupo_id": "El rol dentro de la facultad/grupo es obligatorio."}
+            )
+        if requiere == 'facultad' and not data.get('facultad_id'):
+            raise ValidationError(
+                {"facultad_id": "La facultad es obligatoria para este tipo de rol."}
+            )
+        if requiere == 'grupo' and not data.get('grupo_id'):
+            raise ValidationError(
+                {"grupo_id": "El grupo de investigación es obligatorio para este tipo de rol."}
             )

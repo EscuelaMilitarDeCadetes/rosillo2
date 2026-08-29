@@ -25,13 +25,11 @@ class ConvocatoriaViewSet(viewsets.ViewSet):
             permission_classes = [EsAsesor]
         elif self.action == "cambiar_estado":
             permission_classes = [EsCInterno]
-        elif self.action in ["list", "retrieve", "activas"]:
+        elif self.action in ["list", "retrieve"]:
             return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL), TieneAmbitoFormal()]
         elif self.action == "participar":
-            # Réplica de participarConvocatoria: solo FACULTAD/GRUPO postulan
-            # proyectos a convocatorias — mismo rol que ProyectoXConvocatoriaViewSet.create.
             return [combinar(ROLES_CREACION_PROYECTO), TieneAmbitoFormal()]
-        else:  # internas, externas
+        else:  # internas
             permission_classes = [EsCInterno]
         return [permission() for permission in permission_classes] + [TieneAmbitoFormal()]
 
@@ -70,26 +68,11 @@ class ConvocatoriaViewSet(viewsets.ViewSet):
         )
         return Response(self.serializer_class(convocatoria).data)
 
-    @action(detail=False, methods=["get"], url_path="activas")
-    def activas(self, request):
-        convocatorias = ConvocatoriaService.listar_activas()
-        return Response(self.serializer_class(convocatorias, many=True).data)
-
     @action(detail=False, methods=["get"], url_path="internas")
     def internas(self, request):
         estado = request.query_params.get("estado")
         estado = estado.lower() == "true" if estado is not None else None
         convocatorias = ConvocatoriaService.listar_internas(estado=estado)
-        paginator = self.pagination_class()
-        page = paginator.paginate_queryset(convocatorias, request, view=self)
-        serializer = self.serializer_class(page, many=True)
-        return paginator.get_paginated_response(serializer.data)
-
-    @action(detail=False, methods=["get"], url_path="externas")
-    def externas(self, request):
-        estado = request.query_params.get("estado")
-        estado = estado.lower() == "true" if estado is not None else None
-        convocatorias = ConvocatoriaService.listar_externas(estado=estado)
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(convocatorias, request, view=self)
         serializer = self.serializer_class(page, many=True)

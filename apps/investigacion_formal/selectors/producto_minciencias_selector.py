@@ -40,14 +40,3 @@ class ProductoMincienciasSelector:
         if excluir_id is not None:
             qs = qs.exclude(pk=excluir_id)
         return qs.exists()
-
-    @staticmethod
-    def listar_por_proyecto(proyecto_id):
-        """Equivalente a obtenerTodosProductosMincienciasXProyecto() del repo original:
-        productos distintos que aparecen en ProductoXProyecto para un proyecto dado."""
-        return (
-            ProductoMinciencias.objects
-            .filter(productoxgrupo__productoxproyecto__proyecto_id=proyecto_id)
-            .distinct()
-            .order_by('nombre_producto')
-        )

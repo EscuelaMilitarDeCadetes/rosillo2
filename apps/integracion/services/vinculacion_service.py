@@ -1,18 +1,16 @@
 """
-VinculacionService — capa de orquestación entre usuarios e institucional.
-
-Implementa GestionUsuarioInterface (RN-06): crear_credenciales,
-desactivar_usuario, activar_usuario, reactivar_usuario,
-reasignar_persona_a_usuario.
-
-Además expone los 12 flujos de creación (uno por rol de plataforma) y las
-dos operaciones de ciclo de vida institucional: reemplazar_usuario
-(reasignar la Persona de un Usuario existente) y retirar_usuario
-(soft-delete completo: Usuario + UsuarioXPersona + PersonaXGrupo).
-
-Los permisos de "quién puede crear/reemplazar/retirar a quién" NO se
-validan en este archivo ni en VinculacionValidator: viven únicamente en
-permission_classes de VinculacionViewSet, conforme a 11_backend_logic.md.
+Reasigna la Persona vinculada a un Usuario existente.
+La CUENTA (Usuario) es permanente; lo que cambia es la PERSONA
+asignada. Secuencia:
+    1. Cierra las PersonaXGrupo activas de la persona anterior.
+    2. Crea la nueva Persona.
+    3. Reasigna la Persona al Usuario (cierra la UsuarioXPersona
+        anterior y abre una nueva).
+    4. Determina el rol final.
+    5. Si el rol final requiere facultad o grupo (ROLES_CON_FACULTAD
+        / ROLES_CON_GRUPO) y el body trae los datos necesarios,
+        crea la PersonaXGrupo correspondiente para la nueva persona.
+    6. Si se indicó un rol_plataforma_id distinto, reemplaza el rol.
 """
 #apps/integracion/services/vinculacion_service.py
 import secrets
@@ -37,6 +35,7 @@ from apps.usuarios.models.usuario_x_persona import UsuarioXPersona
 from apps.usuarios.services.password_service import PasswordService
 from apps.usuarios.services.rol_x_usuario_service import RolXUsuarioService
 from apps.usuarios.services.interfaces import GestionUsuarioInterface
+from apps.usuarios.constants import ROLES_CON_FACULTAD, ROLES_CON_GRUPO
 
 User = get_user_model()
 
@@ -59,9 +58,6 @@ ROL_GRUPO = "GRUPO"
 ROL_CINTERNO = "CINTERNO"
 ROL_CEXTERNO = "CEXTERNO"
 ROL_ASESOR = "ASESOR"
-
-ROLES_CON_FACULTAD = {ROL_DECANO, ROL_FACULTAD, ROL_ESTUDIANTE, ROL_JURADO, ROL_TUTOR}
-ROLES_CON_GRUPO = {ROL_GRUPO, ROL_CINTERNO, ROL_CEXTERNO, ROL_ASESOR}
 
 
 class VinculacionService(GestionUsuarioInterface):
@@ -151,6 +147,31 @@ class VinculacionService(GestionUsuarioInterface):
             ejecutor=ejecutor,
             derivar_facultad_de_grupo=True,
         )
+    
+    @staticmethod
+    def _crear_o_actualizar_vinculacion(persona, rol_grupo_id, facultad_id, grupo_id, ejecutor):
+        """
+        Si la Persona ya tiene una vinculación PersonaXGrupo
+        activa, la actualiza (solo toca los campos que vienen no-None);
+        si no tiene ninguna, crea una nueva.
+        """
+        vinculo_activo = PersonaXGrupoService.listar_activas_persona(persona.pk).first()
+        if vinculo_activo is None:
+            return PersonaXGrupoService.crear(
+                persona_id=persona.pk,
+                rol_grupo_id=rol_grupo_id,
+                grupo_id=grupo_id,
+                facultad_id=facultad_id,
+                vinculacion=django_timezone.now().date(),
+                ejecutor=ejecutor,
+            )
+        return PersonaXGrupoService.actualizar(
+            vinculo_activo.pk,
+            ejecutor=ejecutor,
+            rol_grupo_id=rol_grupo_id,
+            facultad_id=facultad_id,
+            grupo_id=grupo_id,
+        )
 
     @staticmethod
     def _registrar_historial(ejecutor, mensaje: str, objeto=None) -> None:
@@ -184,15 +205,14 @@ class VinculacionService(GestionUsuarioInterface):
     def _flujo_facultad(data: dict, ejecutor, nombre_rol: str) -> dict:
         """
         Flujo 2: + PersonaXGrupo(facultad=<X>, grupo=None).
-        Equivale a guardarPersonaConFacultad().
         """
         VinculacionValidator.validar_datos_flujo_facultad(data)
         persona = VinculacionService._crear_persona(data, ejecutor)
         usuario = VinculacionService._crear_usuario(persona, data, ejecutor)
-        VinculacionService._asignar_rol(usuario, data['rol_plataforma_id'], ejecutor)
         vinculacion = VinculacionService._crear_vinculacion_facultad(
             persona, data['rol_grupo_id'], data['facultad_id'], ejecutor,
         )
+        VinculacionService._asignar_rol(usuario, data['rol_plataforma_id'], ejecutor)
         VinculacionService._registrar_historial(
             ejecutor,
             f"[INTEGRACION] '{ejecutor.username}' registró '{usuario.username}' "
@@ -207,16 +227,16 @@ class VinculacionService(GestionUsuarioInterface):
     def _flujo_grupo(data: dict, ejecutor, nombre_rol: str) -> dict:
         """
         Flujo 3: + PersonaXGrupo(grupo=<X>, facultad=None).
-        Equivale a guardarPersonaConGrupo(). La facultad se deriva
-        automáticamente de FacultadXGrupo dentro de PersonaXGrupoService.
+        La facultad se deriva automáticamente de FacultadXGrupo 
+        dentro de PersonaXGrupoService.
         """
         VinculacionValidator.validar_datos_flujo_grupo(data)
         persona = VinculacionService._crear_persona(data, ejecutor)
         usuario = VinculacionService._crear_usuario(persona, data, ejecutor)
-        VinculacionService._asignar_rol(usuario, data['rol_plataforma_id'], ejecutor)
         vinculacion = VinculacionService._crear_vinculacion_grupo(
             persona, data['rol_grupo_id'], data['grupo_id'], ejecutor,
         )
+        VinculacionService._asignar_rol(usuario, data['rol_plataforma_id'], ejecutor)
         VinculacionService._registrar_historial(
             ejecutor,
             f"[INTEGRACION] '{ejecutor.username}' registró investigador "
@@ -328,23 +348,16 @@ class VinculacionService(GestionUsuarioInterface):
 
         # 4. Reasignar rol si se indica uno distinto
         nombre_rol_final = None
-        if data.get('rol_plataforma_id'):
-            rol_obj = get_object_or_404(RolPlataforma, pk=data['rol_plataforma_id'])
+        rol_plataforma_id_nuevo = data.get('rol_plataforma_id')
+        if rol_plataforma_id_nuevo:
+            rol_obj = get_object_or_404(RolPlataforma, pk=rol_plataforma_id_nuevo)
             nombre_rol_final = rol_obj.nombre_rol
-            roles_activos = RolXUsuarioService.listar_roles_de_usuario(usuario.pk)
-            for rol in roles_activos:
-                RolXUsuarioService.borrar_rol_de_usuario(
-                    usuario_id=usuario.pk,
-                    rol_id=rol.rol_id,
-                    ejecutor=ejecutor,
-                )
-            VinculacionService._asignar_rol(usuario, data['rol_plataforma_id'], ejecutor)
         else:
             rol_activo = VinculacionSelector.obtener_rol_plataforma(usuario.pk)
             nombre_rol_final = rol_activo.nombre_rol if rol_activo else None
 
         # 5. Crear PersonaXGrupo para la nueva persona, según el tipo de
-        #    vinculación que exige el rol final (si aplica y hay datos)
+        #    vinculación que exige el rol final.
         vinculacion = None
         if nombre_rol_final in ROLES_CON_FACULTAD and data.get('facultad_id'):
             vinculacion = VinculacionService._crear_vinculacion_facultad(
@@ -354,6 +367,17 @@ class VinculacionService(GestionUsuarioInterface):
             vinculacion = VinculacionService._crear_vinculacion_grupo(
                 nueva_persona, data.get('rol_grupo_id'), data['grupo_id'], ejecutor,
             )
+        
+        # 6. Reemplazar el rol de plataforma, si se indicó uno distinto
+        if rol_plataforma_id_nuevo:
+            roles_activos = RolXUsuarioService.listar_roles_de_usuario(usuario.pk)
+            for rol in roles_activos:
+                RolXUsuarioService.borrar_rol_de_usuario(
+                    usuario_id=usuario.pk,
+                    rol_id=rol.rol_id,
+                    ejecutor=ejecutor,
+                )
+            VinculacionService._asignar_rol(usuario, rol_plataforma_id_nuevo, ejecutor)
 
         VinculacionService._registrar_historial(
             ejecutor,
@@ -411,6 +435,58 @@ class VinculacionService(GestionUsuarioInterface):
             objeto=usuario,
         )
         return {'usuario': usuario, 'retirado': True}
+    
+    @staticmethod
+    @transaction.atomic
+    def asignar_rol_existente(usuario_id: int, rol_plataforma_id: int, ejecutor,
+                               rol_grupo_id: int = None, facultad_id: int = None,
+                               grupo_id: int = None) -> dict:
+        """
+        Asigna un RolPlataforma a un Usuario ya existente. Si ese rol
+        pertenece a ROLES_CON_FACULTAD o ROLES_CON_GRUPO, crea o actualiza
+        en la MISMA transacción el PersonaXGrupo de la Persona actualmente
+        asignada a ese Usuario.
+        """
+        rol = get_object_or_404(RolPlataforma, pk=rol_plataforma_id)
+        usuario = get_object_or_404(User, pk=usuario_id)
+        persona = VinculacionSelector.obtener_persona_usuario(usuario_id)
+        vinculo = None
+        if rol.nombre_rol in ROLES_CON_FACULTAD:
+            VinculacionValidator.validar_persona_para_rol_institucional(
+                usuario_id, persona, rol.nombre_rol,
+            )
+            VinculacionValidator.validar_datos_asignacion_rol_existente(
+                {'rol_grupo_id': rol_grupo_id, 'facultad_id': facultad_id},
+                requiere='facultad',
+            )
+            vinculo = VinculacionService._crear_o_actualizar_vinculacion(
+                persona, rol_grupo_id, facultad_id, None, ejecutor,
+            )
+        elif rol.nombre_rol in ROLES_CON_GRUPO:
+            VinculacionValidator.validar_persona_para_rol_institucional(
+                usuario_id, persona, rol.nombre_rol,
+            )
+            VinculacionValidator.validar_datos_asignacion_rol_existente(
+                {'rol_grupo_id': rol_grupo_id, 'grupo_id': grupo_id},
+                requiere='grupo',
+            )
+            vinculo = VinculacionService._crear_o_actualizar_vinculacion(
+                persona, rol_grupo_id, None, grupo_id, ejecutor,
+            )
+        RolXUsuarioService.agregar_rol_a_usuario(
+            usuario_id=usuario.pk, rol_id=rol_plataforma_id, ejecutor=ejecutor,
+        )
+        VinculacionService._registrar_historial(
+            ejecutor,
+            f"[INTEGRACION] '{ejecutor.username}' asignó el rol "
+            f"'{rol.nombre_rol}' al usuario '{usuario.username}'" + (
+                f" y vinculó a '{persona.nombre} {persona.apellido}' "
+                f"({'facultad_id=' + str(facultad_id) if facultad_id else 'grupo_id=' + str(grupo_id)})."
+                if vinculo else "."
+            ),
+            objeto=usuario,
+        )
+        return {'usuario': usuario, 'rol': rol, 'vinculacion': vinculo}
 
     # ------------------------------------------------------------------ #
     # Implementación concreta de GestionUsuarioInterface.

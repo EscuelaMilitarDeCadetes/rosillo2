@@ -3,7 +3,13 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
-from apps.usuarios.models import Usuario, RolPlataforma, RolXUsuario
+from rest_framework.exceptions import ValidationError
+from datetime import date
+from apps.usuarios.models import Usuario, RolPlataforma, RolXUsuario, UsuarioXPersona
+from apps.usuarios.services.rol_x_usuario_service import RolXUsuarioService
+from apps.institucional.models import (
+    Persona, GradoEstudios, FacultadEscuela, RolGrupo, PersonaXGrupo,
+)
 
 
 class RolXUsuarioTests(TestCase):
@@ -137,3 +143,118 @@ class RolXUsuarioTests(TestCase):
         self.assertEqual(response.status_code, 200)
         rol.refresh_from_db()
         self.assertEqual(rol.descripcion, "descripcion actualizada")
+        
+    
+class RolXUsuarioServiceGuardTests(TestCase):
+    """
+    RolXUsuarioService.agregar_rol_a_usuario() debe rechazar la 
+    asignación directa de un rol con vínculo institucional
+    (FACULTAD/GRUPO) si el usuario no tiene ya un PersonaXGrupo activo. El
+    único camino soportado para ese caso es
+    VinculacionService.asignar_rol_existente().
+    """
+
+    def setUp(self):
+        self.rol_facultad = RolPlataforma.objects.create(
+            nombre_rol='FACULTAD', descripcion='Requiere vínculo de facultad'
+        )
+        self.rol_soporte = RolPlataforma.objects.create(
+            nombre_rol='SOPORTE', descripcion='No requiere vínculo'
+        )
+        self.admin = Usuario.objects.create_user(
+            username='admin_guard@esmic.edu.co',
+            email='admin_guard@esmic.edu.co',
+            password='Admin123*',
+            is_active=True,
+        )
+
+    # ------------------------------------------------------------------ #
+    # Caso 1: rol con vínculo + usuario SIN PersonaXGrupo activo -> falla
+    # ------------------------------------------------------------------ #
+    def test_agregar_rol_facultad_sin_vinculo_activo_lanza_validation_error(self):
+        usuario_sin_vinculo = Usuario.objects.create_user(
+            username='sinvinculo@esmic.edu.co',
+            email='sinvinculo@esmic.edu.co',
+            password='Sin123*',
+            is_active=True,
+        )
+        with self.assertRaises(ValidationError):
+            RolXUsuarioService.agregar_rol_a_usuario(
+                usuario_id=usuario_sin_vinculo.id,
+                rol_id=self.rol_facultad.id,
+                ejecutor=self.admin,
+            )
+        # No debe haber creado el RolXUsuario: la transacción se revierte.
+        self.assertFalse(
+            RolXUsuario.objects.filter(
+                usuario=usuario_sin_vinculo, rol=self.rol_facultad
+            ).exists()
+        )
+
+    # ------------------------------------------------------------------ #
+    # Caso 2: rol con vínculo + usuario CON PersonaXGrupo activo -> funciona
+    # ------------------------------------------------------------------ #
+    def test_agregar_rol_facultad_con_vinculo_activo_funciona(self):
+        grado = GradoEstudios.objects.create(sigla_grado='CIV', descripcion='Civil')
+        persona = Persona.objects.create(
+            grado=grado,
+            nombre='Persona',
+            apellido='Con Vinculo',
+            documento='900000099',
+            celular='3000000099',
+            correo='convinculo@esmic.edu.co',
+        )
+        usuario_con_vinculo = Usuario.objects.create_user(
+            username='convinculo@esmic.edu.co',
+            email='convinculo@esmic.edu.co',
+            password='Con123*',
+            is_active=True,
+        )
+        UsuarioXPersona.objects.create(
+            usuario=usuario_con_vinculo, persona=persona, estado=True
+        )
+        facultad = FacultadEscuela.objects.create(
+            nombre_facultad='Facultad de Prueba', abreviatura='FP'
+        )
+        rol_grupo = RolGrupo.objects.create(cargo='Decano')
+        PersonaXGrupo.objects.create(
+            persona=persona,
+            rol_grupo=rol_grupo,
+            facultad=facultad,
+            vinculacion=date.today(),
+            estado=True,
+        )
+        rxu = RolXUsuarioService.agregar_rol_a_usuario(
+            usuario_id=usuario_con_vinculo.id,
+            rol_id=self.rol_facultad.id,
+            ejecutor=self.admin,
+        )
+        self.assertTrue(rxu.estado)
+        self.assertTrue(
+            RolXUsuario.objects.filter(
+                usuario=usuario_con_vinculo, rol=self.rol_facultad, estado=True
+            ).exists()
+        )
+
+    # ------------------------------------------------------------------ #
+    # Caso 3: rol SIN vínculo -> el guard ni se activa, comportamiento igual
+    # ------------------------------------------------------------------ #
+    def test_agregar_rol_sin_vinculo_no_requiere_persona(self):
+        usuario_sin_persona = Usuario.objects.create_user(
+            username='sinpersona@esmic.edu.co',
+            email='sinpersona@esmic.edu.co',
+            password='Sin123*',
+            is_active=True,
+        )
+        # Deliberadamente sin Persona/UsuarioXPersona: SOPORTE no lo necesita.
+        rxu = RolXUsuarioService.agregar_rol_a_usuario(
+            usuario_id=usuario_sin_persona.id,
+            rol_id=self.rol_soporte.id,
+            ejecutor=self.admin,
+        )
+        self.assertTrue(rxu.estado)
+        self.assertTrue(
+            RolXUsuario.objects.filter(
+                usuario=usuario_sin_persona, rol=self.rol_soporte, estado=True
+            ).exists()
+        )

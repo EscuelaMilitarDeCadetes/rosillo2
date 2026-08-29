@@ -21,10 +21,6 @@ class ProductoMincienciasService:
         return ProductoMincienciasSelector.obtener(producto_minciencias_id)
 
     @staticmethod
-    def listar_por_proyecto(proyecto_id):
-        return ProductoMincienciasSelector.listar_por_proyecto(proyecto_id)
-
-    @staticmethod
     @transaction.atomic
     def crear(nombre_producto, nomenclatura, peso, vigencia, ejecutor):
         ProductoMincienciasValidator.validar_creacion(nombre_producto, nomenclatura, peso, vigencia)

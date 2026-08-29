@@ -1,6 +1,5 @@
 """
 VinculacionViewSet.
-Adaptador HTTP puro: toda la lógica vive en VinculacionService.
 Permisos aplicados directamente en cada acción (no a nivel de clase)
 para soportar las dos reglas distintas:
   - SOPORTE puede ejecutar: crear_soporte, crear_decano, crear_facultad,
@@ -188,6 +187,36 @@ class VinculacionViewSet(viewsets.ViewSet):
             fecha_retiro=request.data.get('fecha_retiro'),
         )
         return Response(_serializar_resultado(resultado), status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['post'], url_path='asignar-rol-existente',
+            permission_classes=[EsSoporte])
+    def asignar_rol_existente(self, request):
+        """
+        Asigna un rol de plataforma a un usuario ya existente. Si el rol
+        requiere vínculo institucional (facultad o grupo), crea o
+        actualiza el PersonaXGrupo correspondiente en la misma operación.
+
+        Requiere 'usuario_id' y 'rol_plataforma_id'. Según el rol:
+          - ROLES_CON_FACULTAD: requiere además 'facultad_id' y 'rol_grupo_id'.
+          - ROLES_CON_GRUPO: requiere además 'grupo_id' y 'rol_grupo_id'.
+          - Cualquier otro rol: solo asigna el RolXUsuario.
+        """
+        usuario_id = request.data.get('usuario_id')
+        rol_plataforma_id = request.data.get('rol_plataforma_id')
+        if not usuario_id or not rol_plataforma_id:
+            return Response(
+                {'error': "Los campos 'usuario_id' y 'rol_plataforma_id' son obligatorios."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        resultado = VinculacionService.asignar_rol_existente(
+            usuario_id=int(usuario_id),
+            rol_plataforma_id=int(rol_plataforma_id),
+            ejecutor=request.user,
+            rol_grupo_id=_to_int_or_none(request.data.get('rol_grupo_id')),
+            facultad_id=_to_int_or_none(request.data.get('facultad_id')),
+            grupo_id=_to_int_or_none(request.data.get('grupo_id')),
+        )
+        return Response(_serializar_resultado(resultado), status=status.HTTP_200_OK)
 
 
 # ── Utilidad de serialización ─────────────────────────────────────────── #
@@ -232,6 +261,19 @@ def _serializar_resultado(resultado: dict) -> dict:
             'rol_grupo_id': v.rol_grupo_id,
             'estado': v.estado,
         }
+    if 'rol' in resultado and resultado['rol']:
+        r = resultado['rol']
+        out['rol'] = {'id': r.pk, 'nombre_rol': r.nombre_rol}
     if 'retirado' in resultado:
         out['retirado'] = resultado['retirado']
     return out
+
+def _to_int_or_none(valor):
+    """
+    Normaliza a int o None antes de que
+    llegue al service, para que los campos opcionales de facultad/grupo/
+    rol_grupo no se guarden como string en los modelos.
+    """
+    if valor in (None, ''):
+        return None
+    return int(valor)

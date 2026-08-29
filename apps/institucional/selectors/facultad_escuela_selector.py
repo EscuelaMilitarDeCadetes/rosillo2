@@ -1,14 +1,16 @@
 """
 Selector de FacultadEscuela.
 
-Migrado desde: FacultadEscuelaServicio (Thymeleaf)
+Metodos existentes
     listarFacultadEscuela()          -> listar()
     listarFacultadesXUsuario(id)     -> obtener_facultad_usuario(usuario_id)
     listarFacultadesEscuelaGrupoCM() -> listar_facultades_grupo(grupo_id)
 
-DEFAULT_GRUPO_CM_ID vive como constante (no en el nombre del método),
-según el punto 9 del consenso: el nombre del método no debe filtrar
-conocimiento de negocio (CM).
+El original siempre filtraba implícitamente por el grupo CM (grupo_id=3 
+hardcodeado, sin recibir parámetros). Aquí, en cambio, pero TAMPOCO existe un
+valor por defecto: grupo_id es obligatorio y se valida explícitamente
+más abajo. Si un caller necesita replicar el filtro CM del original,
+debe pasar su id de grupo actual de forma explícita.
 """
 from apps.institucional.models import FacultadEscuela
 from rest_framework.exceptions import ValidationError
@@ -16,10 +18,8 @@ from rest_framework.exceptions import ValidationError
 
 class FacultadXUsuarioAmbiguoError(Exception):
     """
-    Análogo a GrupoXUsuarioAmbiguoError. Se lanza cuando un Usuario tiene
-    más de una vinculación PersonaXGrupo activa con facultad distinta de
-    null. Misma decisión: inconsistencia de datos a corregir, no a
-    silenciar.
+    Se lanza cuando un Usuario tiene más de una vinculación
+    PersonaXGrupo activa con facultad distinta de null.
     """
     pass
 
@@ -59,10 +59,8 @@ class FacultadEscuelaSelector:
     @staticmethod
     def listar_facultades_grupo(grupo_id):
         """
-        Equivalente a FacultadEscuelaServicio.listarFacultadesEscuelaGrupoCM(),
-        parametrizado. Llamar sin argumentos preserva el comportamiento
-        exacto del original (grupo_id=3), pero el nombre del método ya no
-        delata ese detalle de negocio.
+        El grupo_id es obligatorio: se lanza ValidationError si se omite, en vez de
+        aplicar un default implícito.
         """
         if grupo_id is None:
             raise ValidationError(

@@ -29,10 +29,6 @@ class NotificacionSelector:
         return qs.order_by('-fecha_creacion')
 
     @staticmethod
-    def contar_no_leidas(usuario_id):
-        return Notificacion.objects.filter(usuario_destino_id=usuario_id, leido=False).count()
-
-    @staticmethod
     def listar_por_tipo(tipo):
         return Notificacion.objects.select_related('usuario_destino').filter(tipo=tipo)
 

@@ -82,35 +82,13 @@ class ConvocatoriaServiceTests(InvestigacionFormalFixturesMixin, TestCase):
                 ejecutor=self.ejecutor,
             )
 
-    def test_listar_activas(self):
-        ConvocatoriaService.crear(
-            nombre_convocatoria='Activa 1', anio_convocatoria=2024,
-            inicio='2024-01-01', cierre='2024-06-30', interno=True,
-            ejecutor=self.ejecutor,
-        )
-        inactiva = ConvocatoriaService.crear(
-            nombre_convocatoria='Inactiva 1', anio_convocatoria=2024,
-            inicio='2024-01-01', cierre='2024-06-30', interno=True,
-            ejecutor=self.ejecutor,
-        )
-        ConvocatoriaService.cambiar_estado(inactiva.pk, False, ejecutor=self.ejecutor)
-
-        activas = ConvocatoriaService.listar_activas()
-        self.assertEqual(activas.count(), 1)
-
-    def test_listar_internas_y_externas(self):
+    def test_listar_internas(self):
         ConvocatoriaService.crear(
             nombre_convocatoria='Interna 1', anio_convocatoria=2024,
             inicio='2024-01-01', cierre='2024-06-30', interno=True,
             ejecutor=self.ejecutor,
         )
-        ConvocatoriaService.crear(
-            nombre_convocatoria='Externa 1', anio_convocatoria=2024,
-            inicio='2024-01-01', cierre='2024-06-30', interno=False,
-            ejecutor=self.ejecutor,
-        )
         self.assertEqual(ConvocatoriaService.listar_internas().count(), 1)
-        self.assertEqual(ConvocatoriaService.listar_externas().count(), 1)
         
     def test_crear_con_documento_exitoso(self):
         from django.core.files.uploadedfile import SimpleUploadedFile

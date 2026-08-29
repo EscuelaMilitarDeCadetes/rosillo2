@@ -103,10 +103,6 @@ class NotificacionService:
     def listar_por_usuario(usuario_id, solo_no_leidas=False):
         return NotificacionSelector.listar_por_usuario(usuario_id, solo_no_leidas=solo_no_leidas)
 
-    @staticmethod
-    def contar_no_leidas(usuario_id):
-        return NotificacionSelector.contar_no_leidas(usuario_id)
-
     # --- Job periódico de recordatorios (Celery beat / cron) ---
 
     @staticmethod

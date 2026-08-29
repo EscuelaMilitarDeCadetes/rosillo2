@@ -55,8 +55,3 @@ class ProductoMincienciasViewSet(viewsets.ViewSet):
             ejecutor=request.user,
         )
         return Response(self.serializer_class(producto).data)
-
-    @action(detail=False, methods=["get"], url_path="por-proyecto/(?P<proyecto_id>[^/.]+)")
-    def por_proyecto(self, request, proyecto_id=None):
-        productos = ProductoMincienciasService.listar_por_proyecto(proyecto_id)
-        return Response(self.serializer_class(productos, many=True).data)

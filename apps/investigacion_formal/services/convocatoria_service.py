@@ -21,16 +21,8 @@ class ConvocatoriaService:
         return ConvocatoriaSelector.obtener(convocatoria_id)
 
     @staticmethod
-    def listar_activas():
-        return ConvocatoriaSelector.listar_activas()
-
-    @staticmethod
     def listar_internas(estado=None):
         return ConvocatoriaSelector.listar_internas(estado=estado)
-
-    @staticmethod
-    def listar_externas(estado=None):
-        return ConvocatoriaSelector.listar_externas(estado=estado)
 
     @staticmethod
     @transaction.atomic
