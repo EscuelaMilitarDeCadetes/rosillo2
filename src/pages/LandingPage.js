@@ -1,18 +1,10 @@
+// src/pages/LandingPage.js
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from 'primereact/button';
 
 /**
- * Portada pública del proyecto (ruta "/"). Antes esta ruta cargaba
- * directamente HomePage con la tabla de convocatorias abiertas, que
- * en realidad es contenido del dominio de "investigación formal" y
- * no debería ser lo primero que ve alguien sin sesión iniciada.
- *
- * Este componente reemplaza esa función: una portada neutral con una
- * descripción breve del proyecto y dos accesos, uno por cada sistema.
- * Ambos llevan al mismo formulario de login (el backend todavía no
- * distingue "sistemas"), pero pasan ?sistema= para que LoginPage sepa
- * a dónde redirigir después de autenticar (ver LoginPage.js).
+ * Portada pública del proyecto 
  */
 const LandingPage = () => {
   return (

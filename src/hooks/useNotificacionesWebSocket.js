@@ -1,9 +1,8 @@
+// src/hooks/useNotificacionesWebSocket.js
 import { useEffect, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { notificacionRecibida } from '../features/notificaciones/notificacionesSlice';
 
-// Deriva la URL del WebSocket a partir de la misma base que usa axiosInstance,
-// solo cambiando el protocolo http -> ws y quitando el prefijo /api/.
 const WS_BASE_URL = 'ws://localhost:8082';
 
 export function useNotificacionesWebSocket() {

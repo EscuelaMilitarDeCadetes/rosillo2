@@ -71,8 +71,6 @@ const UserParticiparConvocatoriaPage = () => {
     dispatch(createProyecto({ convocatoriaId: id, data: formData })).then((result) => {
       if (createProyecto.fulfilled.match(result)) {
         setIsConfirmVisible(false);
-        // Con la separación de responsabilidades, el destino natural tras
-        // participar es la vista dedicada de proyectos del usuario.
         navigate('/mis-proyectos');
       }
     });
@@ -82,7 +80,6 @@ const UserParticiparConvocatoriaPage = () => {
     if (!err) return '';
     if (typeof err === 'string') return err;
     if (err.detail) return err.detail;
-    // DRF ValidationError con dict de campos: { campo: ["msg1", "msg2"], ... }
     return Object.entries(err)
       .map(([campo, mensajes]) => {
         const texto = Array.isArray(mensajes) ? mensajes.join(' ') : mensajes;

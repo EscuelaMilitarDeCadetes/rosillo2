@@ -1,23 +1,9 @@
+// src/features/metadata/metadataSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../api/axiosInstance';
 
-// --------------------------------------------------------------------- //
-// Todas las rutas de listado del backend (RolPlataformaViewSet,
-// FacultadEscuelaViewSet, GrupoInvestigacionViewSet, RolGrupoViewSet,
-// GradoEstudiosViewSet, UsuarioViewSet...) usan ViewSet.list() con
-// pagination_class propio -> SIEMPRE devuelven
-// { count, next, previous, results: [...] }, nunca un array plano.
-// `extraerResultados` normaliza eso para que el resto del código pueda
-// seguir usando arrays directamente, sea cual sea la forma de la respuesta.
-// --------------------------------------------------------------------- //
 const extraerResultados = (data) => (Array.isArray(data) ? data : data?.results ?? []);
 
-// Los catálogos (grados, roles, facultades, grupos, roles-grupo) son
-// pequeños pero pueden superar el page_size=20 por defecto (ver
-// UsuariosPageNumberPagination / InstitucionalPageNumberPagination).
-// Pedimos explícitamente una página grande para traerlos completos de una
-// sola vez, ya que se usan como opciones de <Dropdown>, no como listados
-// paginados.
 const SIN_PAGINAR = { params: { page_size: 200 } };
 
 // Thunk para cargar todos los datos maestros necesarios para los formularios
@@ -56,8 +42,6 @@ export const fetchMetadata = createAsyncThunk(
         axiosInstance.get('usuarios/usuarios/', SIN_PAGINAR),
         // apps/institucional/urls.py -> router.register(r'personas', PersonaViewSet)
         axiosInstance.get('institucional/personas/', SIN_PAGINAR),
-        // Verificado contra apps/common/urls.py y apps/investigacion_formal/urls.py
-        // (montados en api/common/ y api/investigacion-formal/ respectivamente).
         axiosInstance.get('common/tipos-documento/', SIN_PAGINAR),
         axiosInstance.get('investigacion-formal/productos-minciencias/', SIN_PAGINAR),
         axiosInstance.get('investigacion-formal/tipos-producto/', SIN_PAGINAR),

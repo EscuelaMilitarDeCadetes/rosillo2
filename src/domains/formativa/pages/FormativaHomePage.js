@@ -1,3 +1,4 @@
+// src/domains/formativa/pages/FormativaHomePage.js
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchProcesosActivos } from '../../../features/procesosFormativos/procesosFormativosSlice';
@@ -7,10 +8,6 @@ import { ProgressSpinner } from 'primereact/progressspinner';
 
 /**
  * Home del dominio "investigación formativa", montada en "/formativa".
- * Equivalente funcional de FormalHomePage.js (que a su vez es el
- * equivalente de index.html): mientras aquella lista convocatorias
- * internas abiertas, esta lista procesos formativos activos vía
- * ProcesoFormativoViewSet.activos.
  */
 const FormativaHomePage = () => {
   const dispatch = useDispatch();

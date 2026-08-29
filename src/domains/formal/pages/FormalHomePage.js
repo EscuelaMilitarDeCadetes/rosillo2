@@ -8,11 +8,8 @@ import { Button } from 'primereact/button';
 import { ProgressSpinner } from 'primereact/progressspinner';
 
 /**
- * Antes: src/pages/HomePage.js, montada en "/" (pública).
- * Ahora: home del dominio "investigación formal", montada en "/formal"
- * dentro del bloque de rutas protegidas. El contenido es exactamente el
- * mismo que ya tenías (tabla de convocatorias abiertas + video), solo
- * cambió dónde vive y quién puede verla.
+ * Home del dominio "investigación formal", montada en "/formal"
+ * dentro del bloque de rutas protegidas.
  */
 const FormalHomePage = () => {
   const dispatch = useDispatch();
@@ -38,14 +35,6 @@ const FormalHomePage = () => {
     <div className="container mt-4">
       <div className="row g-5">
         <div className="col-lg-6">
-          <div className="ratio ratio-16x9">
-            <iframe
-              src="https://www.youtube.com/embed/th0hgA-qSLI"
-              title="YouTube video player"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-            ></iframe>
-          </div>
         </div>
         <div className="col-lg-6">
           <h3>Convocatorias Internas Abiertas</h3>

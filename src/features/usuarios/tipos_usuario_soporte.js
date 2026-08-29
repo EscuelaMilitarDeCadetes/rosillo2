@@ -1,29 +1,6 @@
+// src/features/usuarios/tipos_usuario_soporte.js
 /*
  * Tipos de usuario que el rol EsSoporte puede crear.
- * Fuente de verdad: apps/integracion/views/vinculacion_viewset.py
- * (comentario de la clase VinculacionViewSet) + apps/integracion/urls.py:
- *   SOPORTE puede ejecutar: crear-soporte, crear-decano, crear-facultad,
- *   crear-grupo, crear-cinterno, crear-cexterno, crear-asesor,
- *   crear-supervisor, crear-gerente.
- * (crear-estudiante, crear-jurado y crear-tutor están restringidos a
- * EsFacultad -> quedan fuera de este modal a propósito, son parte de la
- * futura pantalla equivalente para el rol Facultad, no de EsSoporte.)
- * Cada tipo define:
- *  - endpoint: sufijo real bajo /api/integracion/crear-<endpoint>/
- *  - flujo: determina qué campos adicionales pide
- *      'administrativo' -> solo datos de Persona + rol de plataforma
- *      'facultad'        -> + facultad_id + rol_grupo_id
- *      'grupo'           -> + grupo_id + rol_grupo_id
- *  - rolCandidatos: posibles valores de RolPlataforma.nombre_rol en la BD
- *    para resolver automáticamente rol_plataforma_id (ver resolverRolPlataforma).
- *    El seed antiguo (INSERT_BEFORE_START) usaba nombres con prefijo
- *    "ROLE_" y en plural (p. ej. 'ROLE_SOPORTE', 'ROLE_CINTERNOS'), pero un
- *    comentario en PrivateRoute.js confirma que los nombres reales ya
- *    migrados son SIN prefijo y en singular: ASESOR, CEXTERNO, CINTERNO,
- *    DECANO, ESTUDIANTE, FACULTAD, GERENTE, GRUPO, JURADO, SOPORTE,
- *    SUPERVISOR, TUTOR. Se listan ambas variantes, con la confirmada primero,
- *    por si el entorno todavía tiene datos del seed viejo en algún punto
- *    intermedio de la migración.
  */
 export const TIPOS_USUARIO_SOPORTE = [
   {
@@ -91,16 +68,6 @@ export const TIPOS_USUARIO_SOPORTE = [
   },
 ];
 
-/**
- * Busca en la lista de RolPlataforma (metadata.roles) el registro cuyo
- * nombre_rol coincide con alguno de los candidatos del tipo seleccionado.
- * Primero intenta coincidencia exacta (case-insensitive); si no encuentra
- * nada, cae a una coincidencia parcial (includes) usando el 'key' del tipo,
- * por si el rol en BD tiene una variante de nombre no prevista arriba.
- *
- * Devuelve el objeto RolPlataforma completo o `null` si no hay match, para
- * que la UI pueda avisar en vez de enviar un rol_plataforma_id incorrecto.
- */
 export function resolverRolPlataforma(roles, tipo) {
   if (!roles?.length || !tipo) return null;
 

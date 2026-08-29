@@ -1,17 +1,7 @@
+// src/features/catalogos/catalogosSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../api/axiosInstance';
 import { CATALOGOS_CONFIG } from './catalogosConfig';
-
-/**
- * Slice genérico para los catálogos administrables por EsSoporte.
- *
- * Los 4 ViewSets de este grupo (y previsiblemente los que vengan después)
- * comparten la misma forma: list() paginado -> {count, next, previous,
- * results}, create() y update(), nunca destroy(). En vez de duplicar el
- * mismo par de thunks 14 veces, el estado se indexa por catalogKey
- * (la clave de CATALOGOS_CONFIG) y los thunks reciben esa clave como
- * parte del argumento para saber a qué endpoint pegarle.
- */
 
 const estadoInicialCatalogo = () => ({
   items: [],
@@ -19,6 +9,7 @@ const estadoInicialCatalogo = () => ({
   loading: false,
   saving: false,
   error: null,
+  filtroActivo: false,
 });
 
 const estadoInicial = Object.keys(CATALOGOS_CONFIG).reduce((acc, key) => {
@@ -62,8 +53,12 @@ export const actualizarCatalogoItem = createAsyncThunk(
   'catalogos/actualizarCatalogoItem',
   async ({ catalogKey, id, payload }, { dispatch, rejectWithValue }) => {
     try {
-      const { endpoint } = CATALOGOS_CONFIG[catalogKey];
-      const response = await axiosInstance.patch(`${endpoint}${id}/`, payload);
+      const { endpoint, metodoActualizar } = CATALOGOS_CONFIG[catalogKey];
+      // Se respeta 'metodoActualizar' de catalogosConfig.js
+      // (por defecto 'PUT'; 'PATCH' solo donde el
+      // backend realmente lo requiere).
+      const metodo = (metodoActualizar || 'PUT').toLowerCase();
+      const response = await axiosInstance[metodo](`${endpoint}${id}/`, payload);
       dispatch(fetchCatalogo({ catalogKey }));
       return { catalogKey, data: response.data };
     } catch (error) {
@@ -76,6 +71,22 @@ export const actualizarCatalogoItem = createAsyncThunk(
     }
   }
 );
+
+export const fetchCatalogoFiltrado = createAsyncThunk(
+  'catalogos/fetchCatalogoFiltrado',
+  async ({ catalogKey, valor }, { rejectWithValue }) => {
+    try {
+      const { filtro } = CATALOGOS_CONFIG[catalogKey];
+      const response = await axiosInstance.get(filtro.endpoint, {
+        params: { [filtro.campo]: valor },
+      });
+      return { catalogKey, data: response.data }; // por-grupo devuelve array plano, sin paginar
+    } catch (error) {
+      return rejectWithValue({ catalogKey, mensaje: 'Error al filtrar el catálogo.' });
+    }
+  }
+);
+
 
 const catalogosSlice = createSlice({
   name: 'catalogos',
@@ -96,8 +107,24 @@ const catalogosSlice = createSlice({
         state[catalogKey].loading = false;
         state[catalogKey].items = data.results ?? [];
         state[catalogKey].total = data.count ?? 0;
+        state[catalogKey].filtroActivo = false;
       })
       .addCase(fetchCatalogo.rejected, (state, action) => {
+        const { catalogKey, mensaje } = action.payload;
+        state[catalogKey].loading = false;
+        state[catalogKey].error = mensaje;
+      })
+      .addCase(fetchCatalogoFiltrado.pending, (state, action) => {
+        state[action.meta.arg.catalogKey].loading = true;
+      })
+      .addCase(fetchCatalogoFiltrado.fulfilled, (state, action) => {
+        const { catalogKey, data } = action.payload;
+        state[catalogKey].loading = false;
+        state[catalogKey].items = data ?? [];
+        state[catalogKey].total = (data ?? []).length;
+        state[catalogKey].filtroActivo = true;
+      })
+      .addCase(fetchCatalogoFiltrado.rejected, (state, action) => {
         const { catalogKey, mensaje } = action.payload;
         state[catalogKey].loading = false;
         state[catalogKey].error = mensaje;

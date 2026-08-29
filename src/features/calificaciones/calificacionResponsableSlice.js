@@ -4,15 +4,6 @@ import axiosInstance from '../../api/axiosInstance';
 
 const BASE = 'investigacion-formal/';
 
-// Alimenta calificarProyectosXFacultad.html y calificarProyectosXGrupo.html
-// (son la misma pantalla, solo cambia si se filtra por facultad_id o
-// grupo_id — ambos ya vienen resueltos en state.auth tras el login/MeView).
-//
-// A diferencia de calificacionSlice.js (sin-calificar/calificados, que no
-// paginan), aquí se usa 'buscar/' — sí pagina en servidor y ahora sí
-// acepta facultad_id/grupo_id + estado_finalizado_calificacion.
-
-
 export const fetchProyectosPorResponsable = createAsyncThunk(
   'calificacionResponsable/fetch',
   async ({ facultadId, grupoId, filtros = {}, page = 1 }, { rejectWithValue }) => {

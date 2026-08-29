@@ -2,14 +2,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../../api/axiosInstance";
 
-/*
-  Solo lectura: no hay create/update/destroy.
-
-  buscar/ ahora combina TODOS los filtros en una sola llamada paginada
-  (texto + usuario + rango de fechas + solo_sistema, todos opcionales y en
-  conjunto), en vez de 3 acciones exclusivas entre sí como antes.
-*/
-
 const BASE = "common/historial/";
 
 export const fetchHistorial = createAsyncThunk(
@@ -28,8 +20,6 @@ export const fetchHistorial = createAsyncThunk(
   }
 );
 
-// `filtros` = { texto?, usuarioId?, fechaInicio?, fechaFin?, soloSistema? }
-// Todos opcionales; los que se envíen se combinan con AND en el backend.
 export const buscarHistorial = createAsyncThunk(
   "historial/buscarHistorial",
   async ({ page = 1, pageSize = 10, filtros = {} } = {}, { rejectWithValue }) => {
@@ -50,6 +40,22 @@ export const buscarHistorial = createAsyncThunk(
   }
 );
 
+// --- Endpoints especializados (sin paginación en backend) ---
+
+export const fetchHistorialPorUsuario = createAsyncThunk(
+  "historial/fetchPorUsuario",
+  async (usuarioId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`${BASE}por-usuario/${usuarioId}/`);
+      return response.data; // array plano
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.detail || "Error al filtrar el historial por usuario."
+      );
+    }
+  }
+);
+
 export const fetchHistorialPorRangoFechas = createAsyncThunk(
   "historial/fetchPorRangoFechas",
   async ({ fechaInicio, fechaFin }, { rejectWithValue }) => {
@@ -57,28 +63,24 @@ export const fetchHistorialPorRangoFechas = createAsyncThunk(
       const response = await axiosInstance.get(`${BASE}por-rango-fechas/`, {
         params: { fecha_inicio: fechaInicio, fecha_fin: fechaFin },
       });
-      return response.data;
+      return response.data; // array plano
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.error ||
-          "Error al filtrar el historial por rango de fechas."
+        error.response?.data?.error || "Error al filtrar el historial por rango de fechas."
       );
     }
   }
 );
 
-export const fetchHistorialPorUsuario = createAsyncThunk(
-  "historial/fetchPorUsuario",
-  async (usuarioId, { rejectWithValue }) => {
+export const fetchAccionesSistema = createAsyncThunk(
+  "historial/fetchAccionesSistema",
+  async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(
-        `${BASE}por-usuario/${usuarioId}/`
-      );
-      return response.data;
+      const response = await axiosInstance.get(`${BASE}acciones-sistema/`);
+      return response.data; // array plano
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.detail ||
-          "Error al filtrar el historial por usuario."
+        error.response?.data?.error || "Error al obtener las acciones del sistema."
       );
     }
   }
@@ -90,12 +92,20 @@ const historialSlice = createSlice({
     items: [],
     totalRecords: 0,
     filtrosActivos: false,
+    modoPaginado: true, // false cuando el resultado viene de un endpoint no paginado
     loading: false,
     error: null,
   },
-  reducers: {},
+  reducers: {
+    limpiarFiltro: (state) => {
+      state.filtrosActivos = false;
+      state.modoPaginado = true;
+      state.error = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
+      // --- list ---
       .addCase(fetchHistorial.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -105,11 +115,13 @@ const historialSlice = createSlice({
         state.items = action.payload.results ?? [];
         state.totalRecords = action.payload.count ?? 0;
         state.filtrosActivos = false;
+        state.modoPaginado = true;
       })
       .addCase(fetchHistorial.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
+      // --- buscar ---
       .addCase(buscarHistorial.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -119,11 +131,52 @@ const historialSlice = createSlice({
         state.items = action.payload.results ?? [];
         state.totalRecords = action.payload.count ?? 0;
         state.filtrosActivos = true;
+        state.modoPaginado = true;
       })
       .addCase(buscarHistorial.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      });
+      })
+      // --- por_usuario / por_rango_fechas / acciones_sistema (sin paginar) ---
+      .addMatcher(
+        (action) =>
+          [
+            fetchHistorialPorUsuario.pending.type,
+            fetchHistorialPorRangoFechas.pending.type,
+            fetchAccionesSistema.pending.type,
+          ].includes(action.type),
+        (state) => {
+          state.loading = true;
+          state.error = null;
+        }
+      )
+      .addMatcher(
+        (action) =>
+          [
+            fetchHistorialPorUsuario.fulfilled.type,
+            fetchHistorialPorRangoFechas.fulfilled.type,
+            fetchAccionesSistema.fulfilled.type,
+          ].includes(action.type),
+        (state, action) => {
+          state.loading = false;
+          state.items = action.payload ?? [];
+          state.totalRecords = (action.payload ?? []).length;
+          state.filtrosActivos = true;
+          state.modoPaginado = false; // el resultado ya viene completo
+        }
+      )
+      .addMatcher(
+        (action) =>
+          [
+            fetchHistorialPorUsuario.rejected.type,
+            fetchHistorialPorRangoFechas.rejected.type,
+            fetchAccionesSistema.rejected.type,
+          ].includes(action.type),
+        (state, action) => {
+          state.loading = false;
+          state.error = action.payload;
+        }
+      );
   },
 });
 

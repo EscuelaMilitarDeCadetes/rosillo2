@@ -1,20 +1,11 @@
+// src/features/procesosFormativos/procesosFormativosSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../api/axiosInstance';
 
-// Análogo a fetchOpenConvocatorias, pero para el dominio formativa.
-// ProcesoFormativoViewSet.activos (investigacion_formativa/views/proceso_formativo_viewset.py)
-// devuelve un array plano vía ProcesoFormativoSerializer (no paginado),
-// igual que ConvocatoriaViewSet con estado=true.
 export const fetchProcesosActivos = createAsyncThunk(
   'procesosFormativos/fetchActivos',
   async (_, { rejectWithValue }) => {
     try {
-      // OJO: el prefijo es 'investigacion-formativa/', a diferencia de
-      // convocatoriasSlice.js que llama 'convocatorias-internas/' sin
-      // prefijo (eso apunta a config/urls.py: 'api/investigacion-formal/'
-      // es el prefijo real de convocatorias-internas, así que ese slice
-      // probablemente también necesita revisión — no lo toco aquí porque
-      // no es parte de este alcance, pero quedó anotado).
       const response = await axiosInstance.get('investigacion-formativa/proceso-formativo/activos/');
       return response.data;
     } catch (error) {

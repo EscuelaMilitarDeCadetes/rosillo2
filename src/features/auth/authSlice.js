@@ -2,21 +2,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../api/axiosInstance';
 
-// --- LOGIN ---
-// LoginView (apps/usuarios/views/auth_views.py) devuelve:
-//   { access, refresh, user: {id, username, email}, debe_cambiar_password }
-// NO devuelve roles, así que justo después de loguear se pide el perfil
-// propio a GET usuarios/me/ (ver MeView) para tener roles disponibles.
-//
-// 'sistema' ('formal' | 'formativa') es un concepto puramente de frontend:
-// el backend no lo conoce. Se guarda para que, tras un refresh de página,
-// Navbar y las rutas por defecto sepan a qué dominio volver.
+
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async ({ username, password, sistema = 'formal' }, { rejectWithValue }) => {
     try {
-      // Antes: siempre 'usuarios/login/' (endpoint que ya no existe).
-      // Ahora: el endpoint depende del sistema al que se está logueando.
       const endpoint = sistema === 'formativa'
         ? 'usuarios/login/formativa/'
         : 'usuarios/login/formal/';
@@ -98,10 +88,6 @@ export const logoutUser = createAsyncThunk(
 );
 
 // --- CAMBIAR CONTRASEÑA (usuario autenticado, con o sin debe_cambiar_password) ---
-// PasswordViewSet.change_password (usuarios/password/change-password/) exige
-// old_password + new_password y ya limpia debe_cambiar_password en el backend;
-// acá solo replicamos ese estado en el redux local para que PrivateRoute deje
-// de redirigir sin necesidad de otro roundtrip a usuarios/me/.
 export const changePassword = createAsyncThunk(
   'auth/changePassword',
   async ({ old_password, new_password }, { rejectWithValue }) => {
@@ -120,6 +106,8 @@ export const changePassword = createAsyncThunk(
 const initialState = {
   user: null,
   roles: [],
+  facultadId: null,
+  grupoId: null,  
   isAuthenticated: !!localStorage.getItem('accessToken'),
   debeCambiarPassword: false,
   sistemaActivo: localStorage.getItem('sistemaActivo') || null,
@@ -155,6 +143,8 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.roles = action.payload.roles;
+        state.facultadId = action.payload.facultadId;
+        state.grupoId = action.payload.grupoId;
         state.debeCambiarPassword = action.payload.debeCambiarPassword;
         state.sistemaActivo = action.payload.sistema;
         state.error = null;

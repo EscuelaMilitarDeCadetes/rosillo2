@@ -1,13 +1,13 @@
 // src/domains/usuarios/pages/UsersPage.js
 import React, { useState } from 'react';
 import { Button } from 'primereact/button';
-import PlatformUsersTable from '../../../components/usuarios/PlatformUsersTable';
-import NewUserModal from '../../../components/usuarios/NewUserModal';
-import GroupUsersTable from '../../../components/usuarios/GroupUsersTable';
-import AddRoleModal from '../../../components/usuarios/AddRoleModal';
-import AssignResearcherModal from '../../../components/usuarios/AssignResearcherModal';
-import DeleteRoleModal from '../../../components/usuarios/DeleteRoleModal';
-import EditRoleModal from '../../../components/usuarios/EditRoleModal';
+import PlatformUsersTable from '../components/usuarios/PlatformUsersTable';
+import NewUserModal from '../components/usuarios/NewUserModal';
+import GroupUsersTable from '../components/usuarios/GroupUsersTable';
+import AddRoleModal from '../components/usuarios/AddRoleModal';
+import AssignResearcherModal from '../components/usuarios/AssignResearcherModal';
+import DeleteRoleModal from '../components/usuarios/DeleteRoleModal';
+import EditRoleModal from '../components/usuarios/EditRoleModal';
 import { useSelector } from 'react-redux';
 
 const UsersPage = () => {
@@ -55,6 +55,7 @@ const UsersPage = () => {
         visible={isDeleteRoleModalVisible}
         onHide={() => setIsDeleteRoleModalVisible(false)}
       />
+      <BuscarRolXUsuarioPanel />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-//src/domains/formal/pages/CalificarProyectosXGrupoPage.js
+// src/domains/formal/pages/CalificarProyectosXGrupoPage.js
 import React from 'react';
 import CalificacionPorResponsableTable from '../../../components/calificaciones/CalificacionPorResponsableTable';
 

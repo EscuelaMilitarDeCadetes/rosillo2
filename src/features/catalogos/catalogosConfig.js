@@ -1,22 +1,6 @@
-/**
- * Configuración declarativa de los catálogos administrables por EsSoporte.
- *
- * Cada entrada define:
- *  - key: identificador interno (también la clave del estado en catalogosSlice)
- *  - titulo / tituloSingular: textos para la UI
- *  - endpoint: ruta relativa bajo axiosInstance (sin barra inicial, con barra final)
- *  - permiteEliminar: si el ViewSet real implementa destroy(). Los 4 catálogos
- *    de este primer grupo NO lo implementan (revisado en *_viewset.py), así
- *    que la UI no ofrece borrar — mostrarlo sería prometer algo que el
- *    backend respondería con 405 Method Not Allowed.
- *  - campos: lista ordenada de campos, usada tanto para las columnas de la
- *    tabla como para el formulario de alta/edición.
- *
- * Grupo 1/4. Los próximos 10 catálogos (tipos-documento, roles-grupo,
- * roles-investigador, tipos-producto, tipos-rubro, puntos-control,
- * facultad-x-grupo, producto-x-grupo, productos-minciencias...) se agregan
- * aquí mismo siguiendo este patrón exacto.
- */
+// src/features/catalogos/catalogosConfig.js
+// Se agrega 'metodoActualizar' explícito a cada catálogo y
+// catalogosSlice.js ahora lo respeta en vez de asumir PATCH para todos.
 export const CATALOGOS_CONFIG = {
   rol_plataforma: {
     key: 'rol_plataforma',
@@ -25,11 +9,13 @@ export const CATALOGOS_CONFIG = {
     // apps/usuarios/urls.py -> router.register(r'roles', RolPlataformaViewSet)
     endpoint: 'usuarios/roles/',
     permiteEliminar: false,
+    metodoActualizar: 'PATCH', // RolPlataformaViewSet solo define partial_update()
     campos: [
       { name: 'nombre_rol', label: 'Nombre del Rol', type: 'text', required: true, maxLength: 50 },
       { name: 'descripcion', label: 'Descripción', type: 'text', required: true, maxLength: 180 },
     ],
   },
+  
   grado_estudios: {
     key: 'grado_estudios',
     titulo: 'Grados de Estudio',
@@ -37,11 +23,13 @@ export const CATALOGOS_CONFIG = {
     // apps/institucional/urls.py -> router.register(r'grados', GradoEstudiosViewSet)
     endpoint: 'institucional/grados/',
     permiteEliminar: false,
+    metodoActualizar: 'PUT', // GradoEstudiosViewSet solo define update()
     campos: [
       { name: 'sigla_grado', label: 'Sigla', type: 'text', required: true, maxLength: 3 },
       { name: 'descripcion', label: 'Descripción', type: 'text', required: true, maxLength: 150 },
     ],
   },
+  
   facultad_escuela: {
     key: 'facultad_escuela',
     titulo: 'Facultades / Escuelas',
@@ -49,11 +37,13 @@ export const CATALOGOS_CONFIG = {
     // apps/institucional/urls.py -> router.register(r'facultades', FacultadEscuelaViewSet)
     endpoint: 'institucional/facultades/',
     permiteEliminar: false,
+    metodoActualizar: 'PUT', // FacultadEscuelaViewSet solo define update()
     campos: [
       { name: 'nombre_facultad', label: 'Nombre de la Facultad', type: 'text', required: true, maxLength: 30 },
       { name: 'abreviatura', label: 'Abreviatura', type: 'text', required: true, maxLength: 5 },
     ],
   },
+  
   grupo_investigacion: {
     key: 'grupo_investigacion',
     titulo: 'Grupos de Investigación',
@@ -61,12 +51,14 @@ export const CATALOGOS_CONFIG = {
     // apps/institucional/urls.py -> router.register(r'grupos', GrupoInvestigacionViewSet)
     endpoint: 'institucional/grupos/',
     permiteEliminar: false,
+    metodoActualizar: 'PUT', // GrupoInvestigacionViewSet solo define update()
     campos: [
       { name: 'nombre_grupo', label: 'Nombre del Grupo', type: 'text', required: true, maxLength: 50 },
       { name: 'sigla_grupo', label: 'Sigla', type: 'text', required: true, maxLength: 8 },
       { name: 'clasificacion_grupo', label: 'Clasificación', type: 'text', required: false, maxLength: 3 },
     ],
   },
+  
   facultad_x_grupo: {
     key: 'facultad_x_grupo',
     titulo: 'Facultades por Grupo de Investigación',
@@ -74,29 +66,31 @@ export const CATALOGOS_CONFIG = {
     // apps/institucional/urls.py -> router.register(r'facultad-grupo', FacultadXGrupoViewSet)
     endpoint: 'institucional/facultad-grupo/',
     permiteEliminar: false, // docstring del ViewSet: "Sin destroy(): tabla estructural permanente"
+    metodoActualizar: 'PUT', // FacultadXGrupoViewSet solo define update()
     campos: [
       {
         name: 'grupo',
         label: 'Grupo de Investigación',
         type: 'select',
         required: true,
-        optionsSource: 'grupos',       // state.metadata.grupos (ya se carga en fetchMetadata)
+        optionsSource: 'grupos',       
         optionLabel: 'nombre_grupo',
         optionValue: 'id',
-        columnField: 'grupo_nombre',   // así lo expone FacultadXGrupoSerializer (source='grupo.sigla_grupo')
+        columnField: 'grupo_nombre',   
       },
       {
         name: 'facultad',
         label: 'Facultad',
         type: 'select',
         required: true,
-        optionsSource: 'facultades',   // state.metadata.facultades
+        optionsSource: 'facultades',   
         optionLabel: 'nombre_facultad',
         optionValue: 'id',
-        columnField: 'facultad_nombre', // FacultadXGrupoSerializer: source='facultad.abreviatura'
+        columnField: 'facultad_nombre', 
       },
     ],
   },
+  
   rol_grupo: {
     key: 'rol_grupo',
     titulo: 'Roles de Grupo',
@@ -104,10 +98,12 @@ export const CATALOGOS_CONFIG = {
     // apps/institucional/urls.py -> router.register(r'roles-grupo', RolGrupoViewSet)
     endpoint: 'institucional/roles-grupo/',
     permiteEliminar: false,
+    metodoActualizar: 'PUT', // RolGrupoViewSet solo define update()
     campos: [
       { name: 'cargo', label: 'Cargo', type: 'text', required: true, maxLength: 50 },
     ],
   },
+  
   rol_investigador: {
     key: 'rol_investigador',
     titulo: 'Roles de Investigador',
@@ -115,11 +111,7 @@ export const CATALOGOS_CONFIG = {
     // apps/investigacion_formal/urls.py -> router.register(r'roles-investigador', RolInvestigadorViewSet)
     endpoint: 'investigacion-formal/roles-investigador/',
     permiteEliminar: false,
-    // IMPORTANTE: create/update exigen [EsSoporte, TieneAmbitoFormal] — AMBOS,
-    // no uno u otro (ver rol_investigador_viewset.py -> get_permissions()).
-    // El token JWT solo trae el claim ambito='formal' si el login se hizo por
-    // LoginFormalView. Un SOPORTE logueado por el flujo "formativa" verá un
-    // 403 al crear/editar aquí aunque list/retrieve sí le funcionen.
+    metodoActualizar: 'PUT', // RolInvestigadorViewSet solo define update()
     avisoPermiso:
       'Para crear o editar roles de investigador tu sesión debe haberse iniciado desde el módulo de Investigación Formal.',
     campos: [
@@ -127,27 +119,27 @@ export const CATALOGOS_CONFIG = {
       { name: 'descripcion', label: 'Descripción', type: 'text', required: true, maxLength: 150 },
     ],
   },
+  
   tipo_documento: {
     key: 'tipo_documento',
     titulo: 'Tipos de Documento',
     tituloSingular: 'Tipo de Documento',
-    // apps/common/urls.py -> router.register(r'tipos-documento', TipoDocumentoViewSet)
     endpoint: 'common/tipos-documento/',
     permiteEliminar: false,
+    metodoActualizar: 'PUT', // TipoDocumentoViewSet solo define update()
     campos: [
       { name: 'nombre_documento', label: 'Nombre del Documento', type: 'text', required: true, maxLength: 40 },
-      // El modelo NO restringe 'grupo' a choices fijas (es CharField libre),
-      // pero el seed de INSERT_BEFORE_START solo usa 'convocatoria',
-      // 'proyecto' y 'evaluacion' — se documenta como ayuda, no se fuerza.
-      {
-        name: 'grupo',
-        label: 'Grupo (ej: convocatoria, proyecto, evaluacion)',
-        type: 'text',
-        required: true,
-        maxLength: 30,
-      },
+      { name: 'grupo', label: 'Grupo (ej: convocatoria, proyecto, evaluacion)', type: 'text', required: true, maxLength: 30 },
     ],
+    // apps/common/urls.py -> tipos-documento/por-grupo/?grupo=<valor>
+    filtro: {
+      campo: 'grupo',
+      label: 'Grupo',
+      placeholder: 'Ej: proyecto, convocatoria...',
+      endpoint: 'common/tipos-documento/por-grupo/',
+    },
   },
+  
   tipo_calificacion: {
     key: 'tipo_calificacion',
     titulo: 'Tipos de Calificación',
@@ -155,6 +147,7 @@ export const CATALOGOS_CONFIG = {
     // apps/investigacion_formal/urls.py -> router.register(r'tipos-calificacion', TipoCalificacionViewSet)
     endpoint: 'investigacion-formal/tipos-calificacion/',
     permiteEliminar: false,
+    metodoActualizar: 'PUT', // TipoCalificacionViewSet solo define update()
     avisoPermiso:
       'Para crear o editar tipos de calificación tu sesión debe haberse iniciado desde el módulo de Investigación Formal.',
     campos: [
@@ -162,13 +155,6 @@ export const CATALOGOS_CONFIG = {
       { name: 'descripcion', label: 'Descripción', type: 'text', required: true, maxLength: 150 },
       { name: 'evaluacion', label: '¿Es Evaluación?', type: 'checkbox' },
       {
-        // OJO: el nombre real del campo en el modelo es 'orden_fase', pero
-        // tipo_calificacion_viewset.py lee request.data.get("ordenFase")
-        // (camelCase) al crear/editar — NO uses 'orden_fase' aquí o el
-        // backend recibirá None silenciosamente. Ver TipoCalificacionSerializer
-        // (declara 'ordenFase' como alias read_only de 'orden_fase') y el
-        // create()/update() del ViewSet, que ignora ese alias y lee el
-        // body crudo con la clave camelCase.
         name: 'ordenFase',
         label: 'Orden de la Fase',
         type: 'number',
@@ -176,6 +162,7 @@ export const CATALOGOS_CONFIG = {
       },
     ],
   },
+  
   producto_minciencias: {
     key: 'producto_minciencias',
     titulo: 'Productos Minciencias',
@@ -183,6 +170,7 @@ export const CATALOGOS_CONFIG = {
     // apps/investigacion_formal/urls.py -> router.register(r'productos-minciencias', ProductoMincienciasViewSet)
     endpoint: 'investigacion-formal/productos-minciencias/',
     permiteEliminar: false,
+    metodoActualizar: 'PUT', // ProductoMincienciasViewSet solo define update()
     avisoPermiso:
       'Para crear o editar productos Minciencias tu sesión debe haberse iniciado desde el módulo de Investigación Formal.',
     campos: [
@@ -192,6 +180,7 @@ export const CATALOGOS_CONFIG = {
       { name: 'vigencia', label: 'Vigencia (años)', type: 'number', required: true },
     ],
   },
+  
   grupo_minciencias: {
     key: 'grupo_minciencias',
     titulo: 'Grupos Minciencias',
@@ -199,12 +188,14 @@ export const CATALOGOS_CONFIG = {
     // apps/investigacion_formal/urls.py -> router.register(r'grupos-minciencias', GrupoMincienciasViewSet)
     endpoint: 'investigacion-formal/grupos-minciencias/',
     permiteEliminar: false,
+    metodoActualizar: 'PUT', // GrupoMincienciasViewSet solo define update()
     avisoPermiso:
       'Para crear o editar grupos Minciencias tu sesión debe haberse iniciado desde el módulo de Investigación Formal.',
     campos: [
       { name: 'nombre_grupo_minciencias', label: 'Nombre del Grupo Minciencias', type: 'text', required: true, maxLength: 150 },
     ],
   },
+  
   tipo_producto: {
     key: 'tipo_producto',
     titulo: 'Tipos de Producto',
@@ -212,6 +203,7 @@ export const CATALOGOS_CONFIG = {
     // apps/investigacion_formal/urls.py -> router.register(r'tipos-producto', TipoProductoViewSet)
     endpoint: 'investigacion-formal/tipos-producto/',
     permiteEliminar: false,
+    metodoActualizar: 'PUT', // TipoProductoViewSet solo define update()
     avisoPermiso:
       'Para crear o editar tipos de producto tu sesión debe haberse iniciado desde el módulo de Investigación Formal.',
     campos: [
@@ -219,13 +211,15 @@ export const CATALOGOS_CONFIG = {
       { name: 'aplica', label: '¿Aplica?', type: 'checkbox' },
     ],
   },
+  
   producto_x_grupo: {
     key: 'producto_x_grupo',
     titulo: 'Productos por Grupo',
     tituloSingular: 'Producto x Grupo',
     // apps/investigacion_formal/urls.py -> router.register(r'productos-grupo', ProductoXGrupoViewSet)
     endpoint: 'investigacion-formal/productos-grupo/',
-    permiteEliminar: false, // no hay destroy() implementado pese a que get_permissions() lo contempla
+    permiteEliminar: false, 
+    metodoActualizar: 'PUT', // ProductoXGrupoViewSet solo define update()
     avisoPermiso:
       'Para crear o editar aquí tu sesión debe haberse iniciado desde el módulo de Investigación Formal. A diferencia de los demás catálogos, EsSoporte no es el único rol habilitado: también pueden escribir aquí los roles operativos definidos en ROLES_CREACION_OPERATIVA / ROLES_ESCRITURA_GESTION.',
     campos: [
@@ -237,7 +231,7 @@ export const CATALOGOS_CONFIG = {
         optionsSource: 'productosMinciencias',
         optionLabel: 'nombre_producto',
         optionValue: 'id',
-        columnField: 'producto_nombre', // ProductoXGrupoSerializer: source='producto_minciencias.nombre_producto'
+        columnField: 'producto_nombre', 
       },
       {
         name: 'grupo_minciencias',
@@ -247,7 +241,7 @@ export const CATALOGOS_CONFIG = {
         optionsSource: 'gruposMinciencias',
         optionLabel: 'nombre_grupo_minciencias',
         optionValue: 'id',
-        columnField: 'grupo_nombre', // source='grupo_minciencias.nombre_grupo_minciencias'
+        columnField: 'grupo_nombre',
       },
       {
         name: 'tipo_producto',
@@ -257,21 +251,23 @@ export const CATALOGOS_CONFIG = {
         optionsSource: 'tiposProducto',
         optionLabel: 'tipo_producto',
         optionValue: 'id',
-        columnField: 'tipo_producto_nombre', // source='tipo_producto.tipo_producto'
+        columnField: 'tipo_producto_nombre', 
       },
     ],
   },
+  
   tipo_rubro: {
     key: 'tipo_rubro',
     titulo: 'Tipos de Rubro',
     tituloSingular: 'Tipo de Rubro',
-    // apps/investigacion_formal/urls.py -> router.register(r'tipos-rubro', TipoRubroViewSet)
     endpoint: 'investigacion-formal/tipos-rubro/',
     permiteEliminar: false,
+    metodoActualizar: 'PUT', // TipoRubroViewSet solo define update()
     avisoPermiso:
       'Para crear o editar tipos de rubro tu sesión debe haberse iniciado desde el módulo de Investigación Formal.',
     campos: [
       { name: 'nombre_rubro', label: 'Nombre del Rubro', type: 'text', required: true, maxLength: 50 },
+      { name: 'aplica', label: '¿Aplica?', type: 'checkbox' },
     ],
   },    
 };

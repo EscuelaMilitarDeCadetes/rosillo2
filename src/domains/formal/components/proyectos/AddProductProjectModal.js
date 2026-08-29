@@ -1,0 +1,111 @@
+// src/domains/formal/components/proyectos/AddProductoProyectoModal.js
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Dialog } from 'primereact/dialog';
+import { Button } from 'primereact/button';
+import { Dropdown } from 'primereact/dropdown';
+import { InputText } from 'primereact/inputtext';
+import { InputNumber } from 'primereact/inputnumber';
+import { addProductoProyecto } from '../../../../features/proyectos/productosSlice';
+import ConfirmationModal from '../../../../components/common/ConfirmationModal';
+
+
+const AddProductoProyectoModal = ({ visible, onHide, proyectoId }) => {
+  const dispatch = useDispatch();
+  const { productosMinciencias, tiposProducto } = useSelector((state) => state.metadata); 
+  const { loading, error } = useSelector((state) => state.productos);
+
+  const [selectedProductoMinciencias, setSelectedProductoMinciencias] = useState(null);
+  const [categoria, setCategoria] = useState('');
+  const [puntaje, setPuntaje] = useState(0);
+  const [validationError, setValidationError] = useState('');
+  const [isConfirmVisible, setIsConfirmVisible] = useState(false);
+
+  useEffect(() => {
+    if (!visible) {
+      setSelectedProductoMinciencias(null);
+      setCategoria('');
+      setPuntaje(0);
+      setValidationError('');
+    }
+  }, [visible]);
+
+  const validateForm = () => {
+    if (!selectedProductoMinciencias || !categoria || puntaje <= 0) {
+      setValidationError('Debe seleccionar un producto, ingresar una categoría y un puntaje válido.');
+      return false;
+    }
+    setValidationError('');
+    return true;
+  };
+
+  const handleShowConfirmation = () => {
+    if (validateForm()) {
+      onHide();
+      setIsConfirmVisible(true);
+    }
+  };
+
+  const handleConfirmAdd = () => {
+    const payload = {
+      proyectoId,
+      data: {
+        producto_x_grupo: selectedProductoMinciencias, 
+        categoria,
+        puntaje,
+      },
+    };
+    dispatch(addProductoProyecto(payload)).then((result) => {
+      if (addProductoProyecto.fulfilled.match(result)) {
+        setIsConfirmVisible(false);
+      }
+    });
+  };
+
+  const renderFooter = (
+    <div>
+      <Button label="Cancelar" icon="pi pi-times" onClick={onHide} className="p-button-text" />
+      <Button label="Guardar" icon="pi pi-check" onClick={handleShowConfirmation} autoFocus />
+    </div>
+  );
+
+  return (
+    <>
+      <Dialog header="Agregar Producto al Proyecto" visible={visible} style={{ width: '40vw' }} footer={renderFooter} onHide={onHide}>
+        <div className="p-fluid">
+          <div className="field mb-3">
+            <label htmlFor="productoMinciencias">Producto Minciencias</label>
+            <Dropdown inputId="productoMinciencias" value={selectedProductoMinciencias} options={productosMinciencias} onChange={(e) => setSelectedProductoMinciencias(e.value)} optionLabel="nombre_producto" optionValue="id" filter placeholder="Seleccione un producto" />
+          </div>
+          <div className="field mb-3">
+            <label htmlFor="categoria">Categoría</label>
+            <InputText id="categoria" value={categoria} onChange={(e) => setCategoria(e.target.value)} />
+          </div>
+          <div className="field mb-3">
+            <label htmlFor="puntaje">Puntaje</label>
+            <InputNumber id="puntaje" value={puntaje} onValueChange={(e) => setPuntaje(e.value)} min={0} />
+          </div>
+          {validationError && <div className="alert alert-danger mt-3">{validationError}</div>}
+          {error && <div className="alert alert-danger mt-3">{error}</div>}
+        </div>
+      </Dialog>
+
+      <ConfirmationModal
+        visible={isConfirmVisible}
+        onHide={() => setIsConfirmVisible(false)}
+        onConfirm={handleConfirmAdd}
+        header="Confirmar Adición de Producto"
+        loading={loading}
+      >
+        <h6>Resumen del producto a agregar:</h6>
+        <ul>
+          <li><strong>Producto:</strong> {productosMinciencias.find(pm => pm.id === selectedProductoMinciencias)?.nombre_producto || 'N/A'}</li>
+          <li><strong>Categoría:</strong> {categoria}</li>
+          <li><strong>Puntaje:</strong> {puntaje}</li>
+        </ul>
+      </ConfirmationModal>
+    </>
+  );
+};
+
+export default AddProductoProyectoModal;

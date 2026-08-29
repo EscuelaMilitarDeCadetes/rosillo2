@@ -4,22 +4,24 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../../features/auth/authSlice';
 import { Button } from 'primereact/button';
-
-// Agregar al bloque de imports de Navbar.js
 import { useNotificacionesWebSocket } from '../../hooks/useNotificacionesWebSocket';
-import { fetchNotificacionesIniciales } from '../../features/notificaciones/notificacionesSlice';
+import {
+  fetchNotificacionesIniciales,
+  marcarLeida,
+  marcarTodasLeidas,
+} from '../../features/notificaciones/notificacionesSlice';
 
 
 const Navbar = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { noLeidas } = useSelector((state) => state.notificaciones);
+  const { items: notificaciones } = useSelector((state) => state.notificaciones);
   const navigate = useNavigate();
   const { isAuthenticated, roles, sistemaActivo } = useSelector((state) => state.auth);  
 
-  // Antes, "Inicio" y la marca siempre apuntaban a "/". Ahora "/" es la
-  // portada pública (LandingPage): si el usuario ya inició sesión, debe
-  // volver al home de SU dominio (formal o formativa), no a la portada.
+  // "/" es la LandingPage: si el usuario ya inició sesión, debe
+  // volver al home de SU dominio (formal o formativa), no a la LandingPage.
   const inicioHref = isAuthenticated ? `/${sistemaActivo || 'formal'}` : '/';
 
   // Función auxiliar para verificar si el usuario tiene al menos uno de los roles
@@ -40,6 +42,27 @@ const Navbar = () => {
       dispatch(fetchNotificacionesIniciales(user.id));
     }
   }, [user, dispatch]);
+
+  const handleClickNotificacion = (notif) => {
+    dispatch(marcarLeida(notif.id));
+    if (notif.url_relacionada) {
+      navigate(notif.url_relacionada);
+    }
+  };
+
+  const handleMarcarTodas = (e) => {
+    e.stopPropagation();
+    dispatch(marcarTodasLeidas());
+  };
+
+  const iconoPorTipo = (tipo) => {
+    switch (tipo) {
+      case 'exito': return 'pi pi-check-circle text-success';
+      case 'alerta': return 'pi pi-exclamation-triangle text-warning';
+      case 'error': return 'pi pi-times-circle text-danger';
+      default: return 'pi pi-info-circle text-info';
+    }
+  };  
 
   return (
     <header>
@@ -69,10 +92,6 @@ const Navbar = () => {
                   {hasAnyRole(['SOPORTE']) && (
                     <Link className="nav-item nav-link" to="/usuarios">Usuarios</Link>
                   )}
-                  {/* Catálogos — los 14 ViewSets de solo-lectura/escritura EsSoporte
-                      migrados del punto 4 (INSERT_BEFORE_START_V33). Algunos exigen
-                      además TieneAmbitoFormal para crear/editar; ver avisoPermiso de
-                      cada entrada en catalogosConfig.js. */}
                   {hasAnyRole(['SOPORTE']) && (
                     <li className="nav-item dropdown">
                       <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -124,21 +143,17 @@ const Navbar = () => {
                     </li>
                   )}
  
-                  {/* Estadísticas — EstadisticasViewSet = ROLES_LECTURA_INVESTIGACION_FORMAL (grupo amplio) */}
                   {hasAnyRole(['FACULTAD', 'GRUPO', 'CINTERNO', 'CEXTERNO', 'ASESOR', 'SUPERVISOR', 'DECANO', 'GERENTE']) && (
                     <li className="nav-item dropdown">
                       <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Estadísticas
                       </a>
                       <ul className="dropdown-menu">
-                        <li><Link className="dropdown-item" to="/estadisticas/proyectos-ejecucion">Proyectos en ejecución y finalizados</Link></li>
-                        <li><Link className="dropdown-item" to="/estadisticas/proyectos-convocatoria">Producción científica</Link></li>
+                        <li className="nav-item"><Link className="nav-link" to="/estadisticas">Estadísticas</Link></li>
                       </ul>
                     </li>
                   )}
  
-                  {/* Seguimiento y Control — se mantiene solo para Supervisor,
-                      por diseño original de este menú (ver App.js) */}
                   {hasAnyRole(['SUPERVISOR']) && (
                     <li className="nav-item dropdown">
                       <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -168,8 +183,6 @@ const Navbar = () => {
                     </li>
                   )}
  
-                  {/* Proyectos — ProyectoViewSet (list/retrieve) = ROLES_LECTURA_INVESTIGACION_FORMAL,
-                      con sub-acciones más finas dentro (calificar = CInterno, etc.) */}
                   {hasAnyRole(['CINTERNO', 'SUPERVISOR', 'FACULTAD', 'GRUPO', 'CEXTERNO']) && (
                     <li className="nav-item dropdown">
                       <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -203,7 +216,96 @@ const Navbar = () => {
                       <Link className="nav-link" to="/historial">Historial</Link>
                     </li>
                   )}
- 
+
+                  <li className="nav-item dropdown">
+                    <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      CRM
+                    </a>
+                    <ul className="dropdown-menu">
+                      {hasAnyRole(['SOPORTE', 'CINTERNO', 'CEXTERNO', 'FACULTAD']) && (
+                        <li><Link className="dropdown-item" to="/crm/entidades-externas">Entidades Externas</Link></li>
+                      )}
+                      <li><Link className="dropdown-item" to="/crm/indicadores-impacto">Indicadores de Impacto</Link></li>
+                      <li><Link className="dropdown-item" to="/crm/interacciones">Interacciones</Link></li>
+                    </ul>
+                  </li>
+
+                  {hasAnyRole(['DECANO', 'SUPERVISOR', 'GERENTE']) && (
+                    <li><Link className="dropdown-item" to="/documentos/pendientes-firma">Documentos Pendientes de Firma</Link></li>
+                  )}
+
+                  {hasAnyRole(['DECANO', 'SUPERVISOR', 'FACULTAD', 'GRUPO', 'CINTERNO', 'CEXTERNO']) && (
+                    <li><Link className="dropdown-item" to="/aprobaciones">Aprobaciones</Link></li>
+                  )}
+
+                  <li><Link className="dropdown-item" to="/firmas/pendientes">Mis Firmas Pendientes</Link></li>
+                  <li><Link className="dropdown-item" to="/documentos/por-tipo">Documentos por Tipo</Link></li>
+                  <li><Link className="dropdown-item" to="/plantillas-documento">Plantillas de Documento</Link></li>
+                  {hasAnyRole(['DECANO', 'SUPERVISOR', 'FACULTAD', 'GRUPO', 'CINTERNO', 'CEXTERNO']) && (
+                    <li><Link className="dropdown-item" to="/tareas">Tareas</Link></li>
+                  )}
+                  {user?.is_staff && (
+                    <li><Link className="dropdown-item" to="/notificaciones/recordatorios">Recordatorios Masivos</Link></li>
+                  )}                  
+
+                  {/* Notificaciones — mismo patrón de dropdown Bootstrap usado en Catálogos/Convocatoria */}
+                  <li className="nav-item dropdown">
+                    <a
+                      className="nav-link dropdown-toggle position-relative"
+                      href="#"
+                      role="button"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                    >
+                      <i className="pi pi-bell" />
+                      {noLeidas > 0 && (
+                        <span
+                          className="badge bg-danger rounded-pill position-absolute"
+                          style={{ top: '2px', right: '-4px', fontSize: '0.65rem' }}
+                        >
+                          {noLeidas > 99 ? '99 ' : noLeidas}
+                        </span>
+                      )}
+                    </a>
+                    <ul className="dropdown-menu dropdown-menu-end p-0" style={{ minWidth: '320px', maxHeight: '400px', overflowY: 'auto' }}>
+                      <li className="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                        <strong className="small">Notificaciones</strong>
+                        {noLeidas > 0 && (
+                          <button
+                            type="button"
+                            className="btn btn-link btn-sm p-0"
+                            onClick={handleMarcarTodas}
+                          >
+                            Marcar todas como leídas
+                          </button>
+                        )}
+                      </li>
+                      {notificaciones.length === 0 ? (
+                        <li className="px-3 py-3 text-center text-muted small">
+                          No tienes notificaciones sin leer
+                        </li>
+                      ) : (
+                        notificaciones.map((notif) => (
+                          <li key={notif.id}>
+                            <button
+                              type="button"
+                              className="dropdown-item d-flex align-items-start gap-2 py-2"
+                              onClick={() => handleClickNotificacion(notif)}
+                            >
+                              <i className={iconoPorTipo(notif.tipo)} style={{ marginTop: '2px' }} />
+                              <span className="d-flex flex-column text-start">
+                                <span className="small">{notif.mensaje}</span>
+                                <span className="text-muted" style={{ fontSize: '0.7rem' }}>
+                                  {new Date(notif.fecha_creacion).toLocaleString('es-CO')}
+                                </span>
+                              </span>
+                            </button>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  </li>                  
+                  
                   <Button label="Cerrar Sesión" icon="pi pi-sign-out" className="p-button-text p-button-sm nav-item nav-link" onClick={handleLogout} />
                 </>
               ) : (

@@ -1,6 +1,7 @@
+// src/api/axiosInstance.js
 import axios from 'axios';
 
-// Asegúrate de que este sea el puerto de tu backend Django
+// Puerto del backend Django
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082/api/';
 
 const axiosInstance = axios.create({
@@ -10,7 +11,6 @@ const axiosInstance = axios.create({
   },
 });
 
-// --- Adjunta el access token JWT en cada petición ---
 // El backend usa rest_framework_simplejwt.authentication.JWTAuthentication,
 // que espera "Authorization: Bearer <access>" (NO "Token <token>").
 axiosInstance.interceptors.request.use(
@@ -25,8 +25,7 @@ axiosInstance.interceptors.request.use(
 );
 
 // --- Refresh automático cuando el access token expira (401) ---
-// ACCESS_TOKEN_LIFETIME es de 30 minutos (ver SIMPLE_JWT en settings/base.py),
-// así que sin esto cualquier sesión activa se "cae" silenciosamente a los 30 min.
+// ACCESS_TOKEN_LIFETIME es de 30 minutos,
 let isRefreshing = false;
 let pendingRequests = [];
 

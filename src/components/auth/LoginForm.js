@@ -8,8 +8,7 @@ import { loginUser } from '../../features/auth/authSlice';
 import { useNavigate, Link } from 'react-router-dom';
 
 /**
- * Formulario de login parametrizado por ámbito. Antes vivía completo
- * dentro de LoginPage.js con el ámbito resuelto vía ?sistema=; ahora cada
+ * Formulario de login parametrizado por ámbito. Cada
  * dominio (formal/formativa) tiene su propia página/ruta y le pasa su
  * propio 'sistema' y 'homeRoute' a este componente compartido.
  */
