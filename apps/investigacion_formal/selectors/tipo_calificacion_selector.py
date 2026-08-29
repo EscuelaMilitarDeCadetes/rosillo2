@@ -20,10 +20,6 @@ class TipoCalificacionSelector:
         return TipoCalificacion.objects.filter(pk=tipo_calificacion_id).exists()
 
     @staticmethod
-    def obtener_por_nombre(tipo_calificacion):
-        return TipoCalificacion.objects.filter(tipo_calificacion__iexact=tipo_calificacion).first()
-
-    @staticmethod
     def existe_nombre(tipo_calificacion, excluir_id=None):
         qs = TipoCalificacion.objects.filter(tipo_calificacion__iexact=tipo_calificacion)
         if excluir_id is not None:
@@ -33,27 +29,6 @@ class TipoCalificacionSelector:
     @staticmethod
     def listar_evaluables():
         return TipoCalificacion.objects.filter(evaluacion=True).order_by('orden_fase')
-
-    @staticmethod
-    def obtener_por_orden(orden_fase):
-        return TipoCalificacion.objects.filter(orden_fase=orden_fase).first()
-
-    @staticmethod
-    def obtener_primera_fase():
-        return TipoCalificacion.objects.order_by('orden_fase').first()
-
-    @staticmethod
-    def obtener_ultima_fase():
-        return TipoCalificacion.objects.order_by('-orden_fase').first()
-
-    @staticmethod
-    def obtener_siguiente_fase(orden_actual):
-        return (
-            TipoCalificacion.objects
-            .filter(orden_fase__gt=orden_actual)
-            .order_by('orden_fase')
-            .first()
-        )
 
     @staticmethod
     def existe_orden(orden_fase, excluir_id=None):

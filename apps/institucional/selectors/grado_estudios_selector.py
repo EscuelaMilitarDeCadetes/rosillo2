@@ -22,10 +22,6 @@ class GradoEstudiosSelector:
         return GradoEstudios.objects.filter(pk=grado_id).first()
 
     @staticmethod
-    def obtener_por_sigla(sigla_grado):
-        return GradoEstudios.objects.filter(sigla_grado__iexact=sigla_grado).first()
-
-    @staticmethod
     def existe_sigla(sigla_grado, excluir_id=None):
         qs = GradoEstudios.objects.filter(sigla_grado__iexact=sigla_grado)
         if excluir_id is not None:

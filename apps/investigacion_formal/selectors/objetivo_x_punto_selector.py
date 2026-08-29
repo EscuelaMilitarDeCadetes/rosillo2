@@ -63,12 +63,3 @@ class ObjetivoXPuntoSelector:
         if excluir_id is not None:
             qs = qs.exclude(pk=excluir_id)
         return qs.exists()
-
-    @staticmethod
-    def listar_historico_por_objetivo(objetivo_id):
-        return (
-            ObjetivoXPunto.objects
-            .select_related('punto_control')
-            .filter(objetivo_id=objetivo_id)
-            .order_by('anio_avance', 'mes_avance')
-        )

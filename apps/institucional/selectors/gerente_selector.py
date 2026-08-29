@@ -55,14 +55,6 @@ class GerenteSelector:
         )
 
     @staticmethod
-    def listar_historico_por_persona(persona_id):
-        return (
-            Gerente.objects
-            .filter(persona_id=persona_id)
-            .order_by('-fecha_ingreso')
-        )
-
-    @staticmethod
     def existe_activo_distinto_de(excluir_id=None):
         """
         Soporta la regla: solo puede existir un Gerente activo a la vez.

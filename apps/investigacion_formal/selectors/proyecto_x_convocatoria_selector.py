@@ -56,14 +56,6 @@ class ProyectoXConvocatoriaSelector:
         )
 
     @staticmethod
-    def obtener_por_proyecto_y_convocatoria(proyecto_id, convocatoria_id):
-        return (
-            ProyectoXConvocatoria.objects
-            .filter(proyecto_id=proyecto_id, convocatoria_id=convocatoria_id)
-            .first()
-        )
-
-    @staticmethod
     def existe_vinculo(proyecto_id, convocatoria_id, excluir_id=None):
         qs = ProyectoXConvocatoria.objects.filter(
             proyecto_id=proyecto_id, convocatoria_id=convocatoria_id
@@ -91,38 +83,6 @@ class ProyectoXConvocatoriaSelector:
         if calificacion is not None:
             qs = qs.filter(calificacion_ultimo_filtro_calificacion=calificacion)
         return qs
-
-    @staticmethod
-    def listar_habilitados_correccion_documento():
-        return (
-            ProyectoXConvocatoria.objects
-            .select_related('convocatoria', 'proyecto')
-            .filter(modificacion_documento_proyecto=True)
-        )
-
-    @staticmethod
-    def listar_filtros_fase_distintos():
-        """Réplica de listarFasesCalificadas / getAllPhases: valores distintos de la fase actual."""
-        return (
-            ProyectoXConvocatoria.objects
-            .exclude(ultimo_filtro_calificacion__isnull=True)
-            .exclude(ultimo_filtro_calificacion='')
-            .order_by('ultimo_filtro_calificacion')
-            .values_list('ultimo_filtro_calificacion', flat=True)
-            .distinct()
-        )
-
-    @staticmethod
-    def listar_filtros_calificacion_distintos():
-        """Réplica de getAllQualificationFilter / listarFiltrosUltimaCalificacion."""
-        return (
-            ProyectoXConvocatoria.objects
-            .exclude(calificacion_ultimo_filtro_calificacion__isnull=True)
-            .exclude(calificacion_ultimo_filtro_calificacion='')
-            .order_by('calificacion_ultimo_filtro_calificacion')
-            .values_list('calificacion_ultimo_filtro_calificacion', flat=True)
-            .distinct()
-        )
 
     @staticmethod
     def listar_por_facultad(facultad_id):

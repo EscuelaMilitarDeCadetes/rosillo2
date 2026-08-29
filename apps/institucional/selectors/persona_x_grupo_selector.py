@@ -29,26 +29,6 @@ class PersonaXGrupoSelector:
         )
 
     @staticmethod
-    def listar_historico():
-        """Todos los registros, incluyendo desvinculados (estado=False)."""
-        return (
-            PersonaXGrupo.objects
-            .select_related('persona', 'rol_grupo', 'facultad', 'grupo')
-            .all()
-        )
-    
-    @staticmethod
-    def listar_activos():
-        return (
-            PersonaXGrupo.objects.select_related(
-                "persona", "persona__grado", "rol_grupo", "grupo", "facultad",
-            )
-            .filter(estado=True)
-            .order_by("persona__apellido", "persona__nombre",
-            )
-        )
-
-    @staticmethod
     def obtener(persona_x_grupo_id):
         return (
             PersonaXGrupo.objects
@@ -92,15 +72,6 @@ class PersonaXGrupoSelector:
             .first()
         )
         return fila.facultad if fila else None
-    
-    @staticmethod
-    def existe_facultad_activa(persona_id):
-
-        return (
-            PersonaXGrupo.objects
-            .filter(persona_id=persona_id, facultad__isnull=False, estado=True)
-            .exists()
-        )
 
     @staticmethod
     def listar_con_grupo(excluir_rol_grupo_id=None):
@@ -153,24 +124,6 @@ class PersonaXGrupoSelector:
             .select_related("rol_grupo", "grupo", "facultad")
             .filter(persona_id=persona_id, estado=True,)
         )
-    
-    @staticmethod
-    def listar_por_facultad(facultad_id):
-        return (
-            PersonaXGrupo.objects
-            .select_related("persona", "rol_grupo", "grupo")
-            .filter(facultad_id=facultad_id, estado=True)
-            .order_by("persona__apellido", "persona__nombre")
-        )
-
-    @staticmethod
-    def listar_por_grupo(grupo_id):
-        return (
-            PersonaXGrupo.objects
-            .select_related("persona", "rol_grupo", "facultad")
-            .filter(grupo_id=grupo_id, estado=True)
-            .order_by("persona__apellido", "persona__nombre")
-        )
 
     @staticmethod
     def historial_persona(persona_id):
@@ -179,43 +132,4 @@ class PersonaXGrupoSelector:
             .select_related("rol_grupo", "grupo", "facultad")
             .filter(persona_id=persona_id)
             .order_by("-vinculacion")
-        )
-
-    @staticmethod
-    def obtener_vinculacion_activa(persona_id):
-        return (
-            PersonaXGrupo.objects
-            .filter(persona_id=persona_id, estado=True)
-        )
-
-    @staticmethod
-    def existe_vinculacion_activa(persona_id):
-        return (
-            PersonaXGrupo.objects
-            .filter(persona_id=persona_id, estado=True)
-            .exists()
-        )
-
-    @staticmethod
-    def obtener_por_persona_grupo(persona_id, grupo_id):
-        return (
-            PersonaXGrupo.objects
-            .filter(persona_id=persona_id, grupo_id=grupo_id, estado=True)
-            .first()
-        )
-
-    @staticmethod
-    def obtener_por_persona_facultad(persona_id, facultad_id):
-        return (
-            PersonaXGrupo.objects
-            .filter(persona_id=persona_id, facultad_id=facultad_id, estado=True)
-            .first()
-        )
-
-    @staticmethod
-    def obtener_por_persona_rol(persona_id, rol_grupo_id):
-        return (
-            PersonaXGrupo.objects
-            .filter(persona_id=persona_id, rol_grupo_id=rol_grupo_id, estado=True)
-            .first()
         )

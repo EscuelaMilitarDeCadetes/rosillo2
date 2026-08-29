@@ -13,10 +13,6 @@ class PuntoControlService:
         return PuntoControlSelector.listar()
 
     @staticmethod
-    def listar_historico():
-        return PuntoControlSelector.listar_historico()
-
-    @staticmethod
     def obtener(punto_control_id):
         return PuntoControlSelector.obtener(punto_control_id)
 
@@ -33,35 +29,6 @@ class PuntoControlService:
         HistorialService.registrar(
             ejecutor,
             f"Se creó el punto de control '{punto.control}' (id={punto.pk}).",
-            objeto=punto,
-        )
-        return punto
-
-    @staticmethod
-    @transaction.atomic
-    def actualizar(punto_control_id, control, peso, ejecutor):
-        punto = PuntoControlSelector.obtener(punto_control_id)
-        PuntoControlValidator.validar_actualizacion(punto_control_id, control, peso)
-        punto.control = control.strip()
-        punto.peso = peso
-        punto.save(update_fields=['control', 'peso'])
-        HistorialService.registrar(
-            ejecutor,
-            f"Se actualizó el punto de control '{punto.control}' (id={punto.pk}).",
-            objeto=punto,
-        )
-        return punto
-
-    @staticmethod
-    @transaction.atomic
-    def eliminar(punto_control_id, ejecutor):
-        punto = PuntoControlSelector.obtener(punto_control_id)
-        PuntoControlValidator.validar_eliminacion(punto)
-        punto.estado = False
-        punto.save(update_fields=['estado'])
-        HistorialService.registrar(
-            ejecutor,
-            f"Se desactivó el punto de control '{punto.control}' (id={punto.pk}).",
             objeto=punto,
         )
         return punto

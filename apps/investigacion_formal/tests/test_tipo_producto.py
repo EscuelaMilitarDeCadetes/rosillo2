@@ -40,13 +40,3 @@ class TipoProductoServiceTests(InvestigacionFormalFixturesMixin, TestCase):
         )
         self.assertEqual(actualizado.tipo_producto, 'Nombre Corregido')
         self.assertFalse(actualizado.aplica)
-
-    def test_listar_aplicables(self):
-        TipoProductoService.crear(
-            tipo_producto='Tipo Aplicable', aplica=True, ejecutor=self.ejecutor,
-        )
-        TipoProductoService.crear(
-            tipo_producto='Tipo No Aplicable', aplica=False, ejecutor=self.ejecutor,
-        )
-        resultado = TipoProductoService.listar_aplicables()
-        self.assertEqual(resultado.count(), 1)

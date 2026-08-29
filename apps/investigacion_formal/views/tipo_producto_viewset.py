@@ -20,7 +20,7 @@ class TipoProductoViewSet(viewsets.ViewSet):
     def get_permissions(self):
         if self.action in ["create", "update"]:
             return [EsSoporte(), TieneAmbitoFormal()]
-        else:  # list, retrieve, aplicables, export_excel, export_pdf
+        else:  # list, retrieve, export_excel, export_pdf
             return [combinar(ROLES_LECTURA_CATALOGOS), TieneAmbitoFormal()]
 
     def list(self, request):
@@ -50,11 +50,6 @@ class TipoProductoViewSet(viewsets.ViewSet):
             ejecutor=request.user,
         )
         return Response(self.serializer_class(tipo).data)
-
-    @action(detail=False, methods=["get"], url_path="aplicables")
-    def aplicables(self, request):
-        tipos = TipoProductoService.listar_aplicables()
-        return Response(self.serializer_class(tipos, many=True).data)
     
     @action(detail=False, methods=["get"], url_path="export/excel")
     def export_excel(self, request):

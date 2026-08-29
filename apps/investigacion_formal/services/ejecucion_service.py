@@ -14,10 +14,6 @@ class EjecucionService:
         return EjecucionSelector.listar()
 
     @staticmethod
-    def listar_historico():
-        return EjecucionSelector.listar_historico()
-
-    @staticmethod
     def obtener(ejecucion_id):
         return EjecucionSelector.obtener(ejecucion_id)
 

@@ -21,10 +21,6 @@ class RolGrupoSelector:
         return RolGrupo.objects.filter(pk=rol_grupo_id).first()
 
     @staticmethod
-    def obtener_por_cargo(cargo):
-        return RolGrupo.objects.filter(cargo__iexact=cargo).first()
-
-    @staticmethod
     def existe_cargo(cargo, excluir_id=None):
         qs = RolGrupo.objects.filter(cargo__iexact=cargo)
         if excluir_id is not None:

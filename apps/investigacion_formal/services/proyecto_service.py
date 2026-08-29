@@ -31,18 +31,6 @@ class ProyectoService:
         return ProyectoSelector.obtener(proyecto_id)
 
     @staticmethod
-    def listar_por_usuario(usuario_id):
-        return ProyectoSelector.listar_por_usuario(usuario_id)
-
-    @staticmethod
-    def listar_por_facultad(facultad_id):
-        return ProyectoSelector.listar_por_facultad(facultad_id)
-
-    @staticmethod
-    def listar_por_grupo(grupo_id):
-        return ProyectoSelector.listar_por_grupo(grupo_id)
-
-    @staticmethod
     def listar_por_estado_aprobado(estado_aprobado):
         return ProyectoSelector.listar_por_estado_aprobado(estado_aprobado)
 

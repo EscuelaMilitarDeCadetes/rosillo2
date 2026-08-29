@@ -8,10 +8,6 @@ class PuntoControlSelector:
         return PuntoControl.objects.filter(estado=True).order_by('control')
 
     @staticmethod
-    def listar_historico():
-        return PuntoControl.objects.all().order_by('control')
-
-    @staticmethod
     def obtener(punto_control_id):
         return PuntoControl.objects.get(pk=punto_control_id)
 

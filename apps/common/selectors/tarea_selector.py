@@ -58,12 +58,3 @@ class TareaSelector:
                 fecha_limite__lte=hoy + timedelta(days=dias),
             )
         )
-
-    @staticmethod
-    def listar_pendientes_con_fecha():
-        return (
-            Tarea.objects
-            .select_related('asignado_a')
-            .filter(completada=False, fecha_limite__isnull=False)
-            .order_by('fecha_limite')
-        )

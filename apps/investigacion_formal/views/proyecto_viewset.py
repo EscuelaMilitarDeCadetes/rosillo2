@@ -113,21 +113,6 @@ class ProyectoViewSet(viewsets.ViewSet):
         proyecto = ProyectoService.registrar_acta_cierre(pk, ejecutor=request.user)
         return Response(self.serializer_class(proyecto).data)
 
-    @action(detail=False, methods=["get"], url_path="por-usuario/(?P<usuario_id>[^/.]+)")
-    def por_usuario(self, request, usuario_id=None):
-        proyectos = ProyectoService.listar_por_usuario(usuario_id)
-        return Response(self.serializer_class(proyectos, many=True).data)
-
-    @action(detail=False, methods=["get"], url_path="por-facultad/(?P<facultad_id>[^/.]+)")
-    def por_facultad(self, request, facultad_id=None):
-        proyectos = ProyectoService.listar_por_facultad(facultad_id)
-        return Response(self.serializer_class(proyectos, many=True).data)
-
-    @action(detail=False, methods=["get"], url_path="por-grupo/(?P<grupo_id>[^/.]+)")
-    def por_grupo(self, request, grupo_id=None):
-        proyectos = ProyectoService.listar_por_grupo(grupo_id)
-        return Response(self.serializer_class(proyectos, many=True).data)
-
     @action(detail=False, methods=["get"], url_path="por-estado-aprobado")
     def por_estado_aprobado(self, request):
         estado_aprobado = request.query_params.get("estado_aprobado")

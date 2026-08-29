@@ -7,10 +7,6 @@ class PlantillaDocumentoSelector:
         return PlantillaDocumento.objects.select_related('tipo_documento').filter(estado=True)
 
     @staticmethod
-    def listar_historico():
-        return PlantillaDocumento.objects.select_related('tipo_documento').all()
-
-    @staticmethod
     def obtener(plantilla_id):
         return PlantillaDocumento.objects.select_related('tipo_documento').get(pk=plantilla_id)
 

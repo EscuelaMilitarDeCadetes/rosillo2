@@ -16,9 +16,6 @@ class Proyecto(models.Model):
     fecha_fin = models.DateField(null=True, blank=True)
     codigo = models.CharField(max_length=50)
     gruplac = models.BooleanField(default=False)
-    
-    class Meta:
-        pass
 
     def __str__(self):
         return f'{self.codigo} {self.titulo}'

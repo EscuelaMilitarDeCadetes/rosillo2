@@ -41,14 +41,6 @@ class GrupoInvestigacionSelector:
         return GrupoInvestigacion.objects.filter(pk=grupo_id).first()
 
     @staticmethod
-    def obtener_por_sigla(sigla_grupo):
-        return GrupoInvestigacion.objects.filter(sigla_grupo__iexact=sigla_grupo).first()
-    
-    @staticmethod
-    def obtener_por_clasificacion(clasificacion_grupo):
-        return GrupoInvestigacion.objects.filter(clasificacion_grupo__iexact=clasificacion_grupo).first()
-
-    @staticmethod
     def existe_nombre(nombre_grupo, excluir_id=None):
         qs = GrupoInvestigacion.objects.filter(nombre_grupo__iexact=nombre_grupo)
         if excluir_id is not None:
@@ -58,13 +50,6 @@ class GrupoInvestigacionSelector:
     @staticmethod
     def existe_sigla(sigla_grupo, excluir_id=None):
         qs = GrupoInvestigacion.objects.filter(sigla_grupo__iexact=sigla_grupo)
-        if excluir_id is not None:
-            qs = qs.exclude(pk=excluir_id)
-        return qs.exists()
-
-    @staticmethod
-    def existe_clasificacion(clasificacion_grupo, excluir_id=None):
-        qs = GrupoInvestigacion.objects.filter(clasificacion_grupo__iexact=clasificacion_grupo)
         if excluir_id is not None:
             qs = qs.exclude(pk=excluir_id)
         return qs.exists()

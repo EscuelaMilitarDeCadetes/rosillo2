@@ -17,10 +17,6 @@ class TipoProductoService:
         return TipoProductoSelector.obtener(tipo_producto_id)
 
     @staticmethod
-    def listar_aplicables():
-        return TipoProductoSelector.listar_aplicables()
-
-    @staticmethod
     @transaction.atomic
     def crear(tipo_producto, aplica, ejecutor):
         TipoProductoValidator.validar_creacion(tipo_producto, aplica)

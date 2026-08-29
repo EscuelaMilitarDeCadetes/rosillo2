@@ -20,10 +20,6 @@ class TipoRubroSelector:
         return TipoRubro.objects.filter(pk=tipo_rubro_id).exists()
 
     @staticmethod
-    def obtener_por_nombre(nombre_rubro):
-        return TipoRubro.objects.filter(nombre_rubro__iexact=nombre_rubro).first()
-
-    @staticmethod
     def existe_nombre(nombre_rubro, excluir_id=None):
         qs = TipoRubro.objects.filter(nombre_rubro__iexact=nombre_rubro)
         if excluir_id is not None:

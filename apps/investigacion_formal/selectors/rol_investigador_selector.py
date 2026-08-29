@@ -20,12 +20,6 @@ class RolInvestigadorSelector:
         return RolInvestigador.objects.filter(pk=rol_investigador_id).exists()
 
     @staticmethod
-    def obtener_por_nombre(nombre_rol_investigador):
-        return RolInvestigador.objects.filter(
-            nombre_rol_investigador__iexact=nombre_rol_investigador
-        ).first()
-
-    @staticmethod
     def existe_nombre(nombre_rol_investigador, excluir_id=None):
         qs = RolInvestigador.objects.filter(
             nombre_rol_investigador__iexact=nombre_rol_investigador

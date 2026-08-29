@@ -24,19 +24,6 @@ class MontoSelector:
         return Monto.objects.select_related('proyecto').filter(proyecto_id=proyecto_id).first()
 
     @staticmethod
-    def listar_por_proyecto(proyecto_id):
-        return Monto.objects.filter(proyecto_id=proyecto_id)
-
-    @staticmethod
-    def obtener_por_ejecucion(ejecucion_id):
-        return (
-            Monto.objects
-            .select_related('proyecto')
-            .filter(ejecucion__pk=ejecucion_id)
-            .first()
-        )
-
-    @staticmethod
     def listar_aprobados_proyectos_calificados(interno=True):
         return (
             Monto.objects

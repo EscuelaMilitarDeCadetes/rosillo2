@@ -29,33 +29,6 @@ class PuntoControlServiceTests(InvestigacionFormalFixturesMixin, TestCase):
                 control='Punto Inválido', peso=-10, ejecutor=self.ejecutor,
             )
 
-    def test_actualizar_punto_control_exitoso(self):
-        punto = PuntoControlService.crear(
-            control='Punto Original', peso=10, ejecutor=self.ejecutor,
-        )
-        actualizado = PuntoControlService.actualizar(
-            punto_control_id=punto.pk, control='Punto Corregido', peso=20,
-            ejecutor=self.ejecutor,
-        )
-        self.assertEqual(actualizado.control, 'Punto Corregido')
-        self.assertEqual(actualizado.peso, 20)
-
-    def test_eliminar_punto_control_soft_delete(self):
-        punto = PuntoControlService.crear(
-            control='Punto a Desactivar', peso=10, ejecutor=self.ejecutor,
-        )
-        PuntoControlService.eliminar(punto.pk, ejecutor=self.ejecutor)
-        punto.refresh_from_db()
-        self.assertFalse(punto.estado)
-
-    def test_eliminar_punto_control_ya_desactivado_falla(self):
-        punto = PuntoControlService.crear(
-            control='Punto Doble Baja', peso=10, ejecutor=self.ejecutor,
-        )
-        PuntoControlService.eliminar(punto.pk, ejecutor=self.ejecutor)
-        with self.assertRaises(ValidationError):
-            PuntoControlService.eliminar(punto.pk, ejecutor=self.ejecutor)
-
     def test_listar_puntos_control(self):
         PuntoControlService.crear(control='Punto 1', peso=10, ejecutor=self.ejecutor)
         PuntoControlService.crear(control='Punto 2', peso=20, ejecutor=self.ejecutor)

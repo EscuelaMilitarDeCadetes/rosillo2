@@ -17,10 +17,6 @@ class InvestigadorXProyectoService:
         return InvestigadorXProyectoSelector.listar()
 
     @staticmethod
-    def listar_historico():
-        return InvestigadorXProyectoSelector.listar_historico()
-
-    @staticmethod
     def obtener(investigador_x_proyecto_id):
         return InvestigadorXProyectoSelector.obtener(investigador_x_proyecto_id)
 

@@ -41,10 +41,6 @@ class DocumentoFirmaSelector:
         return qs.order_by("-version").first()
 
     @staticmethod
-    def listar_por_estado(estado):
-        return DocumentoFirma.objects.select_related('tipo_documento').filter(estado=estado)
-
-    @staticmethod
     def listar_habilitados_para_firma():
         return (
             DocumentoFirma.objects

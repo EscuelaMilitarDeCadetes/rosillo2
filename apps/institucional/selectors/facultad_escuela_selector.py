@@ -39,10 +39,6 @@ class FacultadEscuelaSelector:
         return FacultadEscuela.objects.filter(pk=facultad_id).first()
 
     @staticmethod
-    def obtener_por_abreviatura(abreviatura):
-        return FacultadEscuela.objects.filter(abreviatura__iexact=abreviatura).first()
-
-    @staticmethod
     def existe_nombre(nombre_facultad, excluir_id=None):
         qs = FacultadEscuela.objects.filter(nombre_facultad__iexact=nombre_facultad)
         if excluir_id is not None:

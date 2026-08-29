@@ -20,10 +20,6 @@ class EntidadExternaSelector:
         return EntidadExterna.objects.filter(pk=entidad_id).exists()
 
     @staticmethod
-    def obtener_por_nombre(nombre):
-        return EntidadExterna.objects.filter(nombre__iexact=nombre).first()
-
-    @staticmethod
     def listar_por_tipo_relacion(tipo_relacion):
         return (
             EntidadExterna.objects

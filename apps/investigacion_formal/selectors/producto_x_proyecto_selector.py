@@ -33,14 +33,6 @@ class ProductoXProyectoSelector:
         return ProductoXProyecto.objects.filter(pk=producto_x_proyecto_id).exists()
 
     @staticmethod
-    def listar_por_producto_x_grupo(producto_x_grupo_id):
-        return (
-            ProductoXProyecto.objects
-            .select_related('proyecto', 'tipo_documento')
-            .filter(producto_x_grupo_id=producto_x_grupo_id)
-        )
-
-    @staticmethod
     def listar_por_proyecto(proyecto_id, solo_activos=True):
         """Equivalente a findByTituloProyectoFk / getDocumentosXProductosXProyecto."""
         qs = (
@@ -51,16 +43,6 @@ class ProductoXProyectoSelector:
         if solo_activos:
             qs = qs.filter(activo=True)
         return qs
-
-    @staticmethod
-    def obtener_por_proyecto_y_producto(proyecto_id, producto_x_grupo_id):
-        """Equivalente a getByProyectoXProducto(idProy, idProd)."""
-        return (
-            ProductoXProyecto.objects
-            .select_related('tipo_documento')
-            .filter(proyecto_id=proyecto_id, producto_x_grupo_id=producto_x_grupo_id)
-            .first()
-        )
 
     @staticmethod
     def listar_pendientes_por_proyecto(proyecto_id):
@@ -77,14 +59,6 @@ class ProductoXProyectoSelector:
             ProductoXProyecto.objects
             .select_related('producto_x_grupo', 'tipo_documento')
             .filter(proyecto_id=proyecto_id, entregado=True, activo=True)
-        )
-
-    @staticmethod
-    def listar_gruplac_por_proyecto(proyecto_id):
-        return (
-            ProductoXProyecto.objects
-            .select_related('producto_x_grupo')
-            .filter(proyecto_id=proyecto_id, gruplac=True, activo=True)
         )
 
     @staticmethod

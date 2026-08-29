@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from apps.investigacion_formal.serializers.punto_control_serializer import PuntoControlSerializer
 from apps.investigacion_formal.services.punto_control_service import PuntoControlService
 from apps.investigacion_formal.permissions import (
-    ROLES_LECTURA_INVESTIGACION_FORMAL, ROLES_ESCRITURA_GESTION, ROLES_CREACION_OPERATIVA, combinar,
+    ROLES_LECTURA_INVESTIGACION_FORMAL, ROLES_CREACION_OPERATIVA, combinar,
 )
 
 
@@ -17,8 +17,6 @@ class PuntoControlViewSet(viewsets.ViewSet):
     def get_permissions(self):
         if self.action == "create":
             return [combinar(ROLES_CREACION_OPERATIVA), TieneAmbitoFormal()]
-        elif self.action in ["update", "destroy"]:
-            return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormal()]
         else:  # list, retrieve
             return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL), TieneAmbitoFormal()]
 
@@ -40,16 +38,3 @@ class PuntoControlViewSet(viewsets.ViewSet):
             ejecutor=request.user,
         )
         return Response(self.serializer_class(punto).data, status=status.HTTP_201_CREATED)
-
-    def update(self, request, pk=None):
-        punto = PuntoControlService.actualizar(
-            punto_control_id=pk,
-            control=request.data.get("control"),
-            peso=request.data.get("peso"),
-            ejecutor=request.user,
-        )
-        return Response(self.serializer_class(punto).data)
-
-    def destroy(self, request, pk=None):
-        PuntoControlService.eliminar(pk, ejecutor=request.user)
-        return Response(status=status.HTTP_204_NO_CONTENT)

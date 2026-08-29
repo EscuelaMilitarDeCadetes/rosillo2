@@ -20,14 +20,6 @@ class ProductoMincienciasSelector:
         return ProductoMinciencias.objects.filter(pk=producto_minciencias_id).exists()
 
     @staticmethod
-    def obtener_por_nombre(nombre_producto):
-        return ProductoMinciencias.objects.filter(nombre_producto__iexact=nombre_producto).first()
-
-    @staticmethod
-    def obtener_por_nomenclatura(nomenclatura):
-        return ProductoMinciencias.objects.filter(nomenclatura__iexact=nomenclatura).first()
-
-    @staticmethod
     def existe_nombre(nombre_producto, excluir_id=None):
         qs = ProductoMinciencias.objects.filter(nombre_producto__iexact=nombre_producto)
         if excluir_id is not None:

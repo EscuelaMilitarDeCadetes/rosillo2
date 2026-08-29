@@ -20,12 +20,6 @@ class GrupoMincienciasSelector:
         return GrupoMinciencias.objects.filter(pk=grupo_minciencias_id).exists()
 
     @staticmethod
-    def obtener_por_nombre(nombre_grupo_minciencias):
-        return GrupoMinciencias.objects.filter(
-            nombre_grupo_minciencias__iexact=nombre_grupo_minciencias
-        ).first()
-
-    @staticmethod
     def existe_nombre(nombre_grupo_minciencias, excluir_id=None):
         qs = GrupoMinciencias.objects.filter(
             nombre_grupo_minciencias__iexact=nombre_grupo_minciencias

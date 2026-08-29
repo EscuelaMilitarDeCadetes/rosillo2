@@ -96,22 +96,6 @@ class GerenteService:
             objeto=gerente,
         )
         return gerente
-    
-    @staticmethod
-    @transaction.atomic
-    def reactivar(gerente_id, ejecutor):
-        gerente = GerenteSelector.obtener(gerente_id)
-        GerenteValidator.validar_actualizacion(gerente, gerente.fecha_ingreso, None)
-        gerente.fecha_salida = None
-        gerente.estado = True
-        gerente.save(update_fields=["fecha_salida", "estado"])
-        HistorialService.registrar(
-            ejecutor,
-            f"Se reactivó la gerencia de '{gerente.persona}' "
-            f"(id={gerente.pk}).",
-            objeto=gerente,
-        )
-        return gerente
 
     @staticmethod
     @transaction.atomic

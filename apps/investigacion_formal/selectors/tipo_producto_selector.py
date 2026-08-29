@@ -20,16 +20,8 @@ class TipoProductoSelector:
         return TipoProducto.objects.filter(pk=tipo_producto_id).exists()
 
     @staticmethod
-    def obtener_por_nombre(tipo_producto):
-        return TipoProducto.objects.filter(tipo_producto__iexact=tipo_producto).first()
-
-    @staticmethod
     def existe_nombre(tipo_producto, excluir_id=None):
         qs = TipoProducto.objects.filter(tipo_producto__iexact=tipo_producto)
         if excluir_id is not None:
             qs = qs.exclude(pk=excluir_id)
         return qs.exists()
-
-    @staticmethod
-    def listar_aplicables():
-        return TipoProducto.objects.filter(aplica=True).order_by('tipo_producto')

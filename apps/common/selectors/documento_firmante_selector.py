@@ -46,14 +46,6 @@ class DocumentoFirmanteSelector:
         )
 
     @staticmethod
-    def obtener_por_documento_y_usuario(documento_firma_id, usuario_id):
-        return (
-            DocumentoFirmante.objects
-            .filter(documento_firma_id=documento_firma_id, usuario_id=usuario_id)
-            .first()
-        )
-
-    @staticmethod
     def obtener_siguiente_turno(documento_firma_id):
         return (
             DocumentoFirmante.objects
@@ -61,12 +53,6 @@ class DocumentoFirmanteSelector:
             .order_by('orden')
             .first()
         )
-
-    @staticmethod
-    def existe_rechazo(documento_firma_id):
-        return DocumentoFirmante.objects.filter(
-            documento_firma_id=documento_firma_id, estado='RECHAZADO'
-        ).exists()
 
     @staticmethod
     def todos_firmaron(documento_firma_id):

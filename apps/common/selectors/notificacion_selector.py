@@ -29,10 +29,6 @@ class NotificacionSelector:
         return qs.order_by('-fecha_creacion')
 
     @staticmethod
-    def listar_por_tipo(tipo):
-        return Notificacion.objects.select_related('usuario_destino').filter(tipo=tipo)
-
-    @staticmethod
     def existe_recordatorio_hoy(usuario_id, url_relacionada, tipo='alerta'):
         """Evita que el job de recordatorios envíe el mismo aviso más de una
         vez el mismo día para la misma tarea/documento."""

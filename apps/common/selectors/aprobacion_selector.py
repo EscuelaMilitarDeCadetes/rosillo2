@@ -49,15 +49,6 @@ class AprobacionSelector:
         )
 
     @staticmethod
-    def listar_por_revisor(usuario_revisor_id):
-        return (
-            Aprobacion.objects
-            .select_related('tipo_documento')
-            .filter(usuario_revisor_id=usuario_revisor_id)
-            .order_by('-fecha_revision')
-        )
-
-    @staticmethod
     def existe_aprobacion(usuario_revisor_id, tipo_documento_id, id_documento, excluir_id=None):
         qs = Aprobacion.objects.filter(
             usuario_revisor_id=usuario_revisor_id,

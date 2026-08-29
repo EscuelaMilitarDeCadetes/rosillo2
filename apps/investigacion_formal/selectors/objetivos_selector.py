@@ -20,10 +20,6 @@ class ObjetivosSelector:
         return Objetivos.objects.filter(pk=objetivo_id).exists()
 
     @staticmethod
-    def obtener_por_texto(objetivo):
-        return Objetivos.objects.filter(objetivo__iexact=objetivo).first()
-
-    @staticmethod
     def existe_texto(objetivo, excluir_id=None):
         qs = Objetivos.objects.filter(objetivo__iexact=objetivo)
         if excluir_id is not None:
@@ -47,12 +43,6 @@ class ObjetivosSelector:
         return Objetivos.objects.filter(
             proyecto_id=proyecto_id, clase='ESPECIFICO', estado=True
         )
-
-    @staticmethod
-    def existe_objetivo_especifico(proyecto_id):
-        return Objetivos.objects.filter(
-            proyecto_id=proyecto_id, clase='ESPECIFICO', estado=True
-        ).exists()
 
     @staticmethod
     def listar_por_proyecto(proyecto_id, solo_activos=True):

@@ -45,14 +45,6 @@ class PersonaSelector:
         return Persona.objects.filter(pk=persona_id).exists()
 
     @staticmethod
-    def obtener_por_documento(documento):
-        return Persona.objects.select_related('grado').filter(documento=documento).first()
-
-    @staticmethod
-    def obtener_por_correo(correo):
-        return Persona.objects.select_related('grado').filter(correo__iexact=correo).first()
-
-    @staticmethod
     def existe_documento(documento, excluir_id=None):
         qs = Persona.objects.filter(documento=documento)
         if excluir_id is not None:
