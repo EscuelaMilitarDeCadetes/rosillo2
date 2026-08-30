@@ -35,14 +35,6 @@ class GerenteValidator:
             GerenteValidator._validar_no_hay_otro_activo(gerente)
 
     @staticmethod
-    def validar_eliminacion(gerente):
-        """
-        Gerente no tiene relaciones dependientes en cascada hacia otras
-        tablas del módulo, así que no se requiere validación adicional.
-        """
-        pass
-
-    @staticmethod
     def _validar_persona_obligatoria(persona_id):
         if not persona_id:
             raise ValidationError(
