@@ -61,13 +61,6 @@ class NotificacionServiceTests(CommonFixturesMixin, TestCase):
         resultados = NotificacionService.listar_por_usuario(self.otro_usuario.pk, solo_no_leidas=True)
         self.assertEqual(resultados.count(), 1)
 
-    def test_eliminar_notificacion(self):
-        notificacion = NotificacionService.crear(
-            usuario_destino_id=self.otro_usuario.pk, mensaje='Mensaje'
-        )
-        resultado = NotificacionService.eliminar(notificacion.pk, ejecutor=self.ejecutor)
-        self.assertTrue(resultado)
-
     # --- Job de recordatorios ---
 
     def test_enviar_recordatorios_tareas_vencida_genera_notificacion(self):

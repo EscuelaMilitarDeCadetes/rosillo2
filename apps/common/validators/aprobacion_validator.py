@@ -15,10 +15,6 @@ class AprobacionValidator:
         AprobacionValidator._validar_unicidad(usuario_revisor_id, tipo_documento_id, id_documento)
 
     @staticmethod
-    def validar_eliminacion(aprobacion):
-        pass
-
-    @staticmethod
     def _validar_usuario_revisor(usuario_revisor_id):
         if not usuario_revisor_id:
             raise ValidationError({"usuario_revisor": "El usuario revisor es obligatorio."})

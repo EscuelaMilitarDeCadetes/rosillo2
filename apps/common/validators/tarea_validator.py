@@ -9,18 +9,9 @@ class TareaValidator:
         TareaValidator._validar_objeto_relacionado(content_type_id, object_id)
 
     @staticmethod
-    def validar_actualizacion(tarea_id, asignado_a_id, descripcion):
-        TareaValidator._validar_asignado(asignado_a_id)
-        TareaValidator._validar_descripcion(descripcion)
-
-    @staticmethod
     def validar_completar(tarea):
         if tarea.completada:
             raise ValidationError("Esta tarea ya fue marcada como completada.")
-
-    @staticmethod
-    def validar_eliminacion(tarea):
-        pass
 
     @staticmethod
     def _validar_asignado(asignado_a_id):

@@ -72,16 +72,6 @@ class TareaServiceTests(CommonFixturesMixin, TestCase):
         with self.assertRaises(ValidationError):
             TareaService.completar(tarea.pk, ejecutor=self.otro_usuario)
 
-    def test_eliminar_tarea(self):
-        tarea = TareaService.crear(
-            asignado_a_id=self.otro_usuario.pk,
-            descripcion='Revisar informe mensual',
-            objeto=self.objeto_generico,
-            ejecutor=self.ejecutor,
-        )
-        resultado = TareaService.eliminar(tarea.pk, ejecutor=self.ejecutor)
-        self.assertTrue(resultado)
-
     def test_listar_por_usuario_solo_pendientes(self):
         t1 = TareaService.crear(
             asignado_a_id=self.otro_usuario.pk,

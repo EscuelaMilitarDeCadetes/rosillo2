@@ -13,17 +13,6 @@ class NotificacionValidator:
         NotificacionValidator._validar_url(url_relacionada)
 
     @staticmethod
-    def validar_actualizacion(notificacion_id, usuario_destino_id, mensaje, tipo=None, url_relacionada=None):
-        NotificacionValidator._validar_usuario_destino(usuario_destino_id)
-        NotificacionValidator._validar_mensaje(mensaje)
-        NotificacionValidator._validar_tipo(tipo)
-        NotificacionValidator._validar_url(url_relacionada)
-
-    @staticmethod
-    def validar_eliminacion(notificacion):
-        pass
-
-    @staticmethod
     def _validar_usuario_destino(usuario_destino_id):
         if not usuario_destino_id:
             raise ValidationError({"usuario_destino": "El usuario destinatario es obligatorio."})

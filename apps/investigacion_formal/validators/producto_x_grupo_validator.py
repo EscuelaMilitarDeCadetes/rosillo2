@@ -29,10 +29,6 @@ class ProductoXGrupoValidator:
         )
 
     @staticmethod
-    def validar_eliminacion(producto_x_grupo):
-        pass
-
-    @staticmethod
     def _validar_producto_minciencias(producto_minciencias_id):
         if not producto_minciencias_id:
             raise ValidationError({"producto_minciencias": "El producto Minciencias es obligatorio."})

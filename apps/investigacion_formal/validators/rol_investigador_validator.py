@@ -20,10 +20,6 @@ class RolInvestigadorValidator:
         )
 
     @staticmethod
-    def validar_eliminacion(rol_investigador):
-        pass
-
-    @staticmethod
     def _validar_nombre(nombre_rol_investigador):
         if not nombre_rol_investigador or not nombre_rol_investigador.strip():
             raise ValidationError(

@@ -17,10 +17,6 @@ class PlantillaDocumentoValidator:
         PlantillaDocumentoValidator._validar_unicidad(tipo_documento_id, excluir_id=plantilla_id)
 
     @staticmethod
-    def validar_eliminacion(plantilla):
-        pass
-
-    @staticmethod
     def _validar_tipo_documento(tipo_documento_id):
         if not tipo_documento_id:
             raise ValidationError({"tipo_documento": "El tipo de documento es obligatorio."})

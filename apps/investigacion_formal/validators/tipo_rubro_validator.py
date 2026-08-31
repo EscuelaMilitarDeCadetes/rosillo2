@@ -16,10 +16,6 @@ class TipoRubroValidator:
         TipoRubroValidator._validar_unicidad(nombre_rubro, excluir_id=tipo_rubro_id)
 
     @staticmethod
-    def validar_eliminacion(tipo_rubro):
-        pass
-
-    @staticmethod
     def _validar_nombre(nombre_rubro):
         if not nombre_rubro or not nombre_rubro.strip():
             raise ValidationError({"nombre_rubro": "El nombre del rubro es obligatorio."})

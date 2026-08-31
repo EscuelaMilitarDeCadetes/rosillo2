@@ -18,10 +18,6 @@ class TipoProductoValidator:
         TipoProductoValidator._validar_unicidad(tipo_producto, excluir_id=tipo_producto_id)
 
     @staticmethod
-    def validar_eliminacion(tipo_producto):
-        pass
-
-    @staticmethod
     def _validar_nombre(tipo_producto):
         if not tipo_producto or not tipo_producto.strip():
             raise ValidationError({"tipo_producto": "El nombre del tipo de producto es obligatorio."})

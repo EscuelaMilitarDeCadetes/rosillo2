@@ -17,14 +17,6 @@ class ProyectoXConvocatoriaValidator:
         ProyectoXConvocatoriaValidator._validar_unicidad(convocatoria_id, proyecto_id)
 
     @staticmethod
-    def validar_actualizacion(proyecto_x_convocatoria_id, convocatoria_id, proyecto_id):
-        ProyectoXConvocatoriaValidator._validar_convocatoria(convocatoria_id)
-        ProyectoXConvocatoriaValidator._validar_proyecto(proyecto_id)
-        ProyectoXConvocatoriaValidator._validar_unicidad(
-            convocatoria_id, proyecto_id, excluir_id=proyecto_x_convocatoria_id
-        )
-
-    @staticmethod
     def validar_habilitar_correccion(proyecto_x_convocatoria):
         if proyecto_x_convocatoria.estado_finalizado_calificacion:
             raise ValidationError(

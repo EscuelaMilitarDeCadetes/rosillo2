@@ -12,15 +12,6 @@ class DocumentoFirmanteValidator:
         DocumentoFirmanteValidator._validar_unicidad(documento_firma_id, usuario_id)
 
     @staticmethod
-    def validar_actualizacion(documento_firmante_id, documento_firma_id, usuario_id, orden):
-        DocumentoFirmanteValidator._validar_documento_firma(documento_firma_id)
-        DocumentoFirmanteValidator._validar_usuario(usuario_id)
-        DocumentoFirmanteValidator._validar_orden(orden)
-        DocumentoFirmanteValidator._validar_unicidad(
-            documento_firma_id, usuario_id, excluir_id=documento_firmante_id
-        )
-
-    @staticmethod
     def validar_firma(documento_firmante, codigo_verificacion_ingresado, ejecutor):
         if ejecutor is None or ejecutor.pk != documento_firmante.usuario_id:
             raise ValidationError("Solo el firmante asignado puede registrar esta firma.")

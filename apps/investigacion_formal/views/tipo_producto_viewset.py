@@ -50,22 +50,3 @@ class TipoProductoViewSet(viewsets.ViewSet):
             ejecutor=request.user,
         )
         return Response(self.serializer_class(tipo).data)
-    
-    @action(detail=False, methods=["get"], url_path="export/excel")
-    def export_excel(self, request):
-        tipos = TipoProductoService.listar()
-        buffer = ExportacionService.exportar_excel_tipos_producto(tipos)
-        response = HttpResponse(
-            buffer.read(),
-            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
-        response["Content-Disposition"] = "attachment; filename=tipos_producto.xlsx"
-        return response
-
-    @action(detail=False, methods=["get"], url_path="export/pdf")
-    def export_pdf(self, request):
-        tipos = TipoProductoService.listar()
-        buffer = ExportacionService.exportar_pdf_tipos_producto(tipos)
-        response = HttpResponse(buffer.read(), content_type="application/pdf")
-        response["Content-Disposition"] = "attachment; filename=tipos_producto.pdf"
-        return response

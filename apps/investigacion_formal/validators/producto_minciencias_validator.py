@@ -28,10 +28,6 @@ class ProductoMincienciasValidator:
         )
 
     @staticmethod
-    def validar_eliminacion(producto_minciencias):
-        pass
-
-    @staticmethod
     def _validar_nombre(nombre_producto):
         if not nombre_producto or not nombre_producto.strip():
             raise ValidationError({"nombre_producto": "El nombre del producto es obligatorio."})

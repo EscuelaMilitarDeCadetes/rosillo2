@@ -28,10 +28,6 @@ class TipoCalificacionValidator:
         )
 
     @staticmethod
-    def validar_eliminacion(tipo_calificacion):
-        pass
-
-    @staticmethod
     def _validar_nombre(tipo_calificacion):
         if not tipo_calificacion or not tipo_calificacion.strip():
             raise ValidationError({"tipo_calificacion": "El nombre del tipo de calificación es obligatorio."})
