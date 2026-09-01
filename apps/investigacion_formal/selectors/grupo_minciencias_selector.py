@@ -12,10 +12,6 @@ class GrupoMincienciasSelector:
         return GrupoMinciencias.objects.get(pk=grupo_minciencias_id)
 
     @staticmethod
-    def buscar(grupo_minciencias_id):
-        return GrupoMinciencias.objects.filter(pk=grupo_minciencias_id).first()
-
-    @staticmethod
     def existe(grupo_minciencias_id):
         return GrupoMinciencias.objects.filter(pk=grupo_minciencias_id).exists()
 

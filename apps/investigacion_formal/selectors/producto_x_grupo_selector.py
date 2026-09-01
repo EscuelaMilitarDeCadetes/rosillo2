@@ -20,15 +20,6 @@ class ProductoXGrupoSelector:
         )
 
     @staticmethod
-    def buscar(producto_x_grupo_id):
-        return (
-            ProductoXGrupo.objects
-            .select_related('producto_minciencias', 'grupo_minciencias', 'tipo_producto')
-            .filter(pk=producto_x_grupo_id)
-            .first()
-        )
-
-    @staticmethod
     def existe(producto_x_grupo_id):
         return ProductoXGrupo.objects.filter(pk=producto_x_grupo_id).exists()
 

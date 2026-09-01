@@ -2,6 +2,7 @@ from rest_framework.exceptions import ValidationError
 from apps.investigacion_formal.selectors.investigador_x_proyecto_selector import (
     InvestigadorXProyectoSelector,
 )
+from apps.investigacion_formal.selectors.rol_investigador_selector import RolInvestigadorSelector
 
 
 class InvestigadorXProyectoValidator:
@@ -12,11 +13,6 @@ class InvestigadorXProyectoValidator:
         InvestigadorXProyectoValidator._validar_proyecto(proyecto_id)
         InvestigadorXProyectoValidator._validar_persona_x_grupo(persona_x_grupo_id)
         InvestigadorXProyectoValidator._validar_orcid(orcid)
-        # CORREGIDO (INV-05): antes comprobaba unicidad contra TODOS los
-        # registros (activos e inactivos), lo que impedía reincorporar a un
-        # investigador retirado con el mismo rol. Ahora solo bloquea si hay
-        # un vínculo ACTIVO igual — igual que hacía el Thymeleaf original
-        # (findByXrolInvestigadorFkXpersonaXGrupoFkXproyectoFk usaba estado=true).
         existente = InvestigadorXProyectoSelector.obtener_por_combinacion(
             rol_investigador_id, proyecto_id, persona_x_grupo_id
         )
@@ -42,6 +38,10 @@ class InvestigadorXProyectoValidator:
     def _validar_rol_investigador(rol_investigador_id):
         if not rol_investigador_id:
             raise ValidationError({"rol_investigador": "El rol del investigador es obligatorio."})
+        if not RolInvestigadorSelector.existe(rol_investigador_id):
+            raise ValidationError(
+                {"rol_investigador": f"No existe un RolInvestigador con id={rol_investigador_id}."}
+            )
 
     @staticmethod
     def _validar_proyecto(proyecto_id):

@@ -16,10 +16,6 @@ class TipoDocumentoValidator:
         TipoDocumentoValidator._validar_unicidad_nombre(nombre_documento, excluir_id=tipo_documento_id)
 
     @staticmethod
-    def validar_eliminacion(tipo_documento):
-        pass
-
-    @staticmethod
     def _validar_nombre(nombre_documento):
         if not nombre_documento or not nombre_documento.strip():
             raise ValidationError({"nombre_documento": "El nombre del documento es obligatorio."})

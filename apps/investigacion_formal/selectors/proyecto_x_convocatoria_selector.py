@@ -19,15 +19,6 @@ class ProyectoXConvocatoriaSelector:
         )
 
     @staticmethod
-    def buscar(proyecto_x_convocatoria_id):
-        return (
-            ProyectoXConvocatoria.objects
-            .select_related('convocatoria', 'proyecto')
-            .filter(pk=proyecto_x_convocatoria_id)
-            .first()
-        )
-
-    @staticmethod
     def existe(proyecto_x_convocatoria_id):
         return ProyectoXConvocatoria.objects.filter(pk=proyecto_x_convocatoria_id).exists()
 

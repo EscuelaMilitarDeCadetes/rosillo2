@@ -20,19 +20,6 @@ class InvestigadorXProyectoSelector:
         )
 
     @staticmethod
-    def buscar(investigador_x_proyecto_id):
-        return (
-            InvestigadorXProyecto.objects
-            .select_related('rol_investigador', 'proyecto', 'persona_x_grupo')
-            .filter(pk=investigador_x_proyecto_id)
-            .first()
-        )
-
-    @staticmethod
-    def existe(investigador_x_proyecto_id):
-        return InvestigadorXProyecto.objects.filter(pk=investigador_x_proyecto_id).exists()
-
-    @staticmethod
     def listar_por_proyecto(proyecto_id, solo_activos=True):
         qs = (
             InvestigadorXProyecto.objects

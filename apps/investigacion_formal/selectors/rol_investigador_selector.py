@@ -12,10 +12,6 @@ class RolInvestigadorSelector:
         return RolInvestigador.objects.get(pk=rol_investigador_id)
 
     @staticmethod
-    def buscar(rol_investigador_id):
-        return RolInvestigador.objects.filter(pk=rol_investigador_id).first()
-
-    @staticmethod
     def existe(rol_investigador_id):
         return RolInvestigador.objects.filter(pk=rol_investigador_id).exists()
 

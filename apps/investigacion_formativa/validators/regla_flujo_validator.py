@@ -1,3 +1,4 @@
+# apps/investigacion_formativa/validators/regla_flujo_validator.py
 from rest_framework.exceptions import ValidationError
 
 from apps.investigacion_formativa.selectors.regla_flujo_selector import ReglaFlujoSelector
@@ -56,11 +57,9 @@ class ReglaFlujoValidator:
 
     @staticmethod
     def validar_desactivacion(regla):
-        if not regla.activa:
-            raise ValidationError("Esta regla ya se encuentra desactivada.")
-
-    @staticmethod
-    def validar_eliminacion(regla):
+        """
+        Única validación de baja para ReglaFlujo. 
+        """
         if not regla.activa:
             raise ValidationError("Esta regla ya se encuentra desactivada.")
 

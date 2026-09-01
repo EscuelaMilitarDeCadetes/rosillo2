@@ -29,15 +29,6 @@ class FacultadXGrupoSelector:
         return FacultadXGrupo.objects.select_related('facultad', 'grupo').get(pk=facultad_x_grupo_id)
 
     @staticmethod
-    def buscar(facultad_x_grupo_id):
-        return (
-            FacultadXGrupo.objects
-            .select_related('facultad', 'grupo')
-            .filter(pk=facultad_x_grupo_id)
-            .first()
-        )
-
-    @staticmethod
     def obtener_grupo_de_facultad(facultad_id):
         """
         Núcleo de la validación dura de PersonaXGrupo: dado el id de una

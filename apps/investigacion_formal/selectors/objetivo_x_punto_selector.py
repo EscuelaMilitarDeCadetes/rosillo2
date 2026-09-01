@@ -16,19 +16,6 @@ class ObjetivoXPuntoSelector:
         )
 
     @staticmethod
-    def buscar(objetivo_x_punto_id):
-        return (
-            ObjetivoXPunto.objects
-            .select_related('objetivo', 'punto_control')
-            .filter(pk=objetivo_x_punto_id)
-            .first()
-        )
-
-    @staticmethod
-    def existe(objetivo_x_punto_id):
-        return ObjetivoXPunto.objects.filter(pk=objetivo_x_punto_id).exists()
-
-    @staticmethod
     def listar_por_proyecto(proyecto_id, solo_activos=True):
         qs = (
             ObjetivoXPunto.objects

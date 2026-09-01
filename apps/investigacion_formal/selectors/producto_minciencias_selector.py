@@ -12,10 +12,6 @@ class ProductoMincienciasSelector:
         return ProductoMinciencias.objects.get(pk=producto_minciencias_id)
 
     @staticmethod
-    def buscar(producto_minciencias_id):
-        return ProductoMinciencias.objects.filter(pk=producto_minciencias_id).first()
-
-    @staticmethod
     def existe(producto_minciencias_id):
         return ProductoMinciencias.objects.filter(pk=producto_minciencias_id).exists()
 

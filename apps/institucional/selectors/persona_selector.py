@@ -46,10 +46,6 @@ class PersonaSelector:
         return Persona.objects.select_related('grado').get(pk=persona_id)
 
     @staticmethod
-    def buscar(persona_id):
-        return Persona.objects.select_related('grado').filter(pk=persona_id).first()
-
-    @staticmethod
     def existe(persona_id):
         return Persona.objects.filter(pk=persona_id).exists()
 

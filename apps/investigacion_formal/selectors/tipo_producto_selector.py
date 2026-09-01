@@ -12,10 +12,6 @@ class TipoProductoSelector:
         return TipoProducto.objects.get(pk=tipo_producto_id)
 
     @staticmethod
-    def buscar(tipo_producto_id):
-        return TipoProducto.objects.filter(pk=tipo_producto_id).first()
-
-    @staticmethod
     def existe(tipo_producto_id):
         return TipoProducto.objects.filter(pk=tipo_producto_id).exists()
 

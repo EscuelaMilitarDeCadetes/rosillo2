@@ -15,10 +15,6 @@ class TipoDocumentoSelector:
         return TipoDocumento.objects.filter(pk=tipo_documento_id).first()
 
     @staticmethod
-    def existe(tipo_documento_id):
-        return TipoDocumento.objects.filter(pk=tipo_documento_id).exists()
-
-    @staticmethod
     def obtener_por_nombre(nombre_documento):
         return TipoDocumento.objects.filter(nombre_documento__iexact=nombre_documento).first()
 

@@ -12,15 +12,6 @@ class ProyectoSelector:
         return Proyecto.objects.select_related('usuario', 'gerente').get(pk=proyecto_id)
 
     @staticmethod
-    def buscar(proyecto_id):
-        return (
-            Proyecto.objects
-            .select_related('usuario', 'gerente')
-            .filter(pk=proyecto_id)
-            .first()
-        )
-
-    @staticmethod
     def existe(proyecto_id):
         return Proyecto.objects.filter(pk=proyecto_id).exists()
 

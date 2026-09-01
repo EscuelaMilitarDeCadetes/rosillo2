@@ -12,10 +12,6 @@ class TipoCalificacionSelector:
         return TipoCalificacion.objects.get(pk=tipo_calificacion_id)
 
     @staticmethod
-    def buscar(tipo_calificacion_id):
-        return TipoCalificacion.objects.filter(pk=tipo_calificacion_id).first()
-
-    @staticmethod
     def existe(tipo_calificacion_id):
         return TipoCalificacion.objects.filter(pk=tipo_calificacion_id).exists()
 

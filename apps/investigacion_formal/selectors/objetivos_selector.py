@@ -12,10 +12,6 @@ class ObjetivosSelector:
         return Objetivos.objects.select_related('proyecto').get(pk=objetivo_id)
 
     @staticmethod
-    def buscar(objetivo_id):
-        return Objetivos.objects.select_related('proyecto').filter(pk=objetivo_id).first()
-
-    @staticmethod
     def existe(objetivo_id):
         return Objetivos.objects.filter(pk=objetivo_id).exists()
 

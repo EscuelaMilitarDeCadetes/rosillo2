@@ -12,10 +12,6 @@ class EntidadExternaSelector:
         return EntidadExterna.objects.get(pk=entidad_id)
 
     @staticmethod
-    def buscar(entidad_id):
-        return EntidadExterna.objects.filter(pk=entidad_id).first()
-
-    @staticmethod
     def existe(entidad_id):
         return EntidadExterna.objects.filter(pk=entidad_id).exists()
 

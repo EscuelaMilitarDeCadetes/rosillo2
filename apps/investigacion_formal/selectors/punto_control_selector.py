@@ -12,10 +12,6 @@ class PuntoControlSelector:
         return PuntoControl.objects.get(pk=punto_control_id)
 
     @staticmethod
-    def buscar(punto_control_id):
-        return PuntoControl.objects.filter(pk=punto_control_id).first()
-
-    @staticmethod
     def existe(punto_control_id):
         return PuntoControl.objects.filter(pk=punto_control_id).exists()
 

@@ -1,6 +1,10 @@
 from rest_framework.exceptions import ValidationError
 
 from apps.investigacion_formal.selectors.calificacion_selector import CalificacionSelector
+from apps.investigacion_formal.selectors.tipo_calificacion_selector import TipoCalificacionSelector
+from apps.investigacion_formal.selectors.proyecto_x_convocatoria_selector import (
+    ProyectoXConvocatoriaSelector,
+)
 
 
 class CalificacionValidator:
@@ -23,12 +27,19 @@ class CalificacionValidator:
     def _validar_fase(fase_id):
         if not fase_id:
             raise ValidationError({"fase": "La fase de calificación es obligatoria."})
+        if not TipoCalificacionSelector.existe(fase_id):
+            raise ValidationError({"fase": f"No existe un TipoCalificacion con id={fase_id}."})
+
 
     @staticmethod
     def _validar_aplicar(aplicar_id):
         if not aplicar_id:
             raise ValidationError(
                 {"aplicar": "El proyecto-convocatoria a calificar es obligatorio."}
+            )
+        if not ProyectoXConvocatoriaSelector.existe(aplicar_id):
+            raise ValidationError(
+                {"aplicar": f"No existe un ProyectoXConvocatoria con id={aplicar_id}."}
             )
 
     @staticmethod

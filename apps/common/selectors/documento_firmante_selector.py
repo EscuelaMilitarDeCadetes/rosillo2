@@ -15,19 +15,6 @@ class DocumentoFirmanteSelector:
         )
 
     @staticmethod
-    def buscar(documento_firmante_id):
-        return (
-            DocumentoFirmante.objects
-            .select_related('documento_firma', 'usuario')
-            .filter(pk=documento_firmante_id)
-            .first()
-        )
-
-    @staticmethod
-    def existe(documento_firmante_id):
-        return DocumentoFirmante.objects.filter(pk=documento_firmante_id).exists()
-
-    @staticmethod
     def listar_por_documento(documento_firma_id):
         return (
             DocumentoFirmante.objects

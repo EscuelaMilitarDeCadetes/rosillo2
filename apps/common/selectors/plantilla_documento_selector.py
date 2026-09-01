@@ -11,14 +11,6 @@ class PlantillaDocumentoSelector:
         return PlantillaDocumento.objects.select_related('tipo_documento').get(pk=plantilla_id)
 
     @staticmethod
-    def buscar(plantilla_id):
-        return PlantillaDocumento.objects.select_related('tipo_documento').filter(pk=plantilla_id).first()
-
-    @staticmethod
-    def existe(plantilla_id):
-        return PlantillaDocumento.objects.filter(pk=plantilla_id).exists()
-
-    @staticmethod
     def obtener_por_tipo_documento(tipo_documento_id):
         return (
             PlantillaDocumento.objects

@@ -107,6 +107,7 @@ class GerenteService:
         de un periodo de gestión.
         """
         gerente = GerenteSelector.obtener(gerente_id)
+        GerenteValidator.validar_eliminacion(gerente)
         gerente.estado = False
         gerente.save(update_fields=["estado"])
         HistorialService.registrar(

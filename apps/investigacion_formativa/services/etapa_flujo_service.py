@@ -1,3 +1,4 @@
+# apps/investigacion_formativa/services/etapa_flujo_service.py
 from django.db import transaction
 
 from apps.investigacion_formativa.models import EtapaFlujo
@@ -8,7 +9,7 @@ from apps.common.services.historial_service import HistorialService
 
 class EtapaFlujoService:
     """Los métodos activar()/desactivar() controlan el campo `activo` de la
-    etapa (soft toggle), sin afectar su vínculo con FlujoProceso."""
+    etapa, sin afectar su vínculo con FlujoProceso."""
 
     @staticmethod
     def listar():
@@ -27,11 +28,15 @@ class EtapaFlujoService:
     def crear(flujo_id, nombre, orden, codigo, rol_responsable, ejecutor,
               documento_requerido_id=None, descripcion=None, tipo_etapa='OTRO',
               es_obligatoria=True, permite_paralelismo=True, permite_reversion=True,
-              permite_salto=True, requiere_aprobacion=True, requiere_documento=True,
+              permite_salto=True, requiere_aprobacion=True, requiere_documento=False,
               requiere_firma=True, requiere_evaluacion=True, es_final=False,
               permite_reintentos=True):
         EtapaFlujoValidator.validar_creacion(
             flujo_id, nombre, orden, codigo, tipo_etapa, rol_responsable,
+            documento_requerido_id=documento_requerido_id,
+            requiere_documento=requiere_documento,
+            es_final=es_final,
+            permite_salto=permite_salto,
         )
         etapa = EtapaFlujo.objects.create(
             flujo_id=flujo_id,
@@ -66,12 +71,16 @@ class EtapaFlujoService:
     def actualizar(etapa_id, nombre, orden, codigo, rol_responsable, ejecutor,
                     documento_requerido_id=None, descripcion=None, tipo_etapa='OTRO',
                     es_obligatoria=True, permite_paralelismo=True, permite_reversion=True,
-                    permite_salto=True, requiere_aprobacion=True, requiere_documento=True,
+                    permite_salto=True, requiere_aprobacion=True, requiere_documento=False,
                     requiere_firma=True, requiere_evaluacion=True, es_final=False,
                     permite_reintentos=True):
         etapa = EtapaFlujoSelector.obtener(etapa_id)
         EtapaFlujoValidator.validar_actualizacion(
             etapa_id, etapa.flujo_id, nombre, orden, codigo, tipo_etapa, rol_responsable,
+            documento_requerido_id=documento_requerido_id,
+            requiere_documento=requiere_documento,
+            es_final=es_final,
+            permite_salto=permite_salto,
         )
         etapa.nombre = nombre
         etapa.orden = orden
@@ -102,7 +111,7 @@ class EtapaFlujoService:
             objeto=etapa,
         )
         return etapa
-    
+
     @staticmethod
     @transaction.atomic
     def activar(etapa_id, ejecutor):

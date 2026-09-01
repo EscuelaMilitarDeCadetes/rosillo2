@@ -33,6 +33,10 @@ class GerenteValidator:
         ya_era_el_activo = gerente.estado and gerente.fecha_salida is None
         if seria_activo and not ya_era_el_activo:
             GerenteValidator._validar_no_hay_otro_activo(gerente)
+            
+    @staticmethod
+    def validar_eliminacion(gerente):
+        pass
 
     @staticmethod
     def _validar_persona_obligatoria(persona_id):

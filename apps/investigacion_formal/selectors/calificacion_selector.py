@@ -12,19 +12,6 @@ class CalificacionSelector:
         return Calificacion.objects.select_related('fase', 'aplicar').get(pk=calificacion_id)
 
     @staticmethod
-    def buscar(calificacion_id):
-        return (
-            Calificacion.objects
-            .select_related('fase', 'aplicar')
-            .filter(pk=calificacion_id)
-            .first()
-        )
-
-    @staticmethod
-    def existe(calificacion_id):
-        return Calificacion.objects.filter(pk=calificacion_id).exists()
-
-    @staticmethod
     def listar_por_proyecto_x_convocatoria(aplicar_id):
         return (
             Calificacion.objects

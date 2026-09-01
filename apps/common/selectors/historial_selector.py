@@ -17,10 +17,6 @@ class HistorialSelector:
         return Historial.objects.select_related('usuario', 'content_type').filter(pk=historial_id).first()
 
     @staticmethod
-    def existe(historial_id):
-        return Historial.objects.filter(pk=historial_id).exists()
-
-    @staticmethod
     def listar_por_usuario(usuario_id):
         return Historial.objects.filter(usuario_id=usuario_id).order_by('-fecha_creacion')
 

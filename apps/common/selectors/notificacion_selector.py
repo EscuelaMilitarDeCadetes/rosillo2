@@ -14,14 +14,6 @@ class NotificacionSelector:
         return Notificacion.objects.select_related('usuario_destino').get(pk=notificacion_id)
 
     @staticmethod
-    def buscar(notificacion_id):
-        return Notificacion.objects.select_related('usuario_destino').filter(pk=notificacion_id).first()
-
-    @staticmethod
-    def existe(notificacion_id):
-        return Notificacion.objects.filter(pk=notificacion_id).exists()
-
-    @staticmethod
     def listar_por_usuario(usuario_id, solo_no_leidas=False):
         qs = Notificacion.objects.filter(usuario_destino_id=usuario_id)
         if solo_no_leidas:

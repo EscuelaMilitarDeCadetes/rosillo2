@@ -16,19 +16,6 @@ class InteraccionSelector:
         )
 
     @staticmethod
-    def buscar(interaccion_id):
-        return (
-            Interaccion.objects
-            .select_related('entidad', 'proyecto_asociado')
-            .filter(pk=interaccion_id)
-            .first()
-        )
-
-    @staticmethod
-    def existe(interaccion_id):
-        return Interaccion.objects.filter(pk=interaccion_id).exists()
-
-    @staticmethod
     def listar_por_entidad(entidad_id):
         return (
             Interaccion.objects

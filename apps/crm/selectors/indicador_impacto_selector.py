@@ -12,19 +12,6 @@ class IndicadorImpactoSelector:
         return IndicadorImpacto.objects.select_related('proyecto').get(pk=indicador_id)
 
     @staticmethod
-    def buscar(indicador_id):
-        return (
-            IndicadorImpacto.objects
-            .select_related('proyecto')
-            .filter(pk=indicador_id)
-            .first()
-        )
-
-    @staticmethod
-    def existe(indicador_id):
-        return IndicadorImpacto.objects.filter(pk=indicador_id).exists()
-
-    @staticmethod
     def listar_por_proyecto(proyecto_id):
         return (
             IndicadorImpacto.objects

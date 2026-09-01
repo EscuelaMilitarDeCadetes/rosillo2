@@ -11,14 +11,6 @@ class AprobacionSelector:
         return Aprobacion.objects.select_related('usuario_revisor', 'tipo_documento').get(pk=aprobacion_id)
 
     @staticmethod
-    def buscar(aprobacion_id):
-        return (Aprobacion.objects.select_related('usuario_revisor', 'tipo_documento').filter(pk=aprobacion_id).first())
-
-    @staticmethod
-    def existe(aprobacion_id):
-        return Aprobacion.objects.filter(pk=aprobacion_id).exists()
-
-    @staticmethod
     def listar_pendientes(usuario_revisor_id=None):
         qs = Aprobacion.objects.select_related('tipo_documento').filter(estado='PENDIENTE')
         if usuario_revisor_id is not None:

@@ -20,19 +20,6 @@ class ProductoXProyectoSelector:
         )
 
     @staticmethod
-    def buscar(producto_x_proyecto_id):
-        return (
-            ProductoXProyecto.objects
-            .select_related('producto_x_grupo', 'proyecto', 'tipo_documento')
-            .filter(pk=producto_x_proyecto_id)
-            .first()
-        )
-
-    @staticmethod
-    def existe(producto_x_proyecto_id):
-        return ProductoXProyecto.objects.filter(pk=producto_x_proyecto_id).exists()
-
-    @staticmethod
     def listar_por_proyecto(proyecto_id, solo_activos=True):
         """Equivalente a findByTituloProyectoFk / getDocumentosXProductosXProyecto."""
         qs = (

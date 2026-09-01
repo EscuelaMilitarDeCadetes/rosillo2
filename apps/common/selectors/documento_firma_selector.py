@@ -16,10 +16,6 @@ class DocumentoFirmaSelector:
         return DocumentoFirma.objects.select_related('tipo_documento').filter(pk=documento_firma_id).first()
 
     @staticmethod
-    def existe(documento_firma_id):
-        return DocumentoFirma.objects.filter(pk=documento_firma_id).exists()
-
-    @staticmethod
     def listar_por_tipo_documento(tipo_documento_id):
         return (
             DocumentoFirma.objects

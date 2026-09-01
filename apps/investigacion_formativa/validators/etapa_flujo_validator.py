@@ -1,5 +1,4 @@
 # apps/investigacion_formativa/validators/etapa_flujo_validator.py
-
 from rest_framework.exceptions import ValidationError
 
 from apps.investigacion_formativa.selectors.etapa_flujo_selector import EtapaFlujoSelector
@@ -14,22 +13,30 @@ class EtapaFlujoValidator:
     ROLES_RESPONSABLE_VALIDOS = ('ESTUDIANTE', 'TUTOR', 'JURADO', 'FACULTAD')
 
     @staticmethod
-    def validar_creacion(flujo_id, nombre, orden, codigo, tipo_etapa, rol_responsable):
+    def validar_creacion(flujo_id, nombre, orden, codigo, tipo_etapa, rol_responsable,
+                          documento_requerido_id=None, requiere_documento=True,
+                          es_final=False, permite_salto=True):
         EtapaFlujoValidator._validar_nombre(nombre)
         EtapaFlujoValidator._validar_orden(orden)
         EtapaFlujoValidator._validar_codigo(codigo)
         EtapaFlujoValidator._validar_tipo_etapa(tipo_etapa)
         EtapaFlujoValidator._validar_rol_responsable(rol_responsable)
         EtapaFlujoValidator._validar_unicidad_orden(flujo_id, orden)
+        EtapaFlujoValidator.validar_consistencia_requisitos(documento_requerido_id, requiere_documento)
+        EtapaFlujoValidator.validar_etapa_final_no_permite_salto(es_final, permite_salto)
 
     @staticmethod
-    def validar_actualizacion(etapa_id, flujo_id, nombre, orden, codigo, tipo_etapa, rol_responsable):
+    def validar_actualizacion(etapa_id, flujo_id, nombre, orden, codigo, tipo_etapa, rol_responsable,
+                               documento_requerido_id=None, requiere_documento=True,
+                               es_final=False, permite_salto=True):
         EtapaFlujoValidator._validar_nombre(nombre)
         EtapaFlujoValidator._validar_orden(orden)
         EtapaFlujoValidator._validar_codigo(codigo)
         EtapaFlujoValidator._validar_tipo_etapa(tipo_etapa)
         EtapaFlujoValidator._validar_rol_responsable(rol_responsable)
         EtapaFlujoValidator._validar_unicidad_orden(flujo_id, orden, excluir_id=etapa_id)
+        EtapaFlujoValidator.validar_consistencia_requisitos(documento_requerido_id, requiere_documento)
+        EtapaFlujoValidator.validar_etapa_final_no_permite_salto(es_final, permite_salto)
 
     @staticmethod
     def validar_consistencia_requisitos(documento_requerido_id, requiere_documento):

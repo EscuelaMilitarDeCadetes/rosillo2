@@ -38,10 +38,6 @@ class GerenteSelector:
         return Gerente.objects.select_related('persona').get(pk=gerente_id)
 
     @staticmethod
-    def buscar(gerente_id):
-        return Gerente.objects.select_related('persona').filter(pk=gerente_id).first()
-
-    @staticmethod
     def obtener_actual():
         """
         Devuelve el Gerente vigente: estado=True y sin fecha_salida.

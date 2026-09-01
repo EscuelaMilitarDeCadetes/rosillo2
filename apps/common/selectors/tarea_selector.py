@@ -14,14 +14,6 @@ class TareaSelector:
         return Tarea.objects.select_related('asignado_a', 'content_type').get(pk=tarea_id)
 
     @staticmethod
-    def buscar(tarea_id):
-        return Tarea.objects.select_related('asignado_a', 'content_type').filter(pk=tarea_id).first()
-
-    @staticmethod
-    def existe(tarea_id):
-        return Tarea.objects.filter(pk=tarea_id).exists()
-
-    @staticmethod
     def listar_por_usuario(usuario_id, solo_pendientes=False):
         qs = Tarea.objects.filter(asignado_a_id=usuario_id)
         if solo_pendientes:

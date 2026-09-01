@@ -102,12 +102,6 @@ class ReglaFlujoServiceTests(InvestigacionFormativaFixturesMixin, TestCase):
         with self.assertRaises(ValidationError):
             ReglaFlujoService.activar(regla.pk, ejecutor=self.ejecutor)
 
-    def test_eliminar_regla_soft_delete(self):
-        regla = self._crear_regla()
-        ReglaFlujoService.eliminar(regla.pk, ejecutor=self.ejecutor)
-        regla.refresh_from_db()
-        self.assertFalse(regla.activa)
-
     def test_listar_por_transicion(self):
         self._crear_regla()
         resultado = ReglaFlujoService.listar_por_transicion(self.etapa_origen.pk, self.etapa_destino.pk)

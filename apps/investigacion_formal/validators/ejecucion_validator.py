@@ -1,6 +1,7 @@
 from rest_framework.exceptions import ValidationError
 
 from apps.investigacion_formal.selectors.monto_selector import MontoSelector
+from apps.investigacion_formal.selectors.tipo_rubro_selector import TipoRubroSelector
 
 
 class EjecucionValidator:
@@ -52,6 +53,8 @@ class EjecucionValidator:
     def _validar_tipo_rubro(tipo_rubro_id):
         if not tipo_rubro_id:
             raise ValidationError({"tipo_rubro": "El tipo de rubro es obligatorio."})
+        if not TipoRubroSelector.existe(tipo_rubro_id):
+            raise ValidationError({"tipo_rubro": f"No existe un TipoRubro con id={tipo_rubro_id}."})
 
     @staticmethod
     def _validar_nombre(nombre):

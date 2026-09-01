@@ -1,3 +1,4 @@
+# apps/investigacion_formativa/services/regla_flujo_service.py
 from django.db import transaction
 
 from apps.investigacion_formativa.models import ReglaFlujo
@@ -110,6 +111,9 @@ class ReglaFlujoService:
     @staticmethod
     @transaction.atomic
     def desactivar(regla_id, ejecutor):
+        """
+        Único mecanismo de baja para ReglaFlujo.
+        """
         regla = ReglaFlujoSelector.obtener(regla_id)
         ReglaFlujoValidator.validar_desactivacion(regla)
         regla.activa = False
@@ -117,20 +121,6 @@ class ReglaFlujoService:
         HistorialService.registrar(
             ejecutor,
             f"Se desactivó la regla '{regla.nombre}' (id={regla.pk}).",
-            objeto=regla,
-        )
-        return regla
-
-    @staticmethod
-    @transaction.atomic
-    def eliminar(regla_id, ejecutor):
-        regla = ReglaFlujoSelector.obtener(regla_id)
-        ReglaFlujoValidator.validar_eliminacion(regla)
-        regla.activa = False
-        regla.save(update_fields=['activa'])
-        HistorialService.registrar(
-            ejecutor,
-            f"Se desactivó (soft-delete) la regla '{regla.nombre}' (id={regla.pk}).",
             objeto=regla,
         )
         return regla

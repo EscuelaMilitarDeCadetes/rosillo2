@@ -18,7 +18,7 @@ class RegistroHorasViewSet(viewsets.ViewSet):
     pagination_class = InvestigacionFormativaPageNumberPagination
 
     def get_permissions(self):
-        if self.action in ["create", "ajustar_horas_requeridas", "recalcular", "destroy"]:
+        if self.action in ["create", "ajustar_horas_requeridas", "recalcular"]:
             return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormativa()]
         else:  # list, retrieve, por_proceso
             return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA), TieneAmbitoFormativa()]

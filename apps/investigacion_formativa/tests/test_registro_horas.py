@@ -47,7 +47,6 @@ class RegistroHorasServiceTests(InvestigacionFormativaFixturesMixin, TestCase):
         control = RegistroHorasService.crear(proceso_id=self.proceso.pk, ejecutor=self.ejecutor)
         self._crear_registro_actividades(horas_reportadas=50)
         RegistroHorasService.recalcular(control.pk, ejecutor=self.ejecutor)
-
         with self.assertRaises(ValidationError):
             RegistroHorasService.ajustar_horas_requeridas(
                 registro_horas_id=control.pk, nuevas_horas_requeridas=30, ejecutor=self.ejecutor,
@@ -59,7 +58,6 @@ class RegistroHorasServiceTests(InvestigacionFormativaFixturesMixin, TestCase):
         )
         self._crear_registro_actividades(horas_reportadas=40)
         self._crear_registro_actividades(horas_reportadas=25)
-
         recalculado = RegistroHorasService.recalcular(control.pk, ejecutor=self.ejecutor)
         self.assertEqual(recalculado.horas_acumuladas, 65)
         self.assertTrue(recalculado.cumple_requisito)

@@ -14,19 +14,6 @@ class EjecucionSelector:
         return Ejecucion.objects.select_related('monto', 'tipo_rubro').get(pk=ejecucion_id)
 
     @staticmethod
-    def buscar(ejecucion_id):
-        return (
-            Ejecucion.objects
-            .select_related('monto', 'tipo_rubro')
-            .filter(pk=ejecucion_id)
-            .first()
-        )
-
-    @staticmethod
-    def existe(ejecucion_id):
-        return Ejecucion.objects.filter(pk=ejecucion_id).exists()
-
-    @staticmethod
     def listar_por_monto(monto_id, solo_activas=True):
         qs = Ejecucion.objects.select_related('tipo_rubro').filter(monto_id=monto_id)
         if solo_activas:

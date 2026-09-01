@@ -12,19 +12,6 @@ class ControlCambiosSelector:
         return ControlCambios.objects.select_related('proyecto').get(pk=control_cambios_id)
 
     @staticmethod
-    def buscar(control_cambios_id):
-        return (
-            ControlCambios.objects
-            .select_related('proyecto')
-            .filter(pk=control_cambios_id)
-            .first()
-        )
-
-    @staticmethod
-    def existe(control_cambios_id):
-        return ControlCambios.objects.filter(pk=control_cambios_id).exists()
-
-    @staticmethod
     def listar_por_proyecto(proyecto_id):
         return (
             ControlCambios.objects
