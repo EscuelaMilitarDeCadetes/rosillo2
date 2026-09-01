@@ -9,7 +9,7 @@ class PermisosVinculacionTests(IntegracionFixturesMixin, TestCase):
 
     def test_facultad_puede_crear_estudiante_jurado_tutor(self):
         self.crear_ejecutor_con_rol('FACULTAD', 'decano.facultad@esmic.edu.co')
-        self.loguearse_como('decano.facultad@esmic.edu.co', 'soporte123')
+        self.loguearse_como('decano.facultad@esmic.edu.co', 'soporte123', ambito='formativa')
 
         endpoints = {
             'crear-estudiante': 'ESTUDIANTE',

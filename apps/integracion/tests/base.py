@@ -19,7 +19,7 @@ class IntegracionFixturesMixin:
     ejecutor con rol SOPORTE, listo para pegarle a los endpoints de
     VinculacionViewSet.
 
-    Nota: solo va aquí lo que TODAS las clases de test de este módulo
+    Solo va aquí lo que TODAS las clases de test de este módulo
     necesitan. Fixtures propios de un único archivo (por ejemplo
     persona/usuario/asignacion de test_ciclo_vida_usuario.py) van en el
     setUp() de esa clase específica, no aquí — para no inflar el fixture
@@ -64,13 +64,37 @@ class IntegracionFixturesMixin:
         )
         return usuario
 
-    def loguearse_como(self, username, password):
-        login = self.client.post(reverse('login-formal'), {
-            'username': username, 'password': password,
-        })
-        self.client.credentials(
-            HTTP_AUTHORIZATION=f"Bearer {login.data['access']}"
-        )
+    def loguearse_como(self, username, password, ambito='formal'):
+        """
+        Autentica al usuario en el ámbito indicado y configura el JWT
+        correspondiente en el cliente de pruebas.
+
+        Valores permitidos:
+            - 'formal'
+            - 'formativa'
+        """
+        if ambito == 'formal':
+            login_url = reverse('login-formal')
+        elif ambito == 'formativa':
+            login_url = reverse('login-formativa')
+        else:
+            raise ValueError(
+                f"Ámbito inválido: '{ambito}'. "
+                "Los valores permitidos son 'formal' y 'formativa'."
+            )
+        login = self.client.post(login_url,{'username': username,'password': password,},)
+        self.assertEqual(login.status_code,status.HTTP_200_OK,msg=(
+                f"No fue posible autenticar '{username}' "
+                f"en el ámbito '{ambito}'. "
+                f"Respuesta: {getattr(login, 'data', login.content)}"
+            ))
+        self.assertEqual(login.data.get('ambito'),ambito,msg=(
+                f"El login de '{username}' no devolvió el ámbito esperado. "
+                f"Esperado: '{ambito}'. "
+                f"Recibido: '{login.data.get('ambito')}'."
+            ))
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {login.data['access']}")
+        return login.data
 
     def intentar_login_debe_fallar(self, username, password):
         login = self.client.post(reverse('login-formal'), {

@@ -38,12 +38,7 @@ class DocumentoFirmanteSelector:
 
     @staticmethod
     def listar_pendientes_por_usuario(usuario_id):
-        return (
-            DocumentoFirmante.objects
-            .select_related('documento_firma', 'documento_firma__tipo_documento')
-            .filter(usuario_id=usuario_id, estado='PENDIENTE')
-            .order_by('documento_firma_id', 'orden')
-        )
+        return (DocumentoFirmante.objects.select_related('documento_firma', 'documento_firma__tipo_documento').filter(usuario_id=usuario_id, estado='PENDIENTE').order_by('documento_firma_id', 'orden'))
 
     @staticmethod
     def obtener_siguiente_turno(documento_firma_id):

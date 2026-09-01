@@ -6,17 +6,21 @@ para soportar las dos reglas distintas:
     crear_grupo, crear_cinterno, crear_cexterno, crear_asesor,
     crear_supervisor, crear_gerente, reemplazar, retirar.
   - FACULTAD puede ejecutar: crear_estudiante, crear_jurado, crear_tutor,
-    retirar.
+    retirar. Las tres primeras además exigen TieneAmbitoFormativa (el
+    token debe tener ambito='formativa'), ya que son operaciones propias
+    de investigación formativa.
+  - Las otras acciones que realiza SOPORTE exige TieneAmbitoFormal, 
+    ya que son operaciones propias de investigación formal.
 
 IMPORTANTE: cada @action debe declarar su propio permission_classes.
 Esta clase NO define permission_classes ni get_permissions() a nivel de
 clase, así que cualquier acción que se agregue sin ese kwarg cae al
-default global (IsAuthenticated) — ver 05_security.md / auditoría ronda 5.
+default global (IsAuthenticated).
 """
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from apps.usuarios.permissions import EsSoporte, EsFacultad
+from apps.usuarios.permissions import EsSoporte, EsFacultad, TieneAmbitoFormativa, TieneAmbitoFormal
 from apps.integracion.services.vinculacion_service import VinculacionService
 
 
@@ -44,7 +48,7 @@ class VinculacionViewSet(viewsets.ViewSet):
 
     # -- SOPORTE: flujo administrativo ---------------------------------- #
     @action(detail=False, methods=['post'], url_path='crear-soporte',
-            permission_classes=[EsSoporte])
+            permission_classes=[EsSoporte, TieneAmbitoFormal])
     def crear_soporte(self, request):
         resultado = VinculacionService.crear_usuario_soporte(
             data=request.data, ejecutor=request.user
@@ -52,7 +56,7 @@ class VinculacionViewSet(viewsets.ViewSet):
         return Response(_serializar_resultado(resultado), status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['post'], url_path='crear-supervisor',
-            permission_classes=[EsSoporte])
+            permission_classes=[EsSoporte, TieneAmbitoFormal])
     def crear_supervisor(self, request):
         resultado = VinculacionService.crear_usuario_supervisor(
             data=request.data, ejecutor=request.user
@@ -60,7 +64,7 @@ class VinculacionViewSet(viewsets.ViewSet):
         return Response(_serializar_resultado(resultado), status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['post'], url_path='crear-gerente',
-            permission_classes=[EsSoporte])
+            permission_classes=[EsSoporte, TieneAmbitoFormal])
     def crear_gerente(self, request):
         resultado = VinculacionService.crear_usuario_gerente(
             data=request.data, ejecutor=request.user
@@ -69,7 +73,7 @@ class VinculacionViewSet(viewsets.ViewSet):
 
     # -- SOPORTE: flujo facultad ---------------------------------------- #
     @action(detail=False, methods=['post'], url_path='crear-decano',
-            permission_classes=[EsSoporte])
+            permission_classes=[EsSoporte, TieneAmbitoFormal])
     def crear_decano(self, request):
         resultado = VinculacionService.crear_usuario_decano(
             data=request.data, ejecutor=request.user
@@ -77,7 +81,7 @@ class VinculacionViewSet(viewsets.ViewSet):
         return Response(_serializar_resultado(resultado), status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['post'], url_path='crear-facultad',
-            permission_classes=[EsSoporte])
+            permission_classes=[EsSoporte, TieneAmbitoFormal])
     def crear_facultad(self, request):
         resultado = VinculacionService.crear_usuario_facultad(
             data=request.data, ejecutor=request.user
@@ -86,7 +90,7 @@ class VinculacionViewSet(viewsets.ViewSet):
 
     # -- SOPORTE: flujo grupo ------------------------------------------- #
     @action(detail=False, methods=['post'], url_path='crear-grupo',
-            permission_classes=[EsSoporte])
+            permission_classes=[EsSoporte, TieneAmbitoFormal])
     def crear_grupo(self, request):
         resultado = VinculacionService.crear_usuario_grupo(
             data=request.data, ejecutor=request.user
@@ -94,7 +98,7 @@ class VinculacionViewSet(viewsets.ViewSet):
         return Response(_serializar_resultado(resultado), status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['post'], url_path='crear-cinterno',
-            permission_classes=[EsSoporte])
+            permission_classes=[EsSoporte, TieneAmbitoFormal])
     def crear_cinterno(self, request):
         resultado = VinculacionService.crear_usuario_cinterno(
             data=request.data, ejecutor=request.user
@@ -102,7 +106,7 @@ class VinculacionViewSet(viewsets.ViewSet):
         return Response(_serializar_resultado(resultado), status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['post'], url_path='crear-cexterno',
-            permission_classes=[EsSoporte])
+            permission_classes=[EsSoporte, TieneAmbitoFormal])
     def crear_cexterno(self, request):
         resultado = VinculacionService.crear_usuario_cexterno(
             data=request.data, ejecutor=request.user
@@ -110,7 +114,7 @@ class VinculacionViewSet(viewsets.ViewSet):
         return Response(_serializar_resultado(resultado), status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['post'], url_path='crear-asesor',
-            permission_classes=[EsSoporte])
+            permission_classes=[EsSoporte, TieneAmbitoFormal])
     def crear_asesor(self, request):
         resultado = VinculacionService.crear_usuario_asesor(
             data=request.data, ejecutor=request.user
@@ -119,7 +123,7 @@ class VinculacionViewSet(viewsets.ViewSet):
 
     # -- FACULTAD: flujo facultad (sub-roles que gestiona la facultad) -- #
     @action(detail=False, methods=['post'], url_path='crear-estudiante',
-            permission_classes=[EsFacultad])
+            permission_classes=[EsFacultad, TieneAmbitoFormativa])
     def crear_estudiante(self, request):
         resultado = VinculacionService.crear_usuario_estudiante(
             data=request.data, ejecutor=request.user
@@ -127,7 +131,7 @@ class VinculacionViewSet(viewsets.ViewSet):
         return Response(_serializar_resultado(resultado), status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['post'], url_path='crear-jurado',
-            permission_classes=[EsFacultad])
+            permission_classes=[EsFacultad, TieneAmbitoFormativa])
     def crear_jurado(self, request):
         resultado = VinculacionService.crear_usuario_jurado(
             data=request.data, ejecutor=request.user
@@ -135,7 +139,7 @@ class VinculacionViewSet(viewsets.ViewSet):
         return Response(_serializar_resultado(resultado), status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['post'], url_path='crear-tutor',
-            permission_classes=[EsFacultad])
+            permission_classes=[EsFacultad, TieneAmbitoFormativa])
     def crear_tutor(self, request):
         resultado = VinculacionService.crear_usuario_tutor(
             data=request.data, ejecutor=request.user

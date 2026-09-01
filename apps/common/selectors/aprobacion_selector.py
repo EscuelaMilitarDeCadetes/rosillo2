@@ -12,12 +12,7 @@ class AprobacionSelector:
 
     @staticmethod
     def buscar(aprobacion_id):
-        return (
-            Aprobacion.objects
-            .select_related('usuario_revisor', 'tipo_documento')
-            .filter(pk=aprobacion_id)
-            .first()
-        )
+        return (Aprobacion.objects.select_related('usuario_revisor', 'tipo_documento').filter(pk=aprobacion_id).first())
 
     @staticmethod
     def existe(aprobacion_id):

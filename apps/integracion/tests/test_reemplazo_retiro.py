@@ -14,7 +14,7 @@ class ReemplazoRetiroTests(IntegracionFixturesMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.crear_ejecutor_con_rol('FACULTAD', 'facultad.reemplazo@esmic.edu.co')
-        self.loguearse_como('facultad.reemplazo@esmic.edu.co', 'soporte123')
+        self.loguearse_como('facultad.reemplazo@esmic.edu.co', 'soporte123', ambito='formativa')
 
     def _crear_estudiante_inicial(self, correo='original@esmic.edu.co', documento='ORIG-1'):
         data = self.datos_persona(correo=correo, documento=documento, nombre='Original')

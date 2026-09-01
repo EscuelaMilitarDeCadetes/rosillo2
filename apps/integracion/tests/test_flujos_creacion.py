@@ -69,7 +69,7 @@ class FlujoFacultadTests(IntegracionFixturesMixin, TestCase):
                     self.crear_ejecutor_con_rol(
                         'FACULTAD', f'coordinador{i}.facultad@esmic.edu.co'
                     )
-                    self.loguearse_como(f'coordinador{i}.facultad@esmic.edu.co', 'soporte123')
+                    self.loguearse_como(f'coordinador{i}.facultad@esmic.edu.co', 'soporte123', ambito='formativa')
                 else:
                     self.loguearse_como('soporte@esmic.edu.co', 'soporte123')
                 data = self.datos_persona(

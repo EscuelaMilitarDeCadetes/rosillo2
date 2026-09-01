@@ -1,16 +1,12 @@
 from apps.investigacion_formal.pagination import InvestigacionFormalPageNumberPagination
 from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormal
 from rest_framework import viewsets, status
-from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from apps.investigacion_formal.serializers.tipo_producto_serializer import TipoProductoSerializer
 from apps.investigacion_formal.services.tipo_producto_service import TipoProductoService
 from apps.investigacion_formal.permissions import ROLES_LECTURA_CATALOGOS, combinar
 from apps.usuarios.permissions import EsSoporte
-
-from django.http import HttpResponse
-from apps.investigacion_formal.services.exportacion_service import ExportacionService
 
 
 class TipoProductoViewSet(viewsets.ViewSet):
@@ -20,7 +16,7 @@ class TipoProductoViewSet(viewsets.ViewSet):
     def get_permissions(self):
         if self.action in ["create", "update"]:
             return [EsSoporte(), TieneAmbitoFormal()]
-        else:  # list, retrieve, export_excel, export_pdf
+        else:  # list, retrieve
             return [combinar(ROLES_LECTURA_CATALOGOS), TieneAmbitoFormal()]
 
     def list(self, request):

@@ -1,5 +1,4 @@
 # apps/investigacion_formativa/validators/evaluacion_proceso_validator.py
-
 from rest_framework.exceptions import ValidationError
 
 from apps.investigacion_formativa.selectors.evaluacion_proceso_selector import EvaluacionProcesoSelector
@@ -10,6 +9,11 @@ NOTA_APROBATORIA = 3.5
 
 
 class EvaluacionProcesoValidator:
+    """
+    No se expone actualizar() ni eliminar(), porque una evaluación
+    ya emitida es un registro de auditoría académica. Por
+    eso este validator solo tiene validar_creacion().
+    """
 
     @staticmethod
     def validar_creacion(evaluador_id, instancia_etapa_id, nota, peso, concepto, aprobado, resultado):
@@ -19,13 +23,6 @@ class EvaluacionProcesoValidator:
         EvaluacionProcesoValidator._validar_resultado(resultado)
         EvaluacionProcesoValidator.validar_consistencia_aprobado(aprobado, nota)
         EvaluacionProcesoValidator._validar_unicidad(evaluador_id, instancia_etapa_id)
-
-    @staticmethod
-    def validar_actualizacion(evaluacion_id, evaluador_id, instancia_etapa_id, nota, peso, concepto):
-        EvaluacionProcesoValidator._validar_concepto(concepto)
-        EvaluacionProcesoValidator._validar_nota(nota)
-        EvaluacionProcesoValidator._validar_peso(peso)
-        EvaluacionProcesoValidator._validar_unicidad(evaluador_id, instancia_etapa_id, excluir_id=evaluacion_id)
 
     @staticmethod
     def validar_consistencia_aprobado(aprobado, nota):

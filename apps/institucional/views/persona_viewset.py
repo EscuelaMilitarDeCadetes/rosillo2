@@ -1,6 +1,7 @@
 from apps.institucional.pagination import InstitucionalPageNumberPagination
 from apps.usuarios.permissions.es_decano import EsDecano
 from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from apps.institucional.serializers import PersonaSerializer
 from apps.institucional.services.persona_service import PersonaService
@@ -18,7 +19,7 @@ class PersonaViewSet(viewsets.ViewSet):
     pagination_class = InstitucionalPageNumberPagination
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
+        if self.action in ['list', 'retrieve', 'buscar']:
             permission_classes = [
                 EsSoporte | EsSupervisor | EsAsesor | EsFacultad | EsGrupo | EsCInterno | EsCExterno | EsDecano
             ]
@@ -66,3 +67,20 @@ class PersonaViewSet(viewsets.ViewSet):
         )
         serializer = self.serializer_class(persona)
         return Response(serializer.data)
+
+    @action(detail=False, methods=["get"], url_path="buscar")
+    def buscar(self, request):
+        """
+        Selector paginado y filtrado de Persona, pensado para dropdowns
+        con búsqueda server-side  donde no es seguro asumir que toda la 
+        base de Personas cabe en una sola página cargada de antemano en 
+        el frontend. Sin 'q' (o vacío) se comporta igual que list(), 
+        solo que bajo una URL dedicada para no mezclar semánticas en el 
+        mismo thunk.
+        """
+        texto = request.query_params.get("q", "").strip()
+        personas = PersonaService.listar_filtrado(texto or None)
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(personas, request, view=self)
+        serializer = self.serializer_class(page, many=True)
+        return paginator.get_paginated_response(serializer.data)

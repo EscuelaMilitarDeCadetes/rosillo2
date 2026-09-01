@@ -20,7 +20,7 @@ class ValidacionesVinculacionTests(IntegracionFixturesMixin, TestCase):
 
     def test_flujo_facultad_sin_facultad_id_retorna_400(self):
         self.crear_ejecutor_con_rol('FACULTAD', 'validaciones.facultad@esmic.edu.co')
-        self.loguearse_como('validaciones.facultad@esmic.edu.co', 'soporte123')
+        self.loguearse_como('validaciones.facultad@esmic.edu.co', 'soporte123', ambito='formativa')
         data = self.datos_persona(correo='sinfac@esmic.edu.co', documento='SF-1')
         data['rol_plataforma_id'] = self.roles['ESTUDIANTE'].pk
         data['rol_grupo_id'] = self.rol_grupo.pk
@@ -28,8 +28,6 @@ class ValidacionesVinculacionTests(IntegracionFixturesMixin, TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_flujo_grupo_sin_grupo_id_retorna_400(self):
-        # crear-grupo es exclusivo de SOPORTE; se usa la sesión por
-        # defecto de IntegracionFixturesMixin.setUp(), no un ejecutor GRUPO.
         data = self.datos_persona(correo='singru@esmic.edu.co', documento='SG-1')
         data['rol_plataforma_id'] = self.roles['GRUPO'].pk
         data['rol_grupo_id'] = self.rol_grupo.pk

@@ -1,11 +1,20 @@
 """
 Selector de Persona.
 
-mostrarDatosPersona(correo) Usuario no usa la relación que pasa por 
-UsuarioXPersona. obtener_por_correo().
+mostrarDatosPersona(correo). UsuarioXPersona. obtener_por_correo()
+se migra de forma literal contra Persona.correo (que es un campo
+propio y real de Persona, independiente de cómo se resuelva el Usuario
+asociado).
 
-listar() devuelve TODAS las Personas, sin condición sobre PersonaXGrupo.
+mostrarTodasPersonas() eso filtraba implícitamente a "personas que 
+tienen al menos un PersonaXGrupo". listar() devuelve TODAS las
+Personas, sin condición sobre PersonaXGrupo.
+
+filtrar(texto): agregado para soportar búsqueda server-side desde el
+frontend (selector paginado de Persona. No reemplaza a listar()
+listar() sigue siendo "todas las personas".
 """
+from django.db.models import Q
 from apps.institucional.models import Persona
 
 
@@ -14,6 +23,23 @@ class PersonaSelector:
     @staticmethod
     def listar():
         return Persona.objects.select_related('grado').all().order_by('apellido', 'nombre')
+    
+    @staticmethod
+    def filtrar(texto=None):
+        """
+        Igual que listar(), pero opcionalmente acotado por texto libre
+        contra nombre, apellido, documento y correo (icontains, OR).
+        texto=None o cadena vacía se comporta igual que listar().
+        """
+        qs = Persona.objects.select_related('grado').all().order_by('apellido', 'nombre')
+        if texto:
+            qs = qs.filter(
+                Q(nombre__icontains=texto)
+                | Q(apellido__icontains=texto)
+                | Q(documento__icontains=texto)
+                | Q(correo__icontains=texto)
+            )
+        return qs
 
     @staticmethod
     def obtener(persona_id):

@@ -4,20 +4,12 @@ Service de Persona.
 Interfaz: listar(), obtener(id), crear(...), actualizar(id, ...).
 NO existe eliminar() — Persona es un registro permanente.
 
-ALCANCE DELIBERADAMENTE ACOTADO: este Service SOLO crea/actualiza el
-registro Persona. NO crea Usuario, NO asigna RolXUsuario, NO crea
-PersonaXGrupo. Eso es responsabilidad de una capa orquestadora superior
-(en apps.usuarios o un endpoint compuesto), según la decisión de
-arquitectura ya tomada: la creación de Usuario+Rol no pertenece a
-institucional.
+Este Service SOLO crea/actualiza el registro Persona. NO crea Usuario,
+NO asigna RolXUsuario, NO crea PersonaXGrupo. 
 
-Migrado desde: PersonaServicio (Thymeleaf)
-    buscarPersona(id) -> obtener(id)
-    mostrarTodasPersonas() -> listar()
-    guardarPersonaSinGrupoNiFacultad/ConGrupo/ConFacultad -> crear()
-        (la parte de creación de Persona se conserva; la creación de
-        Usuario+RolXUsuario+PersonaXGrupo que hacían esos 3 métodos en
-        cascada ya NO vive aquí).
+listar_filtrado(texto): agregado para exponer PersonaSelector.filtrar()
+a través de la capa de servicio, consumido por PersonaViewSet.buscar
+(selector paginado de Persona por texto libre).
 """
 from django.db import transaction
 
@@ -32,6 +24,10 @@ class PersonaService:
     @staticmethod
     def listar():
         return PersonaSelector.listar()
+
+    @staticmethod
+    def listar_filtrado(texto=None):
+        return PersonaSelector.filtrar(texto)
 
     @staticmethod
     def obtener(persona_id):
