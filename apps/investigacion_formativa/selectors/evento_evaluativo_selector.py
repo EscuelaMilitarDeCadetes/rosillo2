@@ -19,14 +19,6 @@ class EventoEvaluativoSelector:
         return EventoEvaluativo.objects.get(pk=evento_id)
 
     @staticmethod
-    def buscar(evento_id):
-        return EventoEvaluativo.objects.filter(pk=evento_id).first()
-
-    @staticmethod
-    def existe(evento_id):
-        return EventoEvaluativo.objects.filter(pk=evento_id).exists()
-
-    @staticmethod
     def listar_por_proceso(proceso_formativo_id):
         return (
             EventoEvaluativo.objects
@@ -34,44 +26,6 @@ class EventoEvaluativoSelector:
             .filter(proceso_formativo_id=proceso_formativo_id, activo=True)
             .order_by('numero')
         )
-
-    @staticmethod
-    def obtener_ultimo_por_proceso(proceso_formativo_id):
-        return (
-            EventoEvaluativo.objects
-            .filter(proceso_formativo_id=proceso_formativo_id)
-            .order_by('-numero')
-            .first()
-        )
-
-    @staticmethod
-    def obtener_siguiente_numero(proceso_formativo_id):
-        """Calcula el número correlativo para la próxima sustentación de este proceso."""
-        ultimo = EventoEvaluativo.objects.filter(
-            proceso_formativo_id=proceso_formativo_id
-        ).order_by('-numero').first()
-        return (ultimo.numero + 1) if ultimo else 1        
-
-    @staticmethod
-    def listar_obligatorias(proceso_formativo_id=None):
-        qs = EventoEvaluativo.objects.filter(es_obligatoria=True, activo=True)
-        if proceso_formativo_id is not None:
-            qs = qs.filter(proceso_formativo_id=proceso_formativo_id)
-        return qs.order_by('fecha_sustentacion')
-
-    @staticmethod
-    def listar_por_resultado(resultado, proceso_formativo_id=None):
-        qs = EventoEvaluativo.objects.filter(resultado=resultado, activo=True)
-        if proceso_formativo_id is not None:
-            qs = qs.filter(proceso_formativo_id=proceso_formativo_id)
-        return qs.order_by('-fecha_sustentacion')
-
-    @staticmethod
-    def listar_sin_acta(proceso_formativo_id=None):
-        qs = EventoEvaluativo.objects.filter(acta_sustentacion__isnull=True, activo=True)
-        if proceso_formativo_id is not None:
-            qs = qs.filter(proceso_formativo_id=proceso_formativo_id)
-        return qs.order_by('fecha_sustentacion')
 
     @staticmethod
     def listar_proximas(proceso_formativo_id=None):

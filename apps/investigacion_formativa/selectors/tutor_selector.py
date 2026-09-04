@@ -12,28 +12,6 @@ class TutorSelector:
         return Tutor.objects.select_related('persona', 'facultad').get(pk=tutor_id)
 
     @staticmethod
-    def buscar(tutor_id):
-        return (
-            Tutor.objects
-            .select_related('persona', 'facultad')
-            .filter(pk=tutor_id)
-            .first()
-        )
-
-    @staticmethod
-    def existe(tutor_id):
-        return Tutor.objects.filter(pk=tutor_id).exists()
-
-    @staticmethod
-    def obtener_por_persona(persona_id):
-        return (
-            Tutor.objects
-            .select_related('facultad')
-            .filter(persona_id=persona_id)
-            .first()
-        )
-
-    @staticmethod
     def existe_para_persona(persona_id):
         return Tutor.objects.filter(persona_id=persona_id).exists()
 
@@ -43,18 +21,6 @@ class TutorSelector:
         if excluir_id is not None:
             qs = qs.exclude(pk=excluir_id)
         return qs.exists()
-
-    @staticmethod
-    def listar_por_facultad(facultad_id):
-        return (
-            Tutor.objects
-            .select_related('persona')
-            .filter(facultad_id=facultad_id)
-        )
-
-    @staticmethod
-    def listar_activos():
-        return Tutor.objects.select_related('persona', 'facultad').filter(estado=True)
 
     @staticmethod
     def listar_activos_por_facultad(facultad_id):

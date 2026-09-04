@@ -35,12 +35,6 @@ class ObjetivosSelector:
         ).exists()
 
     @staticmethod
-    def listar_objetivos_especificos_por_proyecto(proyecto_id):
-        return Objetivos.objects.filter(
-            proyecto_id=proyecto_id, clase='ESPECIFICO', estado=True
-        )
-
-    @staticmethod
     def listar_por_proyecto(proyecto_id, solo_activos=True):
         qs = Objetivos.objects.filter(proyecto_id=proyecto_id)
         if solo_activos:

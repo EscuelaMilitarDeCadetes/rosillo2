@@ -21,34 +21,19 @@ class ParticipanteProcesoSelector:
         )
 
     @staticmethod
-    def buscar(participante_id):
-        return (
-            ParticipanteProceso.objects
-            .select_related('proceso_formativo', 'persona')
-            .filter(pk=participante_id)
-            .first()
-        )
-
-    @staticmethod
-    def existe(participante_id):
-        return ParticipanteProceso.objects.filter(pk=participante_id).exists()
-
-    @staticmethod
     def listar_por_proceso(proceso_formativo_id):
         return (
             ParticipanteProceso.objects
             .select_related('persona')
             .filter(proceso_formativo_id=proceso_formativo_id)
         )
-
+    
     @staticmethod
-    def obtener_por_proceso_y_persona(proceso_formativo_id, persona_id):
-        return (
-            ParticipanteProceso.objects
-            .filter(proceso_formativo_id=proceso_formativo_id, persona_id=persona_id)
-            .first()
+    def listar_estudiantes_por_proceso(proceso_formativo_id):
+        return ParticipanteProceso.objects.select_related('persona').filter(
+            proceso_formativo_id=proceso_formativo_id, rol_en_modalidad='ESTUDIANTE'
         )
-
+    
     @staticmethod
     def listar_activos_por_proceso(proceso_formativo_id):
         return (
@@ -56,9 +41,11 @@ class ParticipanteProcesoSelector:
             .select_related('persona')
             .filter(proceso_formativo_id=proceso_formativo_id, activo=True)
         )
-
+        
     @staticmethod
-    def listar_estudiantes_por_proceso(proceso_formativo_id):
-        return ParticipanteProceso.objects.select_related('persona').filter(
-            proceso_formativo_id=proceso_formativo_id, rol_en_modalidad='ESTUDIANTE'
+    def obtener_por_proceso_y_persona(proceso_formativo_id, persona_id):
+        return (
+            ParticipanteProceso.objects
+            .filter(proceso_formativo_id=proceso_formativo_id, persona_id=persona_id)
+            .first()
         )

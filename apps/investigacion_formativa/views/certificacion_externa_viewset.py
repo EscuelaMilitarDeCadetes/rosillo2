@@ -1,5 +1,4 @@
 # apps/investigacion_formativa/views/certificacion_externa_viewset.py
-
 from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormativa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action

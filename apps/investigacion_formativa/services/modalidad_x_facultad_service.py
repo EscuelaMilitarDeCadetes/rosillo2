@@ -1,3 +1,4 @@
+# apps/investigacion_formativa/services/modalidad_x_facultad_service.py
 from django.db import transaction
 
 from apps.investigacion_formativa.models import ModalidadXFacultad
@@ -21,8 +22,8 @@ class ModalidadXFacultadService:
         return ModalidadXFacultadSelector.obtener(modalidad_x_facultad_id)
 
     @staticmethod
-    def listar_por_facultad(facultad_id):
-        return ModalidadXFacultadSelector.listar_por_facultad(facultad_id)
+    def listar_por_facultad(facultad_id, disponible=None):
+        return ModalidadXFacultadSelector.listar_por_facultad(facultad_id, disponible=disponible)
 
     @staticmethod
     @transaction.atomic
@@ -67,21 +68,6 @@ class ModalidadXFacultadService:
             ejecutor,
             f"Se deshabilitó la modalidad '{vinculo.modalidad.nombre}' para la facultad "
             f"'{vinculo.facultad.nombre_facultad}' (id={vinculo.pk}).",
-            objeto=vinculo,
-        )
-        return vinculo
-
-    @staticmethod
-    @transaction.atomic
-    def eliminar(modalidad_x_facultad_id, ejecutor):
-        vinculo = ModalidadXFacultadSelector.obtener(modalidad_x_facultad_id)
-        ModalidadXFacultadValidator.validar_eliminacion(vinculo)
-        vinculo.disponible = False
-        vinculo.save(update_fields=['disponible'])
-        HistorialService.registrar(
-            ejecutor,
-            f"Se deshabilitó (soft-delete) la modalidad '{vinculo.modalidad.nombre}' para la "
-            f"facultad '{vinculo.facultad.nombre_facultad}' (id={vinculo.pk}).",
             objeto=vinculo,
         )
         return vinculo

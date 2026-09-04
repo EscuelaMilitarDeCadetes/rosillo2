@@ -97,13 +97,3 @@ class ObjetivosServiceTests(InvestigacionFormalFixturesMixin, TestCase):
         encontrado = ObjetivosService.obtener_objetivo_general(self.proyecto.pk)
         self.assertIsNotNone(encontrado)
         self.assertEqual(encontrado.clase, 'PRINCIPAL')
-
-    def test_listar_objetivos_especificos(self):
-        ObjetivosService.crear_objetivo_especifico(
-            proyecto_id=self.proyecto.pk, objetivo='Específico 1', ejecutor=self.ejecutor,
-        )
-        ObjetivosService.crear_objetivo_especifico(
-            proyecto_id=self.proyecto.pk, objetivo='Específico 2', ejecutor=self.ejecutor,
-        )
-        resultado = ObjetivosService.listar_objetivos_especificos(self.proyecto.pk)
-        self.assertEqual(resultado.count(), 2)

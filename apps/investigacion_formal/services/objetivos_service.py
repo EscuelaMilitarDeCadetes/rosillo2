@@ -25,10 +25,6 @@ class ObjetivosService:
         return ObjetivosSelector.obtener_objetivo_general_por_proyecto(proyecto_id)
 
     @staticmethod
-    def listar_objetivos_especificos(proyecto_id):
-        return ObjetivosSelector.listar_objetivos_especificos_por_proyecto(proyecto_id)
-
-    @staticmethod
     @transaction.atomic
     def crear_objetivo_general(proyecto_id, objetivo, ejecutor):
         """Réplica de agregarObjetivoPrincipal: solo puede existir un objetivo

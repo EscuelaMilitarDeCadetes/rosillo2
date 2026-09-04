@@ -94,15 +94,73 @@ class ProcesoFormativoService:
             f"(nota={nota_final}, id={proceso.pk}).",
             objeto=proceso,
         )
+        ProcesoFormativoService._desactivar_participantes_finalizados(proceso, ejecutor)
         return proceso
+    
+    @staticmethod
+    def _desactivar_participantes_finalizados(proceso, ejecutor):
+        """Al calificar el proceso, cada participante deja de estar activo
+        EN ESE PROCESO.
+        Estudiantes y jurados, además, pierden acceso a la plataforma porque
+        su cuenta era para ese trámite puntual. Los tutores conservan el
+        acceso: su cuenta es permanente y puede reutilizarse en otro proceso."""
+        from apps.investigacion_formativa.selectors.participante_proceso_selector import (
+            ParticipanteProcesoSelector,
+        )
+        from apps.investigacion_formativa.services.participante_proceso_service import (
+            ParticipanteProcesoService,
+        )
+        participantes = ParticipanteProcesoSelector.listar_por_proceso(proceso.pk).filter(activo=True)
+        for participante in participantes:
+            ParticipanteProcesoService.finalizar(participante.pk, ejecutor=ejecutor)
+            if participante.rol_en_modalidad in ('ESTUDIANTE', 'JURADO'):
+                ProcesoFormativoService._desactivar_acceso_de_persona(participante.persona_id, ejecutor)
+        estudiante = ProcesoFormativoService._estudiante_del_proceso(proceso)
+        if estudiante is not None and estudiante.estado:
+            from apps.investigacion_formativa.services.estudiante_service import EstudianteService
+            EstudianteService.eliminar(estudiante.pk, ejecutor=ejecutor)
+
+    @staticmethod
+    def _estudiante_del_proceso(proceso):
+        from apps.investigacion_formativa.selectors.estudiante_selector import EstudianteSelector
+        postulacion = proceso.postulacion_origen.first()
+        if postulacion is not None:
+            return postulacion.estudiante
+        from apps.investigacion_formativa.selectors.participante_proceso_selector import (
+            ParticipanteProcesoSelector,
+        )
+        participante_estudiante = (
+            ParticipanteProcesoSelector.listar_por_proceso(proceso.pk)
+            .filter(rol_en_modalidad='ESTUDIANTE')
+            .first()
+        )
+        if participante_estudiante is None:
+            return None
+        return EstudianteSelector.obtener_por_persona(participante_estudiante.persona_id)
+
+    @staticmethod
+    def _desactivar_acceso_de_persona(persona_id, ejecutor):
+        """Bloquea el login de la cuenta vinculada a esta persona, vía la
+        interfaz de gestión de usuarios."""
+        from apps.usuarios.models import UsuarioXPersona
+        from apps.usuarios.services.usuario_facade import UsuarioFacade
+        asignacion = (
+            UsuarioXPersona.objects
+            .filter(persona_id=persona_id, estado=True)
+            .select_related('usuario')
+            .first()
+        )
+        if asignacion is None or not asignacion.usuario.is_active:
+            return
+        UsuarioFacade.service().desactivar_usuario(asignacion.usuario_id, ejecutor=ejecutor, forzar=True)
 
     @staticmethod
     @transaction.atomic
     def activar_segunda_instancia(proceso_id, ejecutor):
         """Reabre la calificación del proceso para una segunda instancia.
         La creación del registro de auditoría de la segunda instancia en sí
-        (SegundaInstancia) se hace por separado con SegundaInstanciaService.crear,
-        que exige datos propios de esa instancia (evaluación, etapa de retorno, etc.)."""
+        se hace por separado que exige datos propios de esa instancia.
+        """
         proceso = ProcesoFormativoSelector.obtener(proceso_id)
         ProcesoFormativoValidator.validar_activacion_segunda_instancia(proceso)
         proceso.aprobado = None

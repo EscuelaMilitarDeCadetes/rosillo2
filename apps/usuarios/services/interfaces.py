@@ -42,3 +42,11 @@ class GestionUsuarioInterface(ABC):
     def reasignar_persona_a_usuario(usuario_id: int, nueva_persona_id: int, ejecutor):
         """Cierra la asignación UsuarioXPersona activa (si existe) y crea una nueva."""
         raise NotImplementedError
+    
+    @staticmethod
+    @abstractmethod
+    def listar_creados_por(ejecutor):
+        """Devuelve todos los Usuario (activos e inactivos) cuyo creado_por
+        es el ejecutor. Permite a Facultad reutilizar/reactivar una cuenta
+        de un tutor o jurado que ya creó antes, en vez de duplicarla."""
+        raise NotImplementedError

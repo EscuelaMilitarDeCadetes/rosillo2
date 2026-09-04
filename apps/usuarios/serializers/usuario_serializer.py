@@ -10,14 +10,15 @@ class UsuarioSerializer(serializers.ModelSerializer):
     # El source directo ya no existe. Usamos un SerializerMethodField.
     persona_actual_nombre = serializers.SerializerMethodField()
     persona_actual_documento = serializers.SerializerMethodField()
-    
+    creado_por_username = serializers.CharField(source='creado_por.username', read_only=True, default=None)
 
     class Meta:
         model = Usuario
         # Definimos los campos explícitamente para incluir los nuevos campos de método
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name', 'is_active', 'is_staff',
-            'persona_actual_nombre', 'persona_actual_documento'
+            'persona_actual_nombre', 'persona_actual_documento',
+            'creado_por', 'creado_por_username',
         ]
     
     def _persona_actual(self, obj):

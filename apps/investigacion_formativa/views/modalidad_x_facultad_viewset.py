@@ -1,3 +1,4 @@
+# apps/investigacion_formativa/views/modalidad_x_facultad_viewset.py
 from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormativa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -20,7 +21,7 @@ class ModalidadXFacultadViewSet(viewsets.ViewSet):
     pagination_class = InvestigacionFormativaPageNumberPagination
 
     def get_permissions(self):
-        if self.action in ["create", "habilitar", "deshabilitar", "destroy"]:
+        if self.action in ["create", "habilitar", "deshabilitar"]:
             return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormativa()]
         else:  # list, retrieve, por_facultad
             return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA), TieneAmbitoFormativa()]
@@ -45,10 +46,6 @@ class ModalidadXFacultadViewSet(viewsets.ViewSet):
         )
         return Response(self.serializer_class(vinculo).data, status=status.HTTP_201_CREATED)
 
-    def destroy(self, request, pk=None):
-        ModalidadXFacultadService.eliminar(pk, ejecutor=request.user)
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
     @action(detail=True, methods=["post"])
     def habilitar(self, request, pk=None):
         vinculo = ModalidadXFacultadService.habilitar(pk, ejecutor=request.user)
@@ -61,5 +58,9 @@ class ModalidadXFacultadViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["get"], url_path="por-facultad/(?P<facultad_id>[^/.]+)")
     def por_facultad(self, request, facultad_id=None):
-        vinculos = ModalidadXFacultadService.listar_por_facultad(facultad_id)
+        disponible_raw = request.query_params.get("disponible")
+        disponible = None
+        if disponible_raw is not None:
+            disponible = disponible_raw.lower() in ("true", "1")
+        vinculos = ModalidadXFacultadService.listar_por_facultad(facultad_id, disponible=disponible)
         return Response(self.serializer_class(vinculos, many=True).data)

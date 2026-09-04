@@ -60,16 +60,16 @@ class ProcesoFormativoXProyectoService:
     @staticmethod
     @transaction.atomic
     def eliminar(vinculo_id, ejecutor):
-        """Hard-delete: el modelo no tiene campo estado/activo (tabla puente pura)."""
         vinculo = ProcesoFormativoXProyectoSelector.obtener(vinculo_id)
         ProcesoFormativoXProyectoValidator.validar_eliminacion(vinculo)
-        pk = vinculo.pk
         proceso_titulo = vinculo.proceso_formativo.titulo
         proyecto_titulo = vinculo.proyecto_formal.titulo
+        vinculo.activo = False
+        vinculo.save(update_fields=['activo'])
         HistorialService.registrar(
             ejecutor,
-            f"Se eliminó la vinculación entre el proceso '{proceso_titulo}' y el "
-            f"proyecto '{proyecto_titulo}' (id={pk}).",
+            f"Se desactivó (soft-delete) la vinculación entre el proceso '{proceso_titulo}' "
+            f"y el proyecto '{proyecto_titulo}' (id={vinculo.pk}).",
+            objeto=vinculo,
         )
-        vinculo.delete()
-        return True
+        return vinculo

@@ -19,7 +19,7 @@ class BancoIdeasService:
     @staticmethod
     def obtener(idea_id):
         return BancoIdeasSelector.obtener(idea_id)
-
+    
     @staticmethod
     def listar_disponibles_por_facultad(facultad_id):
         return BancoIdeasSelector.listar_disponibles_por_facultad(facultad_id)

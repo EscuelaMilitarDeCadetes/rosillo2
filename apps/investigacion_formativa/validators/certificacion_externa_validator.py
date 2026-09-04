@@ -1,5 +1,4 @@
 # apps/investigacion_formativa/validators/certificacion_externa_validator.py
-
 from rest_framework.exceptions import ValidationError
 
 TIPOS_VALIDOS = ('MINOR', 'DIPLOMADO', 'CATEDRA_INTERNACIONAL', 'OTRO')
@@ -16,7 +15,10 @@ class CertificacionExternaValidator:
         CertificacionExternaValidator._validar_institucion(institucion)
         CertificacionExternaValidator._validar_horas_certificadas(horas_certificadas)
         CertificacionExternaValidator._validar_fechas(fecha_inicio, fecha_fin)
-        
+        if certificado_asistencia_id is not None:
+            CertificacionExternaValidator.validar_adjuncion_certificado_asistencia(
+                certificacion=None, certificado_asistencia_id=certificado_asistencia_id
+            )
     @staticmethod
     def validar_actualizacion(certificacion, tipo, nombre_programa, institucion,
                                horas_certificadas, fecha_inicio, fecha_fin):

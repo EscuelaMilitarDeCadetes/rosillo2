@@ -1,3 +1,4 @@
+# apps/investigacion_formativa/services/tutor_service.py
 from django.db import transaction
 
 from apps.investigacion_formativa.models import Tutor
@@ -76,20 +77,6 @@ class TutorService:
         HistorialService.registrar(
             ejecutor,
             f"Se desactivó al tutor '{tutor.persona}' (id={tutor.pk}).",
-            objeto=tutor,
-        )
-        return tutor
-
-    @staticmethod
-    @transaction.atomic
-    def eliminar(tutor_id, ejecutor):
-        tutor = TutorSelector.obtener(tutor_id)
-        TutorValidator.validar_eliminacion(tutor)
-        tutor.estado = False
-        tutor.save(update_fields=['estado'])
-        HistorialService.registrar(
-            ejecutor,
-            f"Se desactivó (soft-delete) al tutor '{tutor.persona}' (id={tutor.pk}).",
             objeto=tutor,
         )
         return tutor

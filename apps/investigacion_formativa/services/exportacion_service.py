@@ -92,7 +92,6 @@ class ExportacionService:
         facultad_label = ExportacionService._facultad_label(
             estudiante.pk if estudiante else None
         )
-
         participantes = ParticipanteProcesoSelector.listar_activos_por_proceso(proceso.pk)
         texto_participantes = "; ".join(
             f"* {p.get_rol_en_modalidad_display()} - {p.persona.nombre} {p.persona.apellido}"

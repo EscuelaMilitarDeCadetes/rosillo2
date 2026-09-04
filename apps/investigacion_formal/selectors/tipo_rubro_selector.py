@@ -12,10 +12,6 @@ class TipoRubroSelector:
         return TipoRubro.objects.get(pk=tipo_rubro_id)
 
     @staticmethod
-    def buscar(tipo_rubro_id):
-        return TipoRubro.objects.filter(pk=tipo_rubro_id).first()
-
-    @staticmethod
     def existe(tipo_rubro_id):
         return TipoRubro.objects.filter(pk=tipo_rubro_id).exists()
 

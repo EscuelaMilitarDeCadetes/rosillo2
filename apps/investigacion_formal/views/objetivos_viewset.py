@@ -19,7 +19,7 @@ class ObjetivosViewSet(viewsets.ViewSet):
             return [combinar(ROLES_CREACION_OPERATIVA), TieneAmbitoFormal()]
         elif self.action in ["update", "destroy"]:
             return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormal()]
-        else:  # list, retrieve, por_proyecto, objetivo_general, objetivos_especificos
+        else:  # list, retrieve, por_proyecto, objetivo_general
             return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL), TieneAmbitoFormal()]
 
     def list(self, request):
@@ -75,8 +75,3 @@ class ObjetivosViewSet(viewsets.ViewSet):
         if objetivo is None:
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(self.serializer_class(objetivo).data)
-
-    @action(detail=False, methods=["get"], url_path="especificos/(?P<proyecto_id>[^/.]+)")
-    def objetivos_especificos(self, request, proyecto_id=None):
-        objetivos = ObjetivosService.listar_objetivos_especificos(proyecto_id)
-        return Response(self.serializer_class(objetivos, many=True).data)

@@ -1,5 +1,4 @@
 # apps/investigacion_formativa/tests/test_actividad_formativa.py
-
 from django.test import TestCase
 from rest_framework.exceptions import ValidationError
 
@@ -62,6 +61,7 @@ class ActividadFormativaServiceTests(InvestigacionFormativaFixturesMixin, TestCa
             proceso_formativo_id=self.proceso.pk,
             responsable_id=self.persona.pk,
             nombre='Actividad original',
+            descripcion='Descripción original',
             ejecutor=self.ejecutor,
         )
         actualizada = ActividadFormativaService.actualizar(
@@ -77,6 +77,7 @@ class ActividadFormativaServiceTests(InvestigacionFormativaFixturesMixin, TestCa
             proceso_formativo_id=self.proceso.pk,
             responsable_id=self.persona.pk,
             nombre='Actividad a completar',
+            descripcion='Descripción de la actividad',
             ejecutor=self.ejecutor,
         )
         ActividadFormativaService.iniciar(actividad.pk, ejecutor=self.ejecutor)
@@ -96,6 +97,7 @@ class ActividadFormativaServiceTests(InvestigacionFormativaFixturesMixin, TestCa
             proceso_formativo_id=self.proceso.pk,
             responsable_id=self.persona.pk,
             nombre='Actividad a iniciar',
+            descripcion='Descripción de la actividad',
             ejecutor=self.ejecutor,
         )
         iniciada = ActividadFormativaService.iniciar(actividad.pk, ejecutor=self.ejecutor)
@@ -106,6 +108,7 @@ class ActividadFormativaServiceTests(InvestigacionFormativaFixturesMixin, TestCa
             proceso_formativo_id=self.proceso.pk,
             responsable_id=self.persona.pk,
             nombre='Actividad ya iniciada',
+            descripcion='Descripción de la actividad',
             ejecutor=self.ejecutor,
         )
         ActividadFormativaService.iniciar(actividad.pk, ejecutor=self.ejecutor)
@@ -117,6 +120,7 @@ class ActividadFormativaServiceTests(InvestigacionFormativaFixturesMixin, TestCa
             proceso_formativo_id=self.proceso.pk,
             responsable_id=self.persona.pk,
             nombre='Actividad a completar',
+            descripcion='Descripción de la actividad',
             ejecutor=self.ejecutor,
         )
         ActividadFormativaService.iniciar(actividad.pk, ejecutor=self.ejecutor)
@@ -132,6 +136,7 @@ class ActividadFormativaServiceTests(InvestigacionFormativaFixturesMixin, TestCa
             proceso_formativo_id=self.proceso.pk,
             responsable_id=self.persona.pk,
             nombre='Actividad sin soporte',
+            descripcion='Descripción de la actividad',
             ejecutor=self.ejecutor,
         )
         ActividadFormativaService.iniciar(actividad.pk, ejecutor=self.ejecutor)
@@ -143,6 +148,7 @@ class ActividadFormativaServiceTests(InvestigacionFormativaFixturesMixin, TestCa
             proceso_formativo_id=self.proceso.pk,
             responsable_id=self.persona.pk,
             nombre='Actividad planificada',
+            descripcion='Descripción de la actividad',
             ejecutor=self.ejecutor,
         )
         documento = self._crear_documento_firma('Soporte actividad 3')
@@ -156,6 +162,7 @@ class ActividadFormativaServiceTests(InvestigacionFormativaFixturesMixin, TestCa
             proceso_formativo_id=self.proceso.pk,
             responsable_id=self.persona.pk,
             nombre='Actividad a cancelar',
+            descripcion='Descripción de la actividad',
             ejecutor=self.ejecutor,
         )
         cancelada = ActividadFormativaService.cancelar(actividad.pk, ejecutor=self.ejecutor)
@@ -166,6 +173,7 @@ class ActividadFormativaServiceTests(InvestigacionFormativaFixturesMixin, TestCa
             proceso_formativo_id=self.proceso.pk,
             responsable_id=self.persona.pk,
             nombre='Actividad a completar antes de cancelar',
+            descripcion='Descripción de la actividad',
             ejecutor=self.ejecutor,
         )
         ActividadFormativaService.iniciar(actividad.pk, ejecutor=self.ejecutor)
@@ -181,6 +189,7 @@ class ActividadFormativaServiceTests(InvestigacionFormativaFixturesMixin, TestCa
             proceso_formativo_id=self.proceso.pk,
             responsable_id=self.persona.pk,
             nombre='Actividad a eliminar',
+            descripcion='Descripción de la actividad',
             ejecutor=self.ejecutor,
         )
         resultado = ActividadFormativaService.eliminar(actividad.pk, ejecutor=self.ejecutor)
@@ -192,6 +201,7 @@ class ActividadFormativaServiceTests(InvestigacionFormativaFixturesMixin, TestCa
             proceso_formativo_id=self.proceso.pk,
             responsable_id=self.persona.pk,
             nombre='Actividad no eliminable',
+            descripcion='Descripción de la actividad',
             ejecutor=self.ejecutor,
         )
         ActividadFormativaService.iniciar(actividad.pk, ejecutor=self.ejecutor)
@@ -203,6 +213,7 @@ class ActividadFormativaServiceTests(InvestigacionFormativaFixturesMixin, TestCa
             proceso_formativo_id=self.proceso.pk,
             responsable_id=self.persona.pk,
             nombre='Actividad del proceso',
+            descripcion='Descripción de la actividad',
             ejecutor=self.ejecutor,
         )
         otro_proceso = self._crear_proceso_formativo(titulo='Otro proceso')

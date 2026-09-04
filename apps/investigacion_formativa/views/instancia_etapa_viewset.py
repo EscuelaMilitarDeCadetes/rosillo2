@@ -11,6 +11,7 @@ from apps.investigacion_formativa.permissions import (
     combinar,
     ROLES_LECTURA_INVESTIGACION_FORMATIVA,
     ROLES_GESTION_INSTANCIA_ETAPA,
+    ROLES_ESCRITURA_GESTION,
 )
 
 
@@ -19,12 +20,9 @@ class InstanciaEtapaViewSet(viewsets.ViewSet):
     pagination_class = InvestigacionFormativaPageNumberPagination
 
     def get_permissions(self):
+        if self.action == "create":
+            return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormativa()]
         if self.action in ["iniciar", "aprobar", "rechazar", "marcar_segunda_instancia"]:
-            # Filtro amplio: cualquier rol que PODRIA llegar a ser responsable
-            # de alguna etapa (Estudiante/Tutor/Jurado/Facultad/Decano/Soporte).
-            # El chequeo fino de que el ejecutor coincida con el rol_responsable
-            # de ESTA etapa concreta lo hace InstanciaEtapaService (ver
-            # _validar_ejecutor_responsable / ejecutor_autorizado_para_etapa).
             return [combinar(ROLES_GESTION_INSTANCIA_ETAPA), TieneAmbitoFormativa()]
         else:  # list, retrieve, por_proceso
             return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA), TieneAmbitoFormativa()]
@@ -39,6 +37,14 @@ class InstanciaEtapaViewSet(viewsets.ViewSet):
     def retrieve(self, request, pk=None):
         instancia = InstanciaEtapaService.obtener(pk)
         return Response(self.serializer_class(instancia).data)
+
+    def create(self, request):
+        instancia = InstanciaEtapaService.crear(
+            proceso_id=request.data.get("proceso"),
+            etapa_id=request.data.get("etapa"),
+            ejecutor=request.user,
+        )
+        return Response(self.serializer_class(instancia).data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=["get"], url_path="por-proceso/(?P<proceso_id>[^/.]+)")
     def por_proceso(self, request, proceso_id=None):

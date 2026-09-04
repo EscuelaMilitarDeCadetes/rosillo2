@@ -17,11 +17,7 @@ class FlujoProcesoSelector:
     @staticmethod
     def obtener(flujo_id):
         return FlujoProceso.objects.get(pk=flujo_id)
-
-    @staticmethod
-    def buscar(flujo_id):
-        return FlujoProceso.objects.filter(pk=flujo_id).first()
-
+    
     @staticmethod
     def existe(flujo_id):
         return FlujoProceso.objects.filter(pk=flujo_id).exists()
@@ -49,13 +45,6 @@ class FlujoProcesoSelector:
         return qs.order_by('-version')
 
     @staticmethod
-    def listar_por_tipo(tipo, activo=None):
-        qs = FlujoProceso.objects.filter(tipo=tipo)
-        if activo is not None:
-            qs = qs.filter(activo=activo)
-        return qs.order_by('modalidad', '-version')
-
-    @staticmethod
     def obtener_version_vigente(modalidad_id):
         """Versión activa y vigente por fecha para una modalidad — la que debe usarse al iniciar un nuevo ProcesoFormativo."""
         hoy = timezone.now().date()
@@ -68,16 +57,5 @@ class FlujoProcesoSelector:
         )
 
     @staticmethod
-    def obtener_ultima_version(modalidad_id):
-        return FlujoProceso.objects.filter(modalidad_id=modalidad_id).order_by('-version').first()
-
-    @staticmethod
     def listar_activos():
         return FlujoProceso.objects.filter(activo=True).select_related('modalidad')
-
-    @staticmethod
-    def listar_vencidos():
-        hoy = timezone.now().date()
-        return FlujoProceso.objects.filter(
-            fecha_vigencia_fin__isnull=False, fecha_vigencia_fin__lt=hoy
-        )

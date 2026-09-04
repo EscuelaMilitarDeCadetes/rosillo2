@@ -1,5 +1,4 @@
 # apps/investigacion_formativa/views/flujo_proceso_viewset.py
-
 from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormativa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -63,6 +62,14 @@ class FlujoProcesoViewSet(viewsets.ViewSet):
             ejecutor=request.user,
         )
         return Response(self.serializer_class(flujo).data)
+    
+    @action(detail=False, methods=["get"], url_path="activos/")
+    def activos(self, request):
+        activo = request.query_params.get("activo")
+        if activo is not None:
+            activo = activo.lower() == "true"
+        flujos = FlujoProcesoService.listar_activos()
+        return Response(self.serializer_class(flujos, many=True).data)
 
     @action(detail=False, methods=["get"], url_path="por-modalidad/(?P<modalidad_id>[^/.]+)")
     def por_modalidad(self, request, modalidad_id=None):

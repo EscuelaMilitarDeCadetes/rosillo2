@@ -1,3 +1,4 @@
+# apps/investigacion_formativa/validators/transicion_flujo_validator.py
 from rest_framework.exceptions import ValidationError
 
 from apps.investigacion_formativa.selectors.transicion_flujo_selector import (
@@ -40,11 +41,6 @@ class TransicionFlujoValidator:
 
     @staticmethod
     def validar_desactivacion(transicion):
-        if not transicion.activo:
-            raise ValidationError("Esta transición ya se encuentra desactivada.")
-
-    @staticmethod
-    def validar_eliminacion(transicion):
         if not transicion.activo:
             raise ValidationError("Esta transición ya se encuentra desactivada.")
 

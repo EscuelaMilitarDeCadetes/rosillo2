@@ -41,13 +41,7 @@ class ModalidadXFacultadServiceTests(InvestigacionFormativaFixturesMixin, TestCa
     def test_habilitar_vinculo_ya_disponible_falla(self):
         vinculo = self._crear_vinculo()
         with self.assertRaises(ValidationError):
-            ModalidadXFacultadService.habilitar(vinculo.pk, ejecutor=self.ejecutor)
-
-    def test_eliminar_vinculo_soft_delete(self):
-        vinculo = self._crear_vinculo()
-        ModalidadXFacultadService.eliminar(vinculo.pk, ejecutor=self.ejecutor)
-        vinculo.refresh_from_db()
-        self.assertFalse(vinculo.disponible)
+            ModalidadXFacultadService.habilitar(vinculo.pk, ejecutor=self.ejecutor)    
 
     def test_listar_por_facultad(self):
         self._crear_vinculo()

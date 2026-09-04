@@ -1,10 +1,10 @@
 # apps/investigacion_formativa/validators/homologacion_validator.py
-
 from rest_framework.exceptions import ValidationError
 
 from apps.investigacion_formativa.selectors.homologacion_selector import HomologacionSelector
-
-ESTADOS_VALIDOS = ('PENDIENTE', 'APROBADA', 'RECHAZADA')
+from apps.investigacion_formativa.selectors.proceso_formativo_selector import (
+    ProcesoFormativoSelector,
+)
 
 
 class HomologacionValidator:
@@ -13,6 +13,7 @@ class HomologacionValidator:
     def validar_creacion(proceso_id, observaciones=None):
         """Se crea automáticamente en estado PENDIENTE al iniciar un proceso en una
         modalidad que permite_homologacion."""
+        HomologacionValidator._validar_modalidad_permite_homologacion(proceso_id)
         HomologacionValidator._validar_unicidad_proceso(proceso_id)
 
     @staticmethod
@@ -31,11 +32,10 @@ class HomologacionValidator:
             )
 
     @staticmethod
-    def validar_filtro_estado(estado):
-        if estado not in ESTADOS_VALIDOS:
-            raise ValidationError(
-                {"estado": f"Estado inválido. Debe ser uno de: {', '.join(ESTADOS_VALIDOS)}."}
-            )
+    def _validar_modalidad_permite_homologacion(proceso_id):
+        proceso = ProcesoFormativoSelector.obtener(proceso_id)
+        if not proceso.flujo_version.modalidad.permite_homologacion:
+            raise ValidationError("La modalidad de este proceso no permite homologación.")
 
     @staticmethod
     def _validar_pendiente(homologacion):

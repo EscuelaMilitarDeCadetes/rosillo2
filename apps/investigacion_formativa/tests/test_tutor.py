@@ -62,14 +62,6 @@ class TutorServiceTests(InvestigacionFormativaFixturesMixin, TestCase):
         activado = TutorService.activar(tutor.pk, ejecutor=self.ejecutor)
         self.assertTrue(activado.estado)
 
-    def test_eliminar_tutor_soft_delete(self):
-        tutor = TutorService.crear(
-            persona_id=self.persona.pk, facultad_id=self.facultad.pk, ejecutor=self.ejecutor,
-        )
-        TutorService.eliminar(tutor.pk, ejecutor=self.ejecutor)
-        tutor.refresh_from_db()
-        self.assertFalse(tutor.estado)
-
     def test_listar_activos_por_facultad(self):
         tutor = TutorService.crear(
             persona_id=self.persona.pk, facultad_id=self.facultad.pk, ejecutor=self.ejecutor,

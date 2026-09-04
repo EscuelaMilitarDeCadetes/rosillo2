@@ -43,6 +43,10 @@ class EvaluacionProcesoService:
     @staticmethod
     def listar_por_proceso(proceso_id):
         return EvaluacionProcesoSelector.listar_por_proceso(proceso_id)
+    
+    @staticmethod
+    def listar_terceros_evaluadores(instancia_etapa_id):
+        return EvaluacionProcesoSelector.listar_terceros_evaluadores(instancia_etapa_id)
 
     @staticmethod
     @transaction.atomic

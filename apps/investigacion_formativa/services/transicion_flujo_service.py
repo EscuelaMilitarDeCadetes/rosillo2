@@ -1,3 +1,4 @@
+# apps/investigacion_formativa/services/transicion_flujo_service.py
 from django.db import transaction
 
 from apps.investigacion_formativa.models import TransicionFlujo
@@ -96,20 +97,6 @@ class TransicionFlujoService:
         HistorialService.registrar(
             ejecutor,
             f"Se desactivó la transición '{transicion.nombre}' (id={transicion.pk}).",
-            objeto=transicion,
-        )
-        return transicion
-
-    @staticmethod
-    @transaction.atomic
-    def eliminar(transicion_id, ejecutor):
-        transicion = TransicionFlujoSelector.obtener(transicion_id)
-        TransicionFlujoValidator.validar_eliminacion(transicion)
-        transicion.activo = False
-        transicion.save(update_fields=['activo'])
-        HistorialService.registrar(
-            ejecutor,
-            f"Se desactivó (soft-delete) la transición '{transicion.nombre}' (id={transicion.pk}).",
             objeto=transicion,
         )
         return transicion

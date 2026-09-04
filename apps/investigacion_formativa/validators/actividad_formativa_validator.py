@@ -1,5 +1,4 @@
 # apps/investigacion_formativa/validators/actividad_formativa_validator.py
-
 from rest_framework.exceptions import ValidationError
 
 
@@ -12,6 +11,7 @@ class ActividadFormativaValidator:
                           fecha_inicio, fecha_fin, horas_dedicadas):
         ActividadFormativaValidator._validar_relaciones(proceso_formativo_id, responsable_id)
         ActividadFormativaValidator._validar_nombre(nombre)
+        ActividadFormativaValidator._validar_descripcion(descripcion)
         ActividadFormativaValidator._validar_fechas(fecha_inicio, fecha_fin)
         ActividadFormativaValidator._validar_horas_dedicadas(horas_dedicadas)
 
@@ -19,6 +19,7 @@ class ActividadFormativaValidator:
     def validar_actualizacion(actividad, nombre, descripcion, fecha_inicio, fecha_fin, horas_dedicadas):
         ActividadFormativaValidator._validar_no_terminal(actividad)
         ActividadFormativaValidator._validar_nombre(nombre)
+        ActividadFormativaValidator._validar_descripcion(descripcion)
         ActividadFormativaValidator._validar_fechas(fecha_inicio, fecha_fin)
         ActividadFormativaValidator._validar_horas_dedicadas(horas_dedicadas)
 
@@ -76,6 +77,13 @@ class ActividadFormativaValidator:
             raise ValidationError({"nombre": "El nombre de la actividad es obligatorio."})
         if len(nombre) > 255:
             raise ValidationError({"nombre": "El nombre supera el máximo de 255 caracteres."})
+        
+    @staticmethod
+    def _validar_descripcion(descripcion):
+        if not descripcion or not descripcion.strip():
+            return
+        if len(descripcion) > 255:
+            raise ValidationError({"descripcion": "La descripcion supera el máximo de 255 caracteres."})
 
     @staticmethod
     def _validar_fechas(fecha_inicio, fecha_fin):

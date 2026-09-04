@@ -64,11 +64,12 @@ class ProcesoFormativoXProyectoServiceTests(InvestigacionFormativaFixturesMixin,
         )
         self.assertEqual(actualizado.pk, vinculo.pk)
 
-    def test_eliminar_vinculo_hard_delete(self):
+    def test_eliminar_vinculo_soft_delete(self):
         vinculo = self._crear_vinculo()
-        pk = vinculo.pk
-        ProcesoFormativoXProyectoService.eliminar(pk, ejecutor=self.ejecutor)
-        self.assertFalse(ProcesoFormativoXProyectoService.listar().filter(pk=pk).exists())
+        ProcesoFormativoXProyectoService.eliminar(vinculo.pk, ejecutor=self.ejecutor)
+        vinculo.refresh_from_db()
+        self.assertFalse(vinculo.activo)
+        self.assertTrue(ProcesoFormativoXProyectoService.obtener(vinculo.pk).pk == vinculo.pk)
 
     def test_listar_por_proceso_formativo(self):
         self._crear_vinculo()

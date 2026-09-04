@@ -1,6 +1,7 @@
 from .actividad_formativa_viewset import ActividadFormativaViewSet
 from .banco_ideas_viewset import BancoIdeasViewSet
 from .certificacion_externa_viewset import CertificacionExternaViewSet
+from .estadisticas_viewset import EstadisticasViewSet
 from .estudiante_viewset import EstudianteViewSet
 from .etapa_flujo_viewset import EtapaFlujoViewSet
 from .evaluacion_proceso_viewset import EvaluacionProcesoViewSet
@@ -30,6 +31,7 @@ __all__ = [
     "ActividadFormativaViewSet",
     "BancoIdeasViewSet",
     "CertificacionExternaViewSet",
+    "EstadisticasViewSet",
     "EstudianteViewSet",
     "EtapaFlujoViewSet",
     "EvaluacionProcesoViewSet",

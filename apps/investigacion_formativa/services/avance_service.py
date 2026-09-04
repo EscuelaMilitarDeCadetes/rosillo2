@@ -9,15 +9,10 @@ from apps.common.services.historial_service import HistorialService
 
 
 class AvanceService:
-    """Réplica del criterio de AvanceService de investigacion_formal: los
-    métodos de cálculo son puros (no escriben nada); solo
-    actualizar_porcentaje_avance() persiste, porque ProcesoFormativo.porcentaje_avance
-    es un campo almacenado (no una @property), a diferencia de Proyecto en
-    investigacion_formal.
- 
-    obtener_resumen() es una lectura compuesta (no persiste nada) que arma el
-    dict consumido por GET /proceso-formativo/{id}/avance/, expuesto en
-    ProcesoFormativoViewSet.
+    """
+    Los métodos de cálculo son puros; solo porcentaje_avance() persiste, 
+    porque porcentaje_avance es un campo almacenado, 
+    a diferencia de Proyecto en investigacion_formal.
     """
 
     @staticmethod
@@ -63,18 +58,11 @@ class AvanceService:
     
     @staticmethod
     def obtener_resumen(proceso_id):
-        """Arma el dict compuesto que consume AvanceProcesoFormativoSerializer
-        (proceso_id, porcentaje_avance, horas_acumuladas, etapas_aprobadas,
-        etapas_totales, en_segunda_instancia, etapa_actual, ultimo_registro).
-        Es una lectura pura (no persiste nada), pensada para tableros de
-        seguimiento del propio estudiante y de Facultad/Decano/Soporte."""
         from apps.investigacion_formativa.selectors.avance_selector import AvanceSelector
-
         proceso = ProcesoFormativoSelector.obtener(proceso_id)
         control_horas = AvanceSelector.obtener_control_horas(proceso_id)
         ultimo_registro = AvanceSelector.obtener_ultimo_registro(proceso_id)
         instancia_actual = AvanceSelector.obtener_instancia_actual(proceso_id)
-
         etapa_actual = None
         if instancia_actual is not None:
             etapa_actual = {
@@ -85,7 +73,6 @@ class AvanceService:
                 "estado": instancia_actual.estado,
                 "fecha_inicio": instancia_actual.fecha_inicio,
             }
-
         ultimo_registro_data = None
         if ultimo_registro is not None:
             ultimo_registro_data = {
@@ -95,10 +82,10 @@ class AvanceService:
                 "horas_reportadas": ultimo_registro.horas_reportadas,
                 "aprobado": ultimo_registro.aprobado,
             }
-
         return {
             "proceso_id": proceso.pk,
             "porcentaje_avance": proceso.porcentaje_avance,
+            "avance_tiempo": AvanceService.calcular_avance_tiempo(proceso_id),
             "horas_acumuladas": control_horas.horas_acumuladas if control_horas else None,
             "etapas_aprobadas": AvanceSelector.contar_etapas_aprobadas(proceso_id),
             "etapas_totales": AvanceSelector.contar_etapas_totales(proceso_id),

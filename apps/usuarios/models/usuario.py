@@ -12,6 +12,12 @@ class Usuario(AbstractUser):
     # Nuevo campo: fuerza el cambio de contraseña en el próximo login.
     # Se activa al crear credenciales iniciales (contraseña temporal).
     debe_cambiar_password = models.BooleanField(default=False)
+    creado_por = models.ForeignKey(
+        'self', null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='usuarios_creados',
+        help_text="Usuario que creó esta cuenta (ej. Facultad). Permite que "
+                   "cada Facultad gestione solo las cuentas que ella misma creó.",
+    )
 
     def __str__(self):
         return self.username

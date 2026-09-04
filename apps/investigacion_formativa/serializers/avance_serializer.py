@@ -1,5 +1,4 @@
 # apps/investigacion_formativa/serializers/avance_serializer.py
-
 from rest_framework import serializers
 
 
@@ -21,12 +20,10 @@ class UltimoRegistroAvanceSerializer(serializers.Serializer):
 
 
 class AvanceProcesoFormativoSerializer(serializers.Serializer):
-    """Serializa la salida compuesta del service de avance de un ProcesoFormativo.
-    No mapea una tabla: el service arma un dict combinando ProcesoFormativo,
-    RegistroActividades, RegistroHoras e InstanciaEtapa (ver AvanceSelector)."""
-
+    """Serializa la salida compuesta del service de avance de un ProcesoFormativo."""
     proceso_id = serializers.IntegerField()
     porcentaje_avance = serializers.FloatField(allow_null=True)
+    avance_tiempo = serializers.FloatField(allow_null=True)
     horas_acumuladas = serializers.FloatField(allow_null=True)
     etapas_aprobadas = serializers.IntegerField()
     etapas_totales = serializers.IntegerField()

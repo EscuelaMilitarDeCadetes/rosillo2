@@ -26,9 +26,8 @@ class ProcesoFormativoXProyectoValidator:
 
     @staticmethod
     def validar_eliminacion(vinculo):
-        # El modelo no tiene campo estado/activo (tabla puente pura, solo las
-        # dos FK); el borrado físico no requiere ninguna precondición.
-        pass
+        if not vinculo.activo:
+            raise ValidationError("Esta vinculación ya se encuentra desactivada.")
 
     @staticmethod
     def _validar_proceso_formativo(proceso_formativo_id):

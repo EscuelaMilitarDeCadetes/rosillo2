@@ -15,10 +15,6 @@ class EstudianteService:
     @staticmethod
     def obtener(estudiante_id):
         return EstudianteSelector.obtener(estudiante_id)
-
-    @staticmethod
-    def listar_por_modalidad_facultad(modalidad_facultad_id):
-        return EstudianteSelector.listar_por_modalidad_facultad(modalidad_facultad_id)
     
     @staticmethod
     def listar_por_facultad(facultad_id, estado=None):
@@ -27,6 +23,10 @@ class EstudianteService:
     @staticmethod
     def listar_por_modalidad(modalidad_id, estado=None):
         return EstudianteSelector.listar_por_modalidad(modalidad_id, estado=estado)
+    
+    @staticmethod
+    def listar_por_modalidad_facultad(modalidad_facultad_id, estado=None):
+        return EstudianteSelector.listar_por_modalidad_facultad(modalidad_facultad_id, estado=estado)
 
     @staticmethod
     @transaction.atomic

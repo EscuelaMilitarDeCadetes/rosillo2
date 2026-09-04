@@ -1,3 +1,4 @@
+# apps/investigacion_formativa/views/validacion_antiplagio_viewset.py
 from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormativa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -20,7 +21,7 @@ class ValidacionAntiplagioViewSet(viewsets.ViewSet):
     pagination_class = InvestigacionFormativaPageNumberPagination
 
     def get_permissions(self):
-        if self.action in ["create", "update", "destroy"]:
+        if self.action in ["create", "update"]:
             return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormativa()]
         else:  # list, retrieve, por_instancia_etapa
             return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA), TieneAmbitoFormativa()]

@@ -74,12 +74,6 @@ class TransicionFlujoServiceTests(InvestigacionFormativaFixturesMixin, TestCase)
         activada = TransicionFlujoService.activar(transicion.pk, ejecutor=self.ejecutor)
         self.assertTrue(activada.activo)
 
-    def test_eliminar_transicion_soft_delete(self):
-        transicion = self._crear_transicion()
-        TransicionFlujoService.eliminar(transicion.pk, ejecutor=self.ejecutor)
-        transicion.refresh_from_db()
-        self.assertFalse(transicion.activo)
-
     def test_listar_por_etapa_origen(self):
         self._crear_transicion()
         resultado = TransicionFlujoService.listar_por_etapa_origen(self.etapa_origen.pk)

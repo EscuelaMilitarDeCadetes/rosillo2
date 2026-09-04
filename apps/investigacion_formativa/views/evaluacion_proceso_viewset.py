@@ -1,5 +1,4 @@
 # apps/investigacion_formativa/views/evaluacion_proceso_viewset.py
-
 from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormativa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -66,4 +65,9 @@ class EvaluacionProcesoViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get"], url_path="por-proceso/(?P<proceso_id>[^/.]+)")
     def por_proceso(self, request, proceso_id=None):
         evaluaciones = EvaluacionProcesoService.listar_por_proceso(proceso_id)
+        return Response(self.serializer_class(evaluaciones, many=True).data)
+
+    @action(detail=False, methods=["get"], url_path="terceros-evaluadores/(?P<proceso_id>[^/.]+)")
+    def terceros_evaluadores(self, request, proceso_id=None):
+        evaluaciones = EvaluacionProcesoService.listar_terceros_evaluadores(proceso_id)
         return Response(self.serializer_class(evaluaciones, many=True).data)

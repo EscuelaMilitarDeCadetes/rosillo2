@@ -1,3 +1,4 @@
+# apps/investigacion_formativa/views/tutor_viewset.py
 from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormativa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -16,7 +17,7 @@ class TutorViewSet(viewsets.ViewSet):
     pagination_class = InvestigacionFormativaPageNumberPagination
 
     def get_permissions(self):
-        if self.action in ["create", "update", "activar", "desactivar", "destroy"]:
+        if self.action in ["create", "update", "activar", "desactivar"]:
             return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormativa()]
         else:  # list, retrieve, por_facultad
             return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA), TieneAmbitoFormativa()]
@@ -47,10 +48,6 @@ class TutorViewSet(viewsets.ViewSet):
             ejecutor=request.user,
         )
         return Response(self.serializer_class(tutor).data)
-
-    def destroy(self, request, pk=None):
-        TutorService.eliminar(pk, ejecutor=request.user)
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=["post"])
     def activar(self, request, pk=None):

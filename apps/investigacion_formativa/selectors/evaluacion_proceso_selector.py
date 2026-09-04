@@ -1,5 +1,3 @@
-from django.db.models import Avg
-
 from apps.investigacion_formativa.models import EvaluacionProceso
 
 
@@ -16,11 +14,7 @@ class EvaluacionProcesoSelector:
     @staticmethod
     def obtener(evaluacion_id):
         return EvaluacionProceso.objects.get(pk=evaluacion_id)
-
-    @staticmethod
-    def buscar(evaluacion_id):
-        return EvaluacionProceso.objects.filter(pk=evaluacion_id).first()
-
+    
     @staticmethod
     def existe(evaluacion_id):
         return EvaluacionProceso.objects.filter(pk=evaluacion_id).exists()
@@ -42,15 +36,6 @@ class EvaluacionProcesoSelector:
         )
 
     @staticmethod
-    def listar_por_evaluador(evaluador_id):
-        return (
-            EvaluacionProceso.objects
-            .select_related('instancia_etapa__etapa')
-            .filter(evaluador_id=evaluador_id)
-            .order_by('-fecha_evaluacion')
-        )
-
-    @staticmethod
     def listar_por_proceso(proceso_id):
         return (
             EvaluacionProceso.objects
@@ -65,30 +50,3 @@ class EvaluacionProcesoSelector:
         if instancia_etapa_id is not None:
             qs = qs.filter(instancia_etapa_id=instancia_etapa_id)
         return qs.select_related('evaluador__persona')
-
-    @staticmethod
-    def listar_no_aprobadas_por_instancia(instancia_etapa_id):
-        return EvaluacionProceso.objects.filter(instancia_etapa_id=instancia_etapa_id, aprobado=False)
-
-    @staticmethod
-    def listar_con_nota_inferior(instancia_etapa_id, umbral=3.5):
-        """Evaluaciones cuya nota está por debajo del umbral (dispara SEGUNDA_INSTANCIA según el flujo)."""
-        return EvaluacionProceso.objects.filter(instancia_etapa_id=instancia_etapa_id, nota__lt=umbral)
-
-    @staticmethod
-    def promedio_nota_por_instancia(instancia_etapa_id):
-        return (
-            EvaluacionProceso.objects
-            .filter(instancia_etapa_id=instancia_etapa_id)
-            .aggregate(promedio=Avg('nota'))
-            .get('promedio')
-        )
-
-    @staticmethod
-    def promedio_nota_ponderado_por_instancia(instancia_etapa_id):
-        """Promedio ponderado usando el campo 'peso' de cada evaluación (no es agregación de BD, se calcula en Python)."""
-        evaluaciones = EvaluacionProceso.objects.filter(instancia_etapa_id=instancia_etapa_id)
-        total_peso = sum(e.peso for e in evaluaciones)
-        if not total_peso:
-            return None
-        return sum(e.nota * e.peso for e in evaluaciones) / total_peso

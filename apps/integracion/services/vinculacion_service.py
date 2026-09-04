@@ -41,10 +41,6 @@ User = get_user_model()
 
 # --------------------------------------------------------------------- #
 # Nombres de rol de plataforma.
-# Antes vivían en apps.integracion.constants (archivo eliminado): desde
-# que se retiró la validación de permisos del validator, este archivo es
-# el único consumidor real de estos valores, así que se trasladaron aquí
-# en vez de mantener un módulo aparte solo para esto.
 # --------------------------------------------------------------------- #
 ROL_SOPORTE = "SOPORTE"
 ROL_SUPERVISOR = "SUPERVISOR"
@@ -510,8 +506,14 @@ class VinculacionService(GestionUsuarioInterface):
         token = secrets.token_urlsafe(32)
         user.token_recuperacion = token
         user.token_creado_en = django_timezone.now()
+        # Registra quién creó la cuenta (ej. Facultad), para poder
+        # scoparle la gestión (desactivar/activar/listar) más adelante.
+        if ejecutor is not None and getattr(ejecutor, 'is_authenticated', False):
+            user.creado_por = ejecutor
+        user.save(update_fields=[
+            'debe_cambiar_password', 'token_recuperacion', 'token_creado_en', 'creado_por',
+        ])
         user.save(update_fields=['debe_cambiar_password', 'token_recuperacion', 'token_creado_en'])
-
         persona_id = data.get('persona_fk')
         if persona_id:
             try:
@@ -519,25 +521,52 @@ class VinculacionService(GestionUsuarioInterface):
                 UsuarioXPersona.objects.create(usuario=user, persona=persona, estado=True)
             except Persona.DoesNotExist:
                 pass
-
         VinculacionService._enviar_enlace_establecimiento_password(
             email=user.email, username=user.username, token=token
         )
-
         HistorialService.registrar(
             ejecutor,
             f"Se crearon las credenciales del usuario '{user.username}' y se envió un enlace "
             "para establecer su contraseña inicial (sin transmitir la contraseña por correo).",
         )
         return user
+    
+    @staticmethod
+    def _ejecutor_es_soporte(ejecutor) -> bool:
+        from apps.usuarios.models import RolXUsuario
+        return RolXUsuario.objects.filter(
+            usuario=ejecutor, rol__nombre_rol=ROL_SOPORTE, estado=True,
+        ).exists()
 
     @staticmethod
-    def desactivar_usuario(user_id: int, ejecutor):
+    def _ejecutor_es_facultad(ejecutor) -> bool:
+        from apps.usuarios.models import RolXUsuario
+        return RolXUsuario.objects.filter(
+            usuario=ejecutor, rol__nombre_rol=ROL_FACULTAD, estado=True,
+        ).exists()
+
+    @staticmethod
+    def _validar_puede_gestionar_usuario(usuario_objetivo, ejecutor):
+        """Soporte puede desactivar/activar cualquier usuario. Facultad solo
+        puede hacerlo sobre usuarios que ella misma creó (creado_por)."""
+        from rest_framework.exceptions import PermissionDenied
+        if VinculacionService._ejecutor_es_soporte(ejecutor):
+            return
+        if (VinculacionService._ejecutor_es_facultad(ejecutor)
+                and usuario_objetivo.creado_por_id == ejecutor.id):
+            return
+        raise PermissionDenied(
+            "Solo puedes gestionar usuarios que tú mismo creaste."
+        )
+
+    @staticmethod
+    def desactivar_usuario(user_id: int, ejecutor, forzar=False):
         """Desactiva un usuario (Soft Delete) estableciendo is_active = False."""
         user = get_object_or_404(User, pk=user_id)
+        if not forzar:
+            VinculacionService._validar_puede_gestionar_usuario(user, ejecutor)
         user.is_active = False
         user.save(update_fields=['is_active'])
-        # Invalida todas las sesiones activas directamente en la base de datos
         tokens_activos = OutstandingToken.objects.filter(user=user, blacklistedtoken__isnull=True)
         for token in tokens_activos:
             BlacklistedToken.objects.get_or_create(token=token)
@@ -550,10 +579,15 @@ class VinculacionService(GestionUsuarioInterface):
     def activar_usuario(user_id: int, ejecutor):
         """Activa un usuario estableciendo is_active = True."""
         user = get_object_or_404(User, pk=user_id)
+        VinculacionService._validar_puede_gestionar_usuario(user, ejecutor)
         user.is_active = True
         user.save(update_fields=['is_active'])
         HistorialService.registrar(ejecutor, f"Se activó el usuario {user.username}. Debe iniciar sesión nuevamente.")
         return user
+
+    @staticmethod
+    def listar_creados_por(ejecutor):
+        return User.objects.filter(creado_por=ejecutor).order_by('-date_joined')
 
     @staticmethod
     def reactivar_usuario(user_id: int, ejecutor):
@@ -619,7 +653,7 @@ class VinculacionService(GestionUsuarioInterface):
         message = (
             "Gusto en saludarlo,\n\n"
             f"Su usuario '{username}' para la plataforma se creó de forma exitosa.\n"
-            "Por seguridad, no enviamos su contraseña por correo. Haga clic en el "
+            "Por seguridad, no enviamos su contraseña por correo. Haga click en el "
             f"siguiente enlace para establecer su contraseña de acceso:\n\n{link}\n\n"
             f"El enlace expirará en {PasswordService.TOKEN_EXPIRATION_HOURS} hora(s).\n\n"
             "Bienvenido a la plataforma ROSILLO."

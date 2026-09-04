@@ -1,3 +1,4 @@
+# apps/investigacion_formativa/validators/tutor_validator.py
 from rest_framework.exceptions import ValidationError
 
 from apps.investigacion_formativa.selectors.tutor_selector import TutorSelector
@@ -28,15 +29,9 @@ class TutorValidator:
             raise ValidationError("Este tutor ya se encuentra desactivado.")
 
     @staticmethod
-    def validar_eliminacion(tutor):
-        if not tutor.estado:
-            raise ValidationError("Este tutor ya se encuentra desactivado.")
-
-    @staticmethod
     def _validar_persona(persona_id):
         if not persona_id:
             raise ValidationError({"persona": "La persona es obligatoria."})
-        # Import diferido: institucional no es dependencia directa de investigacion_formativa
         from apps.institucional.models import Persona
 
         if not Persona.objects.filter(pk=persona_id).exists():
@@ -48,7 +43,6 @@ class TutorValidator:
     def _validar_facultad(facultad_id):
         if not facultad_id:
             raise ValidationError({"facultad": "La facultad es obligatoria."})
-        # Import diferido: institucional no es dependencia directa de investigacion_formativa
         from apps.institucional.models import FacultadEscuela
 
         if not FacultadEscuela.objects.filter(pk=facultad_id).exists():
@@ -56,8 +50,5 @@ class TutorValidator:
 
     @staticmethod
     def _validar_unicidad(persona_id, facultad_id, excluir_id=None):
-        # Redundante con el OneToOneField de 'persona' (ya lo cubre
-        # _validar_persona), pero se deja explícito porque el modelo declara
-        # unique_together ('persona', 'facultad') a nivel de Meta.
         if TutorSelector.existe_para_persona_y_facultad(persona_id, facultad_id, excluir_id=excluir_id):
             raise ValidationError("Ya existe un tutor registrado con esta persona y esta facultad.")

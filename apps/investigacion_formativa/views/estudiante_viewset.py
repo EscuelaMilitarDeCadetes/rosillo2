@@ -22,7 +22,7 @@ class EstudianteViewSet(viewsets.ViewSet):
     def get_permissions(self):
         if self.action in ["create", "update", "desactivar", "reactivar"]:
             return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormativa()]
-        else:  # list, retrieve, por_facultad, por_modalidad
+        else:  # list, retrieve, por_facultad, por_modalidad, por_modalidad_facultad
             return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA), TieneAmbitoFormativa()]
 
     def list(self, request):
@@ -80,3 +80,11 @@ class EstudianteViewSet(viewsets.ViewSet):
     def reactivar(self, request, pk=None):
         estudiante = EstudianteService.activar(estudiante_id=pk, ejecutor=request.user)
         return Response(self.serializer_class(estudiante).data)
+    
+    @action(detail=False, methods=["get"], url_path="por-modalidad-facultad/(?P<modalidad_facultad_id>[^/.]+)")
+    def por_modalidad_facultad(self, request, modalidad_facultad_id=None):
+        estado = request.query_params.get("estado")
+        if estado is not None:
+            estado = estado.lower() == "true"
+        estudiantes = EstudianteService.listar_por_modalidad_facultad(modalidad_facultad_id, estado=estado)
+        return Response(self.serializer_class(estudiantes, many=True).data)

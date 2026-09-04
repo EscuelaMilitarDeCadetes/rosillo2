@@ -13,19 +13,6 @@ class RegistroHorasSelector:
         return RegistroHoras.objects.select_related('proceso').get(pk=registro_horas_id)
 
     @staticmethod
-    def buscar(registro_horas_id):
-        return (
-            RegistroHoras.objects
-            .select_related('proceso')
-            .filter(pk=registro_horas_id)
-            .first()
-        )
-
-    @staticmethod
-    def existe(registro_horas_id):
-        return RegistroHoras.objects.filter(pk=registro_horas_id).exists()
-
-    @staticmethod
     def obtener_por_proceso(proceso_id):
         return (
             RegistroHoras.objects

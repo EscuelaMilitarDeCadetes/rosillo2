@@ -50,13 +50,11 @@ class EventoEvaluativoService:
         EventoEvaluativoValidator.validar_creacion(
             proceso_formativo_id, numero, es_obligatoria, fecha_sustentacion, lugar
         )
-
         es_facultad = ejecutor_es_facultad(ejecutor)
         if es_facultad and not usuario_revisor_id:
             raise ValidationError(
                 {"usuario_revisor_id": "Debe indicar el Decano que revisará esta sustentación."}
             )
-
         evento = EventoEvaluativo.objects.create(
             proceso_formativo_id=proceso_formativo_id,
             numero=numero,
@@ -71,14 +69,12 @@ class EventoEvaluativoService:
             f"'{evento.proceso_formativo.titulo}' para el {fecha_sustentacion} (id={evento.pk}).",
             objeto=evento,
         )
-
         notificar_varios(
             usuarios_ids_participantes_de_proceso(evento.proceso_formativo, ROLES_A_NOTIFICAR_SUSTENTACION),
             f"Se programó la sustentación #{numero} del proceso "
             f"'{evento.proceso_formativo.titulo}' para el {fecha_sustentacion} en '{lugar}'.",
             tipo='info',
         )
-
         if es_facultad:
             tipo_documento = TipoDocumentoSelector.obtener_por_nombre(
                 TIPO_DOCUMENTO_APROBACION_EVENTO_EVALUATIVO
@@ -100,7 +96,6 @@ class EventoEvaluativoService:
                 f"(aprobacion id={aprobacion.pk}).",
                 tipo='info',
             )
-
         return evento
     
     @staticmethod

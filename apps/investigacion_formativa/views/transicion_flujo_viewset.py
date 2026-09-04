@@ -1,3 +1,4 @@
+# apps/investigacion_formativa/views/transicion_flujo_viewset.py
 from apps.usuarios.permissions.tiene_ambito import TieneAmbitoFormativa
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -20,7 +21,7 @@ class TransicionFlujoViewSet(viewsets.ViewSet):
     pagination_class = InvestigacionFormativaPageNumberPagination
 
     def get_permissions(self):
-        if self.action in ["create", "update", "activar", "desactivar", "destroy"]:
+        if self.action in ["create", "update", "activar", "desactivar"]:
             return [combinar(ROLES_CONFIGURACION_FLUJO), TieneAmbitoFormativa()]
         else:  # list, retrieve, por_etapa_origen
             return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA), TieneAmbitoFormativa()]
@@ -60,10 +61,6 @@ class TransicionFlujoViewSet(viewsets.ViewSet):
             orden=request.data.get("orden", 0),
         )
         return Response(self.serializer_class(transicion).data)
-
-    def destroy(self, request, pk=None):
-        TransicionFlujoService.eliminar(pk, ejecutor=request.user)
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=["post"])
     def activar(self, request, pk=None):
