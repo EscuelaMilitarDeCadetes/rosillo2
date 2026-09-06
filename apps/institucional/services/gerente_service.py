@@ -19,7 +19,6 @@ del CRUD genérico): obtener_actual(), finalizar().
 """
 from django.db import transaction
 from django.utils import timezone
-from django.shortcuts import get_object_or_404
 from apps.institucional.models import Gerente
 from apps.institucional.selectors.gerente_selector import GerenteSelector
 from apps.institucional.validators.gerente_validator import GerenteValidator

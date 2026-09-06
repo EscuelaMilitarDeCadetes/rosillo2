@@ -1,5 +1,4 @@
-from django.db.models import Q
-
+# apps/investigacion_formativa/selectors/regla_flujo_selector.py
 from apps.investigacion_formativa.models import ReglaFlujo
 
 
@@ -18,27 +17,10 @@ class ReglaFlujoSelector:
         )
 
     @staticmethod
-    def listar_por_etapa_origen(etapa_origen_id):
-        return (
-            ReglaFlujo.objects
-            .select_related('etapa_destino')
-            .filter(etapa_origen_id=etapa_origen_id)
-            .order_by('prioridad')
-        )
-
-    @staticmethod
     def listar_por_transicion(etapa_origen_id, etapa_destino_id):
         return (
             ReglaFlujo.objects
             .filter(etapa_origen_id=etapa_origen_id, etapa_destino_id=etapa_destino_id)
-            .order_by('prioridad')
-        )
-        
-    @staticmethod
-    def listar_activas_por_transicion_ordenadas(etapa_origen_id, etapa_destino_id):
-        return (
-            ReglaFlujo.objects
-            .filter(etapa_origen_id=etapa_origen_id, etapa_destino_id=etapa_destino_id, activa=True)
             .order_by('prioridad')
         )
 

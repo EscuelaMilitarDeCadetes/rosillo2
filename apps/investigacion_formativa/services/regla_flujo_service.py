@@ -19,7 +19,7 @@ class ReglaFlujoService:
 
     @staticmethod
     def listar_por_transicion(etapa_origen_id, etapa_destino_id):
-        return ReglaFlujoSelector.listar_activas_por_transicion_ordenadas(
+        return ReglaFlujoSelector.listar_por_transicion(
             etapa_origen_id, etapa_destino_id
         )
 

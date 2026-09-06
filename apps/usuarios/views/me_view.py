@@ -35,8 +35,10 @@ class MeView(APIView):
 
         facultad_id = None
         grupo_id = None
+        persona_id = None                      
         persona = UsuarioService.obtener_persona_actual(request.user)
         if persona is not None:
+            persona_id = persona.id            
             from apps.institucional.models import PersonaXGrupo
             vinculo = (
                 PersonaXGrupo.objects
@@ -55,4 +57,5 @@ class MeView(APIView):
             "roles": list(roles),
             "facultad_id": facultad_id,
             "grupo_id": grupo_id,
+            "persona_id": persona_id,          
         })

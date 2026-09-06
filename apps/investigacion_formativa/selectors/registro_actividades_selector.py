@@ -1,5 +1,4 @@
 # apps/investigacion_formativa/selectors/registro_actividades_selector.py
-from django.db.models import Sum
 from apps.investigacion_formativa.models import RegistroActividades
 
 

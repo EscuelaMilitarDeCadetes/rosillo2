@@ -1,6 +1,7 @@
 # Lógica de backend: patrón de capas
 
-Este documento describe el patrón arquitectónico que se aplicó de forma consistente en los seis módulos migrados (`usuarios`, `institucional`, `integracion`, `crm`, `common`, `investigacion_formal`) y que debe seguir aplicándose en `investigacion_formativa`. No describe reglas de negocio puntuales de cada módulo (eso está en `01_architecture.md` y en los documentos de cada módulo), sino la convención de código en sí.
+Este documento describe el patrón arquitectónico que se aplicó de forma consistente en los siete módulos del backend (`usuarios`, `institucional`, `integracion`, `crm`, `common`, `investigacion_formal` e `investigacion_formativa`). 
+No describe reglas de negocio puntuales de cada módulo (eso está en `01_architecture.md` y en los documentos de cada módulo), sino la convención de código en sí.
 
 ## Las cinco capas
 

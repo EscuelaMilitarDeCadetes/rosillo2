@@ -98,7 +98,7 @@ class RolXUsuarioTests(TestCase):
         )
 
     def test_usuario_sin_rol_no_puede_acceder(self):
-        usuario_sin_rol = Usuario.objects.create_user(
+        Usuario.objects.create_user(
             username='sinrol@esmic.edu.co',
             email='sinrol@esmic.edu.co',
             password='Sinrol123*',
@@ -109,7 +109,6 @@ class RolXUsuarioTests(TestCase):
             'password': 'Sinrol123*'
         })
         self.assertEqual(login.status_code, status.HTTP_403_FORBIDDEN)
-        # client_sin_rol ya no aplica: no hay token que emitir
         
     def test_put_no_permitido_sobre_rol_x_usuario(self):
         rxu = RolXUsuario.objects.create(usuario=self.target_user, rol=self.rol_supervisor, estado=True)

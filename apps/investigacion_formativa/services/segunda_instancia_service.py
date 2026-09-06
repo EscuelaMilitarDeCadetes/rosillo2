@@ -5,9 +5,6 @@ from apps.investigacion_formativa.models import SegundaInstancia
 from apps.investigacion_formativa.selectors.segunda_instancia_selector import (
     SegundaInstanciaSelector,
 )
-from apps.investigacion_formativa.selectors.proceso_formativo_selector import (
-    ProcesoFormativoSelector,
-)
 from apps.investigacion_formativa.validators.segunda_instancia_validator import (
     SegundaInstanciaValidator,
 )

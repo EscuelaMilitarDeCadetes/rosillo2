@@ -32,7 +32,7 @@ Se organizan en los siguientes módulos.
 - `Persona`: Maneja la información principal de cada persona
 - `RolGrupo`: Roles que desempeña cada persona dentro de cada grupo
 
-### Módulo: `instegración` (0 tablas)
+### Módulo: `integración` (0 tablas)
 
 ### Módulo: `investigacion_formal` (19 tablas)
 - `Calificacion`: Maneja las calificaciones de las 6 fases de aprobación que tiene cada proyecto interno

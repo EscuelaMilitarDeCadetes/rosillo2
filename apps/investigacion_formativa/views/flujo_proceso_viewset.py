@@ -22,7 +22,7 @@ class FlujoProcesoViewSet(viewsets.ViewSet):
     def get_permissions(self):
         if self.action in ["create", "update", "activar", "desactivar"]:
             return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormativa()]
-        else:  # list, retrieve, por_modalidad, vigente
+        else:  # list, retrieve, activos, por_modalidad, vigente
             return [combinar(ROLES_LECTURA_INVESTIGACION_FORMATIVA), TieneAmbitoFormativa()]
 
     def list(self, request):
@@ -50,9 +50,6 @@ class FlujoProcesoViewSet(viewsets.ViewSet):
         return Response(self.serializer_class(flujo).data, status=status.HTTP_201_CREATED)
 
     def update(self, request, pk=None):
-        # version y tipo no son editables una vez creado el flujo (ver
-        # FlujoProcesoValidator.validar_actualizacion) — si necesitas cambiarlos,
-        # se crea una nueva versión del flujo con FlujoProcesoService.crear().
         flujo = FlujoProcesoService.actualizar(
             flujo_id=pk,
             nombre=request.data.get("nombre"),
@@ -62,8 +59,8 @@ class FlujoProcesoViewSet(viewsets.ViewSet):
             ejecutor=request.user,
         )
         return Response(self.serializer_class(flujo).data)
-    
-    @action(detail=False, methods=["get"], url_path="activos/")
+
+    @action(detail=False, methods=["get"], url_path="activos")
     def activos(self, request):
         activo = request.query_params.get("activo")
         if activo is not None:

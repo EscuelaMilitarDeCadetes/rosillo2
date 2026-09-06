@@ -1,4 +1,3 @@
-from apps.usuarios.serializers.validators import validar_fortaleza_password
 from rest_framework import serializers
 from apps.usuarios.models import Usuario
 from django.contrib.auth import get_user_model

@@ -38,13 +38,6 @@ class InstanciaEtapaValidator:
         InstanciaEtapaValidator._validar_transicion(instancia.estado, 'SEGUNDA_INSTANCIA')
 
     @staticmethod
-    def _validar_estado(estado):
-        if estado not in ESTADOS_VALIDOS:
-            raise ValidationError(
-                {"estado": f"Estado inválido. Debe ser uno de: {', '.join(ESTADOS_VALIDOS)}."}
-            )
-
-    @staticmethod
     def _validar_transicion(estado_actual, nuevo_estado):
         permitidos = TRANSICIONES_PERMITIDAS.get(estado_actual, ())
         if nuevo_estado not in permitidos:

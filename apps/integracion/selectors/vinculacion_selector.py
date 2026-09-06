@@ -5,9 +5,7 @@ Lee datos transversales que cruzan usuarios e institucional.
 Solo lectura — no escribe en ninguna tabla.
 """
 from django.contrib.auth import get_user_model
-
 from apps.usuarios.models import RolXUsuario, UsuarioXPersona
-from apps.institucional.selectors.persona_x_grupo_selector import PersonaXGrupoSelector
 
 User = get_user_model()
 

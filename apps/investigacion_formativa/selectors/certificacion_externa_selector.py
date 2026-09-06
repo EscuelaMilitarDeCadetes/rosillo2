@@ -1,5 +1,4 @@
 # apps/investigacion_formativa/selectors/certificacion_externa_selector.py
-from django.db.models import Sum
 from apps.investigacion_formativa.models import CertificacionExterna
 
 

@@ -1,7 +1,6 @@
-# E:\PROYECTO_ROSILLO\django_react\django\rosillo\apps\investigacion_formativa\permissions.py
-
+# apps\investigacion_formativa\permissions.py
 from apps.usuarios.permissions import (
-    EsEstudiante, EsTutor, EsJurado, EsFacultad, EsDecano, EsSoporte, EsGerente, EsSupervisor
+    EsEstudiante, EsTutor, EsJurado, EsFacultad, EsDecano, EsSoporte,
 )
 
 

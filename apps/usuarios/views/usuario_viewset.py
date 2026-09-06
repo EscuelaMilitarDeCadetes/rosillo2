@@ -6,7 +6,6 @@ from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from ..serializers.usuario_serializer import UsuarioSerializer
-from django.db.models import Prefetch
 from apps.usuarios.services.usuario_facade import UsuarioFacade
 from rest_framework.exceptions import PermissionDenied
 from django.db.models import Prefetch, Q
