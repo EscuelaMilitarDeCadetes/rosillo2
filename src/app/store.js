@@ -17,7 +17,7 @@ import objetivosReducer from '../features/proyectos/objetivosSlice.js'; // Impor
 import productosReducer from '../features/proyectos/productosSlice.js'; // Importa el reducer de productos
 import proyectosReducer from '../features/proyectos/proyectosSlice.js'; // Importa el reducer de proyectos
 import notificacionesReducer from '../features/notificaciones/notificacionesSlice'; // Importa el reducer de notificaciones
-import procesosFormativosReducer from '../features/procesosFormativos/procesosFormativosSlice'; // Importa el reducer de  procesos formativos
+import procesosInvFormativaReducer from '../features/procesosInvFormativa/procesosInvFormativaSlice'; // Importa el reducer de  procesos formativos
 import catalogosReducer from '../features/catalogos/catalogosSlice'; // Importa el reducer de catalogos
 import calificacionResponsableReducer from '../features/calificaciones/calificacionResponsableSlice'; // Importa el reducer de calificaciones
 import historialReducer from '../features/historial/historialSlice'; // Importa el reducer de historial
@@ -27,7 +27,8 @@ import personaXGrupoReducer from '../features/personaXGrupo/personaXGrupoSlice';
 import usuarioAdminReducer from '../features/usuarioAdmin/usuarioAdminSlice'; // Importa el reducer de usuarioAdmin
 import reportesInstitucionalesReducer from '../features/reportesInstitucionales/reportesInstitucionalesSlice'; // Importa el reducer de reportesInstitucionales
 import soporteReducer from '../features/soporte/soporteSlice.js'; // Importa el reducer de soporte
-import estadisticasReducer from '../features/estadisticas/estadisticasSlice'; // Importa el reducer de estadísticas
+import estadisticasFormalReducer from '../features/estadisticas/estadisticasFormalSlice'; // Importa el reducer de estadísticas
+import estadisticasFormativaReducer from '../features/estadisticas/estadisticasFormativaSlice'; // Importa el reducer de estadísticas
 import controlCambiosReducer from '../features/controlCambios/controlCambiosSlice'; // Importa el reducer de control cambios
 import productoXGrupoFiltrosReducer from '../features/catalogos/productoXGrupoFiltrosSlice'; // Importa el reducer de productoXGrupo
 import tipoCalificacionFiltrosReducer from '../features/catalogos/tipoCalificacionFiltrosSlice'; // Importa el reducer de tipoCalificacion
@@ -40,6 +41,33 @@ import documentoFirmanteReducer from "../features/documentoFirmante/documentoFir
 import aprobacionReducer from '../features/aprobacion/aprobacionSlice'; // Importa el reducer de aprobacion
 import plantillaDocumentoReducer from "../features/plantillaDocumento/plantillaDocumentoSlice"; // Importa el reducer de plantillaDocumento
 import tareaReducer from "../features/tarea/tareaSlice"; // Importa el reducer de tarea
+import vinculacionFacultadReducer from '../features/integracion/vinculacionFacultadSlice'; // Importa el reducer de vinculacionFacultad
+import actividadFormativaReducer from '../features/actividadFormativa/actividadFormativaSlice'; // Importa el reducer de actividadFormativa
+import bancoIdeasReducer from '../features/bancoIdeas/bancoIdeasSlice'; // Importa el reducer de bancoIdeas
+import certificacionExternaReducer from '../features/certificacionExterna/certificacionExternaSlice'; // Importa el reducer de certificacionExterna
+import estudianteReducer from '../features/estudiante/estudianteSlice'; // Importa el reducer de estudiante
+import etapaFlujoReducer from '../features/etapaFlujo/etapaFlujoSlice'; // Importa el reducer de etapaFlujo
+import evaluacionProcesoReducer from '../features/evaluacionProceso/evaluacionProcesoSlice'; // Importa el reducer de evaluacionProceso
+import eventoEvaluativoReducer from '../features/eventoEvaluativo/eventoEvaluativoSlice'; // Importa el reducer de eventoEvaluativo
+import flujoProcesoReducer from '../features/flujoProceso/flujoProcesoSlice'; // Importa el reducer de flujoProceso
+import homologacionReducer from '../features/homologacion/homologacionSlice'; // Importa el reducer de homologacion
+import instanciaEtapaReducer from '../features/instanciaEtapa/instanciaEtapaSlice'; // Importa el reducer de instanciaEtapa
+import modalidadXFacultadReducer from '../features/modalidadXFacultad/modalidadXFacultadSlice'; // Importa el reducer de modalidadXFacultad
+import modalidadReducer from '../features/modalidad/modalidadSlice'; // Importa el reducer de modalidad
+import participanteProcesoReducer from '../features/participanteProceso/participanteProcesoSlice'; // Importa el reducer de participanteProceso
+import planTrabajoReducer from '../features/planTrabajo/planTrabajoSlice'; // Importa el reducer de planTrabajo
+import postulacionProcesoReducer from '../features/postulacionProceso/postulacionProcesoSlice'; // Importa el reducer de postulacionProceso
+import procesoFormativoReducer from '../features/procesoFormativo/procesoFormativoSlice'; // Importa el reducer de procesoFormativo
+import procesoFormativoXProyectoReducer from '../features/procesoFormativoXProyecto/procesoFormativoXProyectoSlice'; // Importa el reducer de procesoFormativoXProyecto
+import registroActividadesReducer from '../features/registroActividades/registroActividadesSlice'; // Importa el reducer de registroActividades
+import registroHorasReducer from '../features/registroHoras/registroHorasSlice'; // Importa el reducer de registroHoras
+import reglaFlujoReducer from '../features/reglaFlujo/reglaFlujoSlice'; // Importa el reducer de reglaFlujo
+import requisitoModalidadReducer from '../features/requisitoModalidad/requisitoModalidadSlice'; // Importa el reducer de requisitoModalidad
+import revisionReducer from '../features/revision/revisionSlice'; // Importa el reducer de revision
+import segundaInstanciaReducer from '../features/segundaInstancia/segundaInstanciaSlice'; // Importa el reducer de segundaInstancia
+import transicionFlujoReducer from '../features/transicionFlujo/transicionFlujoSlice'; // Importa el reducer de transicionFlujo
+import tutorReducer from '../features/tutor/tutorSlice'; // Importa el reducer de tutor
+import validacionAntiplagioReducer from '../features/validacionAntiplagio/validacionAntiplagioSlice'; // Importa el reducer de validacionAntiplagio
 
 
 export const store = configureStore({
@@ -60,7 +88,7 @@ export const store = configureStore({
     usuarioLifecycle: usuarioLifecycleReducer, // Añade el reducer de usuarioLifecycle
     metadata: metadataReducer, // Añade el reducer de metadatos
     notificaciones: notificacionesReducer, // Añade el reducer de notificaciones
-    procesosFormativos: procesosFormativosReducer, // Añade el reducer de procesos formativos
+    procesosInvFormativa: procesosInvFormativaReducer, // Añade el reducer de procesos formativos
     catalogos: catalogosReducer, // Añade el reducer de catálogos
     calificacionResponsable: calificacionResponsableReducer, // Añade el reducer de calificaciones por responsable
     historial: historialReducer, // Añade el reducer de historial
@@ -71,7 +99,8 @@ export const store = configureStore({
     usuarioAdmin: usuarioAdminReducer, // Añade el reducer de usuarioAdmin
     reportesInstitucionales: reportesInstitucionalesReducer, // Añade el reducer de reportesInstitucionales
     soporte: soporteReducer, // Añade el reducer soporte
-    estadisticas: estadisticasReducer, // Añade el reducer de estadísticas
+    estadisticasFormal: estadisticasFormalReducer, // Añade el reducer de estadísticas de investigacion formal
+    estadisticasFormativa: estadisticasFormativaReducer, // Añade el reducer de estadísticas de investigacion formativa
     controlCambios: controlCambiosReducer, // Añade el reducer de control de cambios
     productoXGrupoFiltros: productoXGrupoFiltrosReducer, // Añade el reducer de productoXGrupo
     tipoCalificacionFiltros: tipoCalificacionFiltrosReducer, // Añade el reducer de tipoCalificacion
@@ -84,5 +113,32 @@ export const store = configureStore({
     aprobacion: aprobacionReducer, // Añade el reducer de aprobacion
     plantillaDocumento: plantillaDocumentoReducer, // Añade el reducer de plantillaDocumento
     tarea: tareaReducer, // Añade el reducer de tarea
+    vinculacionFacultad: vinculacionFacultadReducer, // Añade el reducer de vinculacionFacultad
+    actividadFormativa: actividadFormativaReducer, // Añade el reducer de actividadFormativa
+    bancoIdeas: bancoIdeasReducer, // Añade el reducer de bancoIdeas
+    certificacionExterna: certificacionExternaReducer, // Añade el reducer de certificacionExterna
+    estudiante: estudianteReducer, // Añade el reducer de estudiante
+    etapaFlujo: etapaFlujoReducer, // Añade el reducer de etapaFlujo
+    evaluacionProceso: evaluacionProcesoReducer, // Añade el reducer de evaluacionProceso
+    eventoEvaluativo: eventoEvaluativoReducer, // Añade el reducer de eventoEvaluativo
+    flujoProceso: flujoProcesoReducer, // Añade el reducer de flujoProceso
+    homologacion: homologacionReducer, // Añade el reducer de homologacion
+    instanciaEtapa: instanciaEtapaReducer, // Añade el reducer de instanciaEtapa
+    modalidadXFacultad: modalidadXFacultadReducer, // Añade el reducer de modalidadXFacultad
+    modalidad: modalidadReducer, // Añade el reducer de modalidad
+    participanteProceso: participanteProcesoReducer, // Añade el reducer de participanteProceso
+    planTrabajo: planTrabajoReducer, // Añade el reducer de planTrabajo
+    postulacionProceso: postulacionProcesoReducer, // Añade el reducer de postulacionProceso
+    procesoFormativo: procesoFormativoReducer, // Añade el reducer de procesoFormativo
+    procesoFormativoXProyecto: procesoFormativoXProyectoReducer, // Añade el reducer de procesoFormativoXProyecto
+    registroActividades: registroActividadesReducer, // Añade el reducer de registroActividades
+    registroHoras: registroHorasReducer, // Añade el reducer de registroHoras
+    reglaFlujo: reglaFlujoReducer, // Añade el reducer de reglaFlujo
+    requisitoModalidad: requisitoModalidadReducer, // Añade el reducer de requisitoModalidad
+    revision: revisionReducer, // Añade el reducer de revision
+    segundaInstancia: segundaInstanciaReducer, // Añade el reducer de segundaInstancia
+    transicionFlujo: transicionFlujoReducer, // Añade el reducer de transicionFlujo
+    tutor: tutorReducer, // Añade el reducer de tutor
+    validacionAntiplagio: validacionAntiplagioReducer, // Añade el reducer de validacionAntiplagio 
   },
 });

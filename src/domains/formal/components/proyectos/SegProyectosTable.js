@@ -8,7 +8,7 @@ import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import axiosInstance from "../../../../api/axiosInstance";
-import { fetchProjects } from "../../../../features/proyectos/proyectosSlice";
+import { fetchProjects, fetchOpcionesFiltroProyectos } from "../../../../features/proyectos/proyectosSlice";
 import InvestigadoresProyectoTable from "./InvestigadoresProyectoTable";
 import ProductosProyectoTable from "./ProductosProyectoTable";
 import { SIN_PAGINAR, OPCIONES_CALIFICACION } from "./segProyectos/formatters";
@@ -17,7 +17,7 @@ import { buildSegProyectosColumns } from "./segProyectos/segProyectosColumns";
 
 const SegProyectosTable = () => {
   const dispatch = useDispatch();
-  const { filteredProjects, totalProjects, loading } = useSelector((state) => state.proyectos);
+  const { filteredProjects, totalProjects, loading, opcionesFiltro } = useSelector((state) => state.proyectos);
   const [facultades, setFacultades] = useState([]);
   const [grupos, setGrupos] = useState([]);
   const [filtros, setFiltros] = useState({
@@ -29,8 +29,7 @@ const SegProyectosTable = () => {
   const [modalInvestigadoresVisible, setModalInvestigadoresVisible] = useState(false);
   const [modalProductosVisible, setModalProductosVisible] = useState(false);
   const [proyectoIdModal, setProyectoIdModal] = useState(null);
-  const [exportando, setExportando] = useState(null);
-  const [opcionesFiltro, setOpcionesFiltro] = useState({ convocatorias: [], aniosInicio: [], aniosFin: [], aniosConvocatoria: [] });
+  const [exportando, setExportando] = useState(null);  
 
   const { cargandoDetalles, detalle } = useProyectoDetalles(filteredProjects);
 
@@ -49,15 +48,8 @@ const SegProyectosTable = () => {
   }, [dispatch, filtros, page]);
 
   useEffect(() => {
-    axiosInstance.get("investigacion-formal/proyecto-convocatoria/opciones-filtro/").then((res) => {
-      setOpcionesFiltro({
-        convocatorias: res.data.convocatorias.map((c) => ({ label: c, value: c })),
-        aniosInicio: res.data.anios_inicio.map((a) => ({ label: String(a), value: a })),
-        aniosFin: res.data.anios_fin.map((a) => ({ label: String(a), value: a })),
-        aniosConvocatoria: res.data.anios_convocatoria.map((a) => ({ label: String(a), value: a })),
-      });
-    });
-  }, []);
+    dispatch(fetchOpcionesFiltroProyectos());
+  }, [dispatch]);
 
   const opcionesResponsable = useMemo(
     () => [

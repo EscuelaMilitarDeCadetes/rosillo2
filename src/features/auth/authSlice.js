@@ -26,6 +26,7 @@ export const loginUser = createAsyncThunk(
         roles: profile.roles,
         facultadId: profile.facultad_id,
         grupoId: profile.grupo_id,
+        personaId: profile.persona_id,   
         debeCambiarPassword: authData.debe_cambiar_password,
         sistema,
       };
@@ -55,6 +56,7 @@ export const loadSession = createAsyncThunk(
         roles: profile.roles,
         facultadId: profile.facultad_id,
         grupoId: profile.grupo_id,
+        personaId: profile.persona_id,
         debeCambiarPassword: profile.debe_cambiar_password,
         sistema: localStorage.getItem('sistemaActivo') || 'formal',
       };
@@ -107,7 +109,8 @@ const initialState = {
   user: null,
   roles: [],
   facultadId: null,
-  grupoId: null,  
+  grupoId: null,
+  personaId: null,
   isAuthenticated: !!localStorage.getItem('accessToken'),
   debeCambiarPassword: false,
   sistemaActivo: localStorage.getItem('sistemaActivo') || null,
@@ -124,6 +127,7 @@ const authSlice = createSlice({
       state.roles = [];
       state.facultadId = null;
       state.grupoId = null;
+      state.personaId = null;
       state.isAuthenticated = false;
       state.debeCambiarPassword = false;
       state.sistemaActivo = null;
@@ -145,6 +149,7 @@ const authSlice = createSlice({
         state.roles = action.payload.roles;
         state.facultadId = action.payload.facultadId;
         state.grupoId = action.payload.grupoId;
+        state.personaId = action.payload.personaId;
         state.debeCambiarPassword = action.payload.debeCambiarPassword;
         state.sistemaActivo = action.payload.sistema;
         state.error = null;
@@ -165,6 +170,7 @@ const authSlice = createSlice({
         state.roles = action.payload.roles;
         state.facultadId = action.payload.facultadId;
         state.grupoId = action.payload.grupoId;
+        state.personaId = action.payload.personaId;
         state.debeCambiarPassword = action.payload.debeCambiarPassword;
         state.sistemaActivo = action.payload.sistema;
       })
@@ -174,6 +180,7 @@ const authSlice = createSlice({
         state.roles = [];
         state.facultadId = null;
         state.grupoId = null;
+        state.personaId = null;
         state.sistemaActivo = null;
       })
       .addCase(logoutUser.fulfilled, (state) => {
@@ -190,6 +197,7 @@ const authSlice = createSlice({
         state.roles = [];
         state.facultadId = null;
         state.grupoId = null;
+        state.personaId = null;
       });
   },
 });

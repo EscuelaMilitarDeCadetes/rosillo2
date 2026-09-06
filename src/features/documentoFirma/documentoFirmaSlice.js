@@ -11,7 +11,6 @@ export const fetchDocumentosHabilitadosParaFirma = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get(`${BASE}habilitados-para-firma/`);
-      // El backend devuelve lista simple (no paginada) para esta acción.
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -40,8 +39,7 @@ export const marcarDocumentoRechazado = createAsyncThunk(
   }
 );
 
-// Reutilizable desde las tablas del dueño del documento (proyecto,
-// convocatoria, calificaciones). No se dispara desde esta pantalla de revisión.
+// Reutilizable desde las tablas del dueño del documento. 
 export const habilitarDocumentoParaFirma = createAsyncThunk(
   "documentoFirma/habilitarParaFirma",
   async (documentoId, { rejectWithValue }) => {
@@ -81,9 +79,9 @@ export const fetchDocumentosPorTipoDocumento = createAsyncThunk(
   }
 );
 
-// Última versión registrada de un tipo de documento (sin importar el objeto
-// al que pertenezca). Complementa a por-tipo-documento cuando solo interesa
-// saber cuál es la versión vigente más reciente.
+// Última versión registrada de un tipo de documento. Complementa 
+// a por-tipo-documento cuando solo interesa saber cuál es la 
+// versión vigente más reciente.
 export const fetchUltimaVersionDocumento = createAsyncThunk(
   "documentoFirma/fetchUltimaVersion",
   async (tipoDocumentoId, { rejectWithValue }) => {
@@ -96,6 +94,30 @@ export const fetchUltimaVersionDocumento = createAsyncThunk(
       return rejectWithValue(
         error.response?.data?.detail ||
           "Error al cargar la última versión de este tipo de documento."
+      );
+    }
+  }
+);
+
+// Documentos vinculados a un objeto puntual del sistema, base del selector 
+// reutilizable de DocumentoFirma por objeto/actividad.
+export const fetchDocumentosPorObjeto = createAsyncThunk(
+  "documentoFirma/fetchPorObjeto",
+  async ({ contentTypeAppLabel, contentTypeModel, objectId }, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`${BASE}por-objeto/`, {
+        params: {
+          content_type_app_label: contentTypeAppLabel,
+          content_type_model: contentTypeModel,
+          object_id: objectId,
+        },
+      });
+      return response.data; // array plano, sin paginar
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.error ||
+          error.response?.data?.detail ||
+          "Error al cargar los documentos vinculados a este objeto."
       );
     }
   }
@@ -119,6 +141,11 @@ const documentoFirmaSlice = createSlice({
     loadingPorTipo: false,
     ultimaVersion: null,
     loadingUltimaVersion: false,
+
+    // Consulta por objeto genérico (selector reutilizable
+    porObjeto: [],
+    loadingPorObjeto: false,
+    errorPorObjeto: null,
   },
   reducers: {
     limpiarErrorDocumentoFirma: (state) => {
@@ -128,6 +155,10 @@ const documentoFirmaSlice = createSlice({
     limpiarPorTipoDocumento: (state) => {
       state.porTipoDocumento = [];
       state.ultimaVersion = null;
+    },
+    limpiarPorObjetoDocumento: (state) => {
+      state.porObjeto = [];
+      state.errorPorObjeto = null;
     },
   },
   extraReducers: (builder) => {
@@ -162,7 +193,7 @@ const documentoFirmaSlice = createSlice({
         state.actioningId = null;
         state.actionError = action.payload;
       })
-      // habilitar para firma (uso futuro en tablas del dueño del documento)
+      // habilitar para firma
       .addCase(habilitarDocumentoParaFirma.pending, (state, action) => {
         state.actioningId = action.meta.arg;
         state.actionError = null;
@@ -198,9 +229,27 @@ const documentoFirmaSlice = createSlice({
       .addCase(fetchUltimaVersionDocumento.rejected, (state, action) => {
         state.loadingUltimaVersion = false;
         state.error = action.payload;
+      })
+      // por objeto genérico (selector reutilizable)
+      .addCase(fetchDocumentosPorObjeto.pending, (state) => {
+        state.loadingPorObjeto = true;
+        state.errorPorObjeto = null;
+      })
+      .addCase(fetchDocumentosPorObjeto.fulfilled, (state, action) => {
+        state.loadingPorObjeto = false;
+        state.porObjeto = action.payload ?? [];
+      })
+      .addCase(fetchDocumentosPorObjeto.rejected, (state, action) => {
+        state.loadingPorObjeto = false;
+        state.errorPorObjeto = action.payload;
+        state.porObjeto = [];
       });
   },
 });
 
-export const { limpiarErrorDocumentoFirma, limpiarPorTipoDocumento } = documentoFirmaSlice.actions;
+export const {
+  limpiarErrorDocumentoFirma,
+  limpiarPorTipoDocumento,
+  limpiarPorObjetoDocumento,
+} = documentoFirmaSlice.actions;
 export default documentoFirmaSlice.reducer;

@@ -28,6 +28,23 @@ export const fetchPersona = createAsyncThunk(
   }
 );
 
+// Selector paginado y filtrado. La búsqueda ahora se resuelve en el servidor, 
+// así que no hay límite implícito sobre cuántas Personas puede tener la base 
+// para que el selector siga funcionando.
+export const buscarPersonas = createAsyncThunk(
+  'personas/buscarPersonas',
+  async ({ q = '', page = 1, pageSize = 15 } = {}, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`${BASE}buscar/`, {
+        params: { q, page, page_size: pageSize },
+      });
+      return response.data; // paginado: { count, results, ... }
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || 'Error al buscar personas.');
+    }
+  }
+);
+
 export const crearPersona = createAsyncThunk(
   'personas/crearPersona',
   async (datos, { dispatch, rejectWithValue }) => {
@@ -74,6 +91,13 @@ const personasSlice = createSlice({
     seleccionadaLoading: false,
     saving: false,
     error: null,
+    // Resultados de la búsqueda server-side (selector paginado), separados
+    // de items/total para no pisar el listado "oficial" paginado de la
+    // tabla de Personas cuando ambos se usan en pantallas distintas.
+    resultadosBusqueda: [],
+    totalBusqueda: 0,
+    busquedaLoading: false,
+    busquedaError: null,
   },
   reducers: {
     limpiarErrorPersona: (state) => {
@@ -81,6 +105,11 @@ const personasSlice = createSlice({
     },
     limpiarPersonaSeleccionada: (state) => {
       state.seleccionada = null;
+    },
+    limpiarResultadosBusquedaPersonas: (state) => {
+      state.resultadosBusqueda = [];
+      state.totalBusqueda = 0;
+      state.busquedaError = null;
     },
   },
   extraReducers: (builder) => {
@@ -108,6 +137,19 @@ const personasSlice = createSlice({
         state.seleccionadaLoading = false;
         state.error = action.payload;
       })
+      .addCase(buscarPersonas.pending, (state) => {
+        state.busquedaLoading = true;
+        state.busquedaError = null;
+      })
+      .addCase(buscarPersonas.fulfilled, (state, action) => {
+        state.busquedaLoading = false;
+        state.resultadosBusqueda = action.payload.results ?? [];
+        state.totalBusqueda = action.payload.count ?? 0;
+      })
+      .addCase(buscarPersonas.rejected, (state, action) => {
+        state.busquedaLoading = false;
+        state.busquedaError = action.payload;
+      })
       .addCase(crearPersona.pending, (state) => {
         state.saving = true;
         state.error = null;
@@ -133,5 +175,9 @@ const personasSlice = createSlice({
   },
 });
 
-export const { limpiarErrorPersona, limpiarPersonaSeleccionada } = personasSlice.actions;
+export const {
+  limpiarErrorPersona,
+  limpiarPersonaSeleccionada,
+  limpiarResultadosBusquedaPersonas,
+} = personasSlice.actions;
 export default personasSlice.reducer;

@@ -47,7 +47,8 @@ import InteraccionesPage from './domains/crm/pages/InteraccionesPage';
 import IndicadoresImpactoPage from './domains/crm/pages/IndicadoresImpactoPage';
 
 
-import EstadisticasDashboardPage from "./domains/estadisticas/pages/EstadisticasDashboardPage";
+import EstadisticasFormalDashboardPage from "./domains/estadisticas/pages/EstadisticasFormalDashboardPage";
+import EstadisticasFormativaDashboardPage from "./domains/estadisticas/pages/EstadisticasFormativaDashboardPage";
 
 
 import AdminConvocatoriasPage from "./domains/formal/pages/AdminConvocatoriasPage";
@@ -68,13 +69,42 @@ import UserConvocatoriaPage from "./domains/formal/pages/UserConvocatoriaPage";
 import UserParticiparConvocatoriaPage from "./domains/formal/pages/UserParticiparConvocatoriaPage";
 
 
+import ActividadesFormativasPage from "./domains/formativa/pages/ActividadesFormativasPage";
+import BancoIdeasPage from "./domains/formativa/pages/BancoIdeasPage";
+import CertificacionesExternasPage from "./domains/formativa/pages/CertificacionesExternasPage";
+import EstudiantesPage from "./domains/formativa/pages/EstudiantesPage";
+import EtapasFlujoPage from "./domains/formativa/pages/EtapasFlujoPage";
+import EvaluacionesProcesoPage from "./domains/formativa/pages/EvaluacionesProcesoPage";
+import EventosEvaluativosPage from "./domains/formativa/pages/EventosEvaluativosPage";
+import FlujosProcesoPage from "./domains/formativa/pages/FlujosProcesoPage";
 import FormativaHomePage from "./domains/formativa/pages/FormativaHomePage";
+import HomologacionesPage from "./domains/formativa/pages/HomologacionesPage";
+import InstanciasEtapaPage from "./domains/formativa/pages/InstanciasEtapaPage";
 import FormativaLoginPage from "./domains/formativa/pages/LoginPage";
+import ModalidadesPage from "./domains/formativa/pages/ModalidadesPage";
+import ModalidadesXFacultadPage from "./domains/formativa/pages/ModalidadesXFacultadPage";
+import ParticipantesProcesoPage from "./domains/formativa/pages/ParticipantesProcesoPage";
+import PlanesTrabajoPage from "./domains/formativa/pages/PlanesTrabajoPage";
+import PostulacionesProcesoPage from "./domains/formativa/pages/PostulacionesProcesoPage";
+import ProcesosFormativosPage from "./domains/formativa/pages/ProcesosFormativosPage";
+import RegistrosActividadesPage from "./domains/formativa/pages/RegistrosActividadesPage";
+import RegistrosHorasPage from "./domains/formativa/pages/RegistrosHorasPage";
+import ReglasFlujoPage from "./domains/formativa/pages/ReglasFlujoPage";
+import RequisitosModalidadPage from "./domains/formativa/pages/RequisitosModalidadPage";
+import RevisionesPage from "./domains/formativa/pages/RevisionesPage";
+import SegundasInstanciasPage from "./domains/formativa/pages/SegundasInstanciasPage";
+import TransicionesFlujoPage from "./domains/formativa/pages/TransicionesFlujoPage";
+import TutoresPage from "./domains/formativa/pages/TutoresPage";
+import ValidacionesAntiplagioPage from "./domains/formativa/pages/ValidacionesAntiplagioPage";
+import VinculosProyectoPage from "./domains/formativa/pages/VinculosProyectoPage";
 
 
 import GerentesPage from './domains/institucional/pages/GerentesPage';
 import PersonasPage from './domains/institucional/pages/PersonasPage';
 import PersonaXGrupoPage from './domains/institucional/pages/PersonaXGrupoPage';
+
+
+import VinculacionFacultadPage from './domains/integracion/pages/VinculacionFacultadPage'
 
 
 import ChangePasswordPage from "./domains/usuarios/pages/ChangePasswordPage";
@@ -126,7 +156,7 @@ function App() {
             <Route path="/forbidden" element={<ForbiddenPage />} />
             <Route path="/server" element={<ServerErrorPage />} />
             {/* Rutas protegidas: cualquier autenticado, sin rol específico */}
-            <Route element={<PrivateRoute />}>
+            <Route element={<PrivateRoute requiredAmbito="formal" />}>
               {/* Rutas comunes. */}
               <Route path="/formal" element={<FormalHomePage />} />
               <Route path="/formativa" element={<FormativaHomePage />} />
@@ -138,7 +168,7 @@ function App() {
               <Route path="/crm/interacciones" element={<InteraccionesPage />} />
               <Route path="/crm/indicadores-impacto" element={<IndicadoresImpactoPage />} />
             </Route>
-            <Route element={<PrivateRoute allowedRoles={["CINTERNO"]} />}>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["CINTERNO"]} />}>
               <Route path="/calificar" element={<CalificarProyectosPage />} />
               <Route path="/institucional/gerentes" element={<GerentesPage />} />
               <Route path="/calificar/:id" element={<CalificarProyectoSeleccionadoPage />} />
@@ -147,52 +177,52 @@ function App() {
               <Route path="/notificaciones/recordatorios" element={<RecordatoriosPage />} />
               <Route path="/plantillas-documento" element={<PlantillasDocumentoPage />} />
             </Route>
-            <Route element={<PrivateRoute allowedRoles={["FACULTAD"]} />}>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["FACULTAD"]} />}>
               <Route path="/participaciones/proyectos-facultad" element={<CalificarProyectosXFacultadPage />} />
             </Route>
-            <Route element={<PrivateRoute allowedRoles={["GRUPO"]} />}>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["GRUPO"]} />}>
               <Route path="/participaciones/proyectos-grupo" element={<CalificarProyectosXGrupoPage />} />
             </Route>
-            <Route element={<PrivateRoute allowedRoles={["SUPERVISOR"]} />}>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["SUPERVISOR"]} />}>
               <Route path="/seguimiento/proyectos" element={<SegProyectosPage />} />
             </Route>
-            <Route element={<PrivateRoute allowedRoles={["CEXTERNO"]} />}>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["CEXTERNO"]} />}>
               <Route path="/proyectos/crear" element={<CrearProyectoExternoPage />} />
             </Route>
-            <Route element={<PrivateRoute allowedRoles={["DECANO", "SUPERVISOR", "FACULTAD", "GRUPO", "CINTERNO", "CEXTERNO"]} />}>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["DECANO", "SUPERVISOR", "FACULTAD", "GRUPO", "CINTERNO", "CEXTERNO"]} />}>
               <Route path="/aprobaciones" element={<AprobacionesPage />} />
               <Route path="/tareas" element={<TareasPage />} />
             </Route>            
-            <Route element={<PrivateRoute allowedRoles={["FACULTAD", "GRUPO"]} />}>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["FACULTAD", "GRUPO"]} />}>
               <Route path="/convocatorias" element={<UserConvocatoriaPage />} />
               <Route path="/mis-proyectos" element={<MisProyectosPage />} />
               <Route path="/participar/:id" element={<UserParticiparConvocatoriaPage />} />
             </Route>            
-            <Route element={<PrivateRoute allowedRoles={["CINTERNO", "ASESOR"]} />}>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["CINTERNO", "ASESOR"]} />}>
               <Route path="/convocatoria/administrar" element={<AdminConvocatoriasPage />} />
             </Route>
-            <Route element={<PrivateRoute allowedRoles={['SOPORTE', 'SUPERVISOR']} />}>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={['SOPORTE', 'SUPERVISOR']} />}>
               <Route path="/historial" element={<HistorialPage />} />
             </Route>
-            <Route element={<PrivateRoute allowedRoles={['DECANO', 'SUPERVISOR', 'GERENTE']} />}>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={['DECANO', 'SUPERVISOR', 'GERENTE']} />}>
               <Route path="/documentos/pendientes-firma" element={<DocumentosPendientesFirmaPage />} />
             </Route>
-            <Route element={<PrivateRoute allowedRoles={['SOPORTE', 'CINTERNO', 'CEXTERNO', 'FACULTAD']} />}>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={['SOPORTE', 'CINTERNO', 'CEXTERNO', 'FACULTAD']} />}>
               <Route path="/crm/entidades-externas" element={<EntidadesExternasPage />} />
             </Route>
-            <Route element={<PrivateRoute allowedRoles={["FACULTAD", "GRUPO", "CINTERNO", "CEXTERNO", "ASESOR", "SUPERVISOR", "DECANO", "GERENTE"]} />}>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["FACULTAD", "GRUPO", "CINTERNO", "CEXTERNO", "ASESOR", "SUPERVISOR", "DECANO", "GERENTE"]} />}>
               <Route path="/proyectos" element={<ProjectsListPage />} />
               <Route path="/proyectos/:id" element={<AllInfoProyectPage />} />
               <Route path="/formal/proyectos/por-estado-aprobado" element={<ProyectosPorEstadoAprobadoPage />} />
-              <Route path="/estadisticas" element={<EstadisticasDashboardPage />} />
+              <Route path="/estadisticasFormal" element={<EstadisticasFormalDashboardPage />} />
               <Route path="/formal/reportes/montos-calificados" element={<ReporteMontosCalificadosPage />} />
             </Route>
-            <Route element={<PrivateRoute allowedRoles={['SOPORTE', 'SUPERVISOR', 'ASESOR', 'FACULTAD', 'GRUPO', 'CINTERNO', 'CEXTERNO', 'DECANO']} />}>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={['SOPORTE', 'SUPERVISOR', 'ASESOR', 'FACULTAD', 'GRUPO', 'CINTERNO', 'CEXTERNO', 'DECANO']} />}>
               <Route path="/institucional/personas" element={<PersonasPage />} />
               <Route path="/institucional/persona-grupo" element={<PersonaXGrupoPage />} />
               <Route path="/usuarios/admin" element={<UsuarioAdminPage />} />
             </Route>
-            <Route element={<PrivateRoute allowedRoles={["SOPORTE"]} />}>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["SOPORTE"]} />}>
               <Route path="/catalogos/roles-plataforma" element={<RolPlataformaPage />} />
               <Route path="/catalogos/grados" element={<GradoEstudiosPage />} />
               <Route path="/catalogos/facultades" element={<FacultadEscuelaPage />} />
@@ -210,6 +240,53 @@ function App() {
               <Route path="/usuarios" element={<UsersPage />} />
               <Route path="/usuarios/usuario-persona" element={<UsuarioXPersonaPage />} />
             </Route>
+            
+            {/* Investigación Formativa — protegida por rol (no confirmado por
+                entidad, ver nota anterior) Y por ámbito: requiere haber
+                entrado por login/formativa/ (sistemaActivo === 'formativa') */}
+            <Route element={<PrivateRoute requiredAmbito="formativa" />}>
+              <Route path="/formativa/procesos" element={<ProcesosFormativosPage />} />
+              <Route path="/formativa/postulaciones" element={<PostulacionesProcesoPage />} />
+              <Route path="/formativa/planes-trabajo" element={<PlanesTrabajoPage />} />
+              <Route path="/formativa/vinculos-proyecto" element={<VinculosProyectoPage />} />
+
+              <Route path="/formativa/estudiantes" element={<EstudiantesPage />} />
+              <Route path="/formativa/participantes" element={<ParticipantesProcesoPage />} />
+              <Route path="/formativa/tutores" element={<TutoresPage />} />
+
+              <Route path="/formativa/modalidades" element={<ModalidadesPage />} />
+              <Route path="/formativa/modalidades-facultad" element={<ModalidadesXFacultadPage />} />
+              <Route path="/formativa/requisitos-modalidad" element={<RequisitosModalidadPage />} />
+
+              <Route path="/formativa/flujos" element={<FlujosProcesoPage />} />
+              <Route path="/formativa/etapas-flujo" element={<EtapasFlujoPage />} />
+              <Route path="/formativa/transiciones-flujo" element={<TransicionesFlujoPage />} />
+              <Route path="/formativa/reglas-flujo" element={<ReglasFlujoPage />} />
+              <Route path="/formativa/instancias-etapa" element={<InstanciasEtapaPage />} />
+
+              <Route path="/formativa/evaluaciones" element={<EvaluacionesProcesoPage />} />
+              <Route path="/formativa/eventos-evaluativos" element={<EventosEvaluativosPage />} />
+              <Route path="/formativa/revisiones" element={<RevisionesPage />} />
+              <Route path="/formativa/validaciones-antiplagio" element={<ValidacionesAntiplagioPage />} />
+              <Route path="/formativa/segundas-instancias" element={<SegundasInstanciasPage />} />
+
+              <Route path="/formativa/actividades" element={<ActividadesFormativasPage />} />
+              <Route path="/formativa/registros-actividades" element={<RegistrosActividadesPage />} />
+              <Route path="/formativa/registros-horas" element={<RegistrosHorasPage />} />
+
+              <Route path="/formativa/banco-ideas" element={<BancoIdeasPage />} />
+              <Route path="/formativa/certificaciones-externas" element={<CertificacionesExternasPage />} />
+              <Route path="/formativa/homologaciones" element={<HomologacionesPage />} />
+            </Route>
+
+            {/* Vinculación de usuarios por Facultad — VinculacionViewSet
+                crear-estudiante/crear-jurado/crear-tutor: ahora exige
+                EsFacultad + TieneAmbitoFormativa en el backend (ver arriba) */}
+            <Route element={<PrivateRoute allowedRoles={["FACULTAD"]} requiredAmbito="formativa" />}>
+              <Route path="/integracion/vinculacion-facultad" element={<VinculacionFacultadPage />} />
+              <Route path="/estadisticasFormativa" element={<EstadisticasFormativaDashboardPage />} />
+            </Route>
+
             {/* Comodín 404: SIEMPRE al final */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

@@ -1,5 +1,5 @@
 // src/domains/common/components/aprobacion/AprobacionesPendientesTable.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -14,12 +14,13 @@ import {
   limpiarErrorAprobacion,
 } from '../../features/aprobacion/aprobacionSlice';
 
-// usuarioId: si se recibe, consulta el turno de ESE usuario en lugar del
-// propio (uso administrativo: un supervisor/decano revisando la cola de
-// otro revisor). soloLectura oculta las acciones aprobar/rechazar, porque
-// resolver el turno de otro revisor no es una acción que deba delegarse
-// desde esta vista de consulta.
-const AprobacionesPendientesTable = ({ usuarioId, soloLectura = false }) => {
+
+const AprobacionesPendientesTable = ({
+  usuarioId,
+  soloLectura = false,
+  filtroTipoDocumento,
+  onSeleccionar,
+}) => {
   const dispatch = useDispatch();
   const { pendientes, loading, error, actioningId, actionError } = useSelector((state) => state.aprobacion);
   const { user } = useSelector((state) => state.auth);
@@ -31,6 +32,11 @@ const AprobacionesPendientesTable = ({ usuarioId, soloLectura = false }) => {
   useEffect(() => {
     if (idEfectivo) dispatch(fetchAprobacionesPendientes(idEfectivo));
   }, [dispatch, idEfectivo]);
+
+  const pendientesFiltradas = useMemo(() => {
+    if (!filtroTipoDocumento) return pendientes;
+    return pendientes.filter((a) => a.tipo_documento_nombre === filtroTipoDocumento);
+  }, [pendientes, filtroTipoDocumento]);
 
   const handleAprobar = (aprobacion) => {
     dispatch(aprobarSolicitud({ aprobacionId: aprobacion.id }));
@@ -49,30 +55,42 @@ const AprobacionesPendientesTable = ({ usuarioId, soloLectura = false }) => {
     });
   };
 
-  const accionesTemplate = (rowData) => (
-    <div className="d-flex gap-2">
-      <Button
-        label="Aprobar"
-        icon="pi pi-check"
-        className="p-button-success p-button-sm"
-        loading={actioningId === rowData.id}
-        onClick={() => handleAprobar(rowData)}
-      />
-      <Button
-        label="Rechazar"
-        icon="pi pi-times"
-        className="p-button-danger p-button-sm"
-        loading={actioningId === rowData.id}
-        onClick={() => abrirRechazo(rowData)}
-      />
-    </div>
-  );
+  const accionesTemplate = (rowData) => {
+    if (onSeleccionar) {
+      return (
+        <Button
+          label="Resolver"
+          icon="pi pi-arrow-right"
+          className="p-button-sm"
+          onClick={() => onSeleccionar(rowData)}
+        />
+      );
+    }
+    return (
+      <div className="d-flex gap-2">
+        <Button
+          label="Aprobar"
+          icon="pi pi-check"
+          className="p-button-success p-button-sm"
+          loading={actioningId === rowData.id}
+          onClick={() => handleAprobar(rowData)}
+        />
+        <Button
+          label="Rechazar"
+          icon="pi pi-times"
+          className="p-button-danger p-button-sm"
+          loading={actioningId === rowData.id}
+          onClick={() => abrirRechazo(rowData)}
+        />
+      </div>
+    );
+  };
 
   return (
     <>
       {error && <Message severity="error" className="mb-3 w-full" text={error} />}
       <DataTable
-        value={pendientes}
+        value={pendientesFiltradas}
         loading={loading}
         emptyMessage={
           soloLectura
@@ -86,7 +104,7 @@ const AprobacionesPendientesTable = ({ usuarioId, soloLectura = false }) => {
         <Column field="fecha_revision" header="Fecha" body={(r) => new Date(r.fecha_revision).toLocaleString('es-CO')} />
         {!soloLectura && <Column header="Acciones" body={accionesTemplate} />}
       </DataTable>
-      {!soloLectura && (
+      {!soloLectura && !onSeleccionar && (
         <Dialog
           header="Rechazar solicitud de aprobación"
           visible={!!modalRechazo}

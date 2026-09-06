@@ -64,6 +64,58 @@ export const fetchRolesActivosUsuario = createAsyncThunk(
   }
 );
 
+export const desactivarUsuario = createAsyncThunk(
+  'usuarioAdmin/desactivarUsuario',
+  async (id, { dispatch, rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(`${BASE}${id}/desactivar/`);
+      dispatch(fetchUsuariosCreadosPorMi());
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || 'Error al desactivar el usuario.');
+    }
+  }
+);
+
+export const activarUsuario = createAsyncThunk(
+  'usuarioAdmin/activarUsuario',
+  async (id, { dispatch, rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(`${BASE}${id}/activar/`);
+      dispatch(fetchUsuariosCreadosPorMi());
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || 'Error al activar el usuario.');
+    }
+  }
+);
+
+export const fetchUsuariosCreadosPorMi = createAsyncThunk(
+  'usuarioAdmin/fetchUsuariosCreadosPorMi',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`${BASE}creados-por-mi/`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || 'Error al cargar tus usuarios creados.');
+    }
+  }
+);
+
+export const buscarUsuarios = createAsyncThunk(
+  'usuarioAdmin/buscarUsuarios',
+  async ({ q = '', page = 1, pageSize = 15 } = {}, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`${BASE}buscar/`, {
+        params: { q, page, page_size: pageSize },
+      });
+      return response.data; // paginado: { count, results, ... }
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || 'Error al buscar usuarios.');
+    }
+  }
+);
+
 const usuarioAdminSlice = createSlice({
   name: 'usuarioAdmin',
   initialState: {
@@ -78,6 +130,9 @@ const usuarioAdminSlice = createSlice({
     dashboardLoading: false,
     rolesActivosPorUsuario: {},
     rolesActivosLoading: false,
+    creadosPorMi: [], 
+    creadosPorMiLoading: false, 
+    transicionandoId: null,
     error: null,
   },
   reducers: {
@@ -108,6 +163,37 @@ const usuarioAdminSlice = createSlice({
       })
       .addCase(fetchUsuario.rejected, (state, action) => {
         state.seleccionadoLoading = false;
+        state.error = action.payload;
+      })
+            .addCase(fetchUsuariosCreadosPorMi.pending, (state) => {
+        state.creadosPorMiLoading = true;
+      })
+      .addCase(fetchUsuariosCreadosPorMi.fulfilled, (state, action) => {
+        state.creadosPorMiLoading = false;
+        state.creadosPorMi = action.payload ?? [];
+      })
+      .addCase(fetchUsuariosCreadosPorMi.rejected, (state, action) => {
+        state.creadosPorMiLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(desactivarUsuario.pending, (state, action) => {
+        state.transicionandoId = action.meta.arg;
+      })
+      .addCase(desactivarUsuario.fulfilled, (state) => {
+        state.transicionandoId = null;
+      })
+      .addCase(desactivarUsuario.rejected, (state, action) => {
+        state.transicionandoId = null;
+        state.error = action.payload;
+      })
+      .addCase(activarUsuario.pending, (state, action) => {
+        state.transicionandoId = action.meta.arg;
+      })
+      .addCase(activarUsuario.fulfilled, (state) => {
+        state.transicionandoId = null;
+      })
+      .addCase(activarUsuario.rejected, (state, action) => {
+        state.transicionandoId = null;
         state.error = action.payload;
       })
       .addCase(fetchUsuariosInactivos.pending, (state) => {

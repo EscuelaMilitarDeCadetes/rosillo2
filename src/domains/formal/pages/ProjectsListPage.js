@@ -15,13 +15,13 @@ import {
   fetchMisProyectos,
   fetchProyectosPorFacultad,
   fetchProyectosPorGrupo,
+  fetchOpcionesFiltroProyectos,
   updateProjectDates,
-} from "../features/proyectos/proyectosSlice";
-import { updateBudget } from "../features/proyectos/montoSlice";
-import useHasRole from "../hooks/useHasRole";
-import useProjectFilters from "../hooks/useProjectFilters";
-import useOpcionesFiltroProyectos from "../hooks/useOpcionesFiltroProyectos";
-import useOpcionesResponsable from "../hooks/useOpcionesResponsable";
+} from "../../../features/proyectos/proyectosSlice";
+import { updateBudget } from "../../../features/proyectos/montoSlice";
+import useHasRole from "../../../hooks/useHasRole";
+import useProjectFilters from "../../../hooks/useProjectFilters";
+import useOpcionesResponsable from "../../../hooks/useOpcionesResponsable";
 import RegisterInvestigatorModal from "../components/proyectos/RegisterInvestigatorModal";
 import AddProductoProyectoModal from "../components/proyectos/AddProductProjectModal";
 import AddObjetivoModal from "../components/proyectos/AddObjetivoModal";
@@ -55,13 +55,12 @@ const ProjectsListPage = () => {
     esModoExterno ? ["CEXTERNO"] : ["CINTERNO", "CEXTERNO"]
   );
 
-  const { filteredProjects, totalProjects, loading, proyectosPorRol, loadingProyectosPorRol } = useSelector(
+  const { filteredProjects, totalProjects, loading, proyectosPorRol, loadingProyectosPorRol, opcionesFiltro } = useSelector(
     (state) => state.proyectos
   );
   const { facultadId, grupoId } = useSelector((state) => state.auth);
 
   const { filtros, setFiltros, page, setPage } = useProjectFilters({ calificacion, esModoExterno, rolParam });
-  const opcionesFiltro = useOpcionesFiltroProyectos();
   const { opcionesResponsableAgrupadas } = useOpcionesResponsable();
 
   const [modalMontoVisible, setModalMontoVisible] = useState(false);
@@ -90,6 +89,10 @@ const ProjectsListPage = () => {
       dispatch(fetchProyectosPorGrupo(grupoId));
     }
   }, [dispatch, rolParam, facultadId, grupoId]);  
+
+  useEffect(() => {
+    dispatch(fetchOpcionesFiltroProyectos());
+  }, [dispatch]);
 
   const abrirModalMonto = (rowData) => {
     setProyectoSeleccionado(rowData);

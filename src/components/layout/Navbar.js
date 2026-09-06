@@ -11,14 +11,13 @@ import {
   marcarTodasLeidas,
 } from '../../features/notificaciones/notificacionesSlice';
 
-
 const Navbar = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { noLeidas } = useSelector((state) => state.notificaciones);
   const { items: notificaciones } = useSelector((state) => state.notificaciones);
   const navigate = useNavigate();
-  const { isAuthenticated, roles, sistemaActivo } = useSelector((state) => state.auth);  
+  const { isAuthenticated, roles, sistemaActivo } = useSelector((state) => state.auth);
 
   // "/" es la LandingPage: si el usuario ya inició sesión, debe
   // volver al home de SU dominio (formal o formativa), no a la LandingPage.
@@ -29,6 +28,13 @@ const Navbar = () => {
     if (!isAuthenticated || !roles) return false;
     return requiredRoles.some(role => roles.includes(role));
   };
+
+  // Ámbito de sesión: refleja el claim 'ambito' del JWT, fijado según el
+  // endpoint de login usado (login/formal/ vs login/formativa/). Se usa
+  // para separar los menús de cada dominio, igual que hasAnyRole separa
+  // por rol de plataforma.
+  const esFormal = isAuthenticated && sistemaActivo === 'formal';
+  const esFormativa = isAuthenticated && sistemaActivo === 'formativa';
 
   const handleLogout = () => {
     dispatch(logoutUser());
@@ -62,7 +68,7 @@ const Navbar = () => {
       case 'error': return 'pi pi-times-circle text-danger';
       default: return 'pi pi-info-circle text-info';
     }
-  };  
+  };
 
   return (
     <header>
@@ -114,109 +120,122 @@ const Navbar = () => {
                         <li><Link className="dropdown-item" to="/catalogos/tipo-rubro">Tipos de Rubro</Link></li>
                       </ul>
                     </li>
-                  )}                  
+                  )}
+                  {hasAnyRole(['FACULTAD']) && (
+                    <Link className="nav-item nav-link" to="/usuarios/admin">Administración de Usuarios</Link>
+                  )}
                   <Link className="nav-item nav-link" to="/perfil">Mi perfil</Link>
                   <Link className="nav-item nav-link" to="/ayuda">Ayuda</Link>
- 
-                  {/* Externos — proyectos externos: ProyectoViewSet.crear_externo = EsCExterno */}
-                  {hasAnyRole(['CEXTERNO']) && (
-                    <li className="nav-item dropdown">
-                      <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Externos
-                      </a>
-                      <ul className="dropdown-menu">
-                        <li><Link className="dropdown-item" to="/proyectos/crear?tipo=externo">Crear Proyecto Externo</Link></li>
-                        <li><Link className="dropdown-item" to="/proyectos?tipo=externo">Administrar Proyectos Externos</Link></li>
-                      </ul>
-                    </li>
-                  )}
- 
-                  {/* Convocatoria — ConvocatoriaViewSet: internas/externas/cambiar-estado = EsCInterno */}
-                  {hasAnyRole(['CINTERNO']) && (
-                    <li className="nav-item dropdown">
-                      <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Convocatoria
-                      </a>
-                      <ul className="dropdown-menu">
-                        <li><Link className="dropdown-item" to="/convocatoria/administrar">Administrar Convocatoria</Link></li>
-                      </ul>
-                    </li>
-                  )}
- 
-                  {hasAnyRole(['FACULTAD', 'GRUPO', 'CINTERNO', 'CEXTERNO', 'ASESOR', 'SUPERVISOR', 'DECANO', 'GERENTE']) && (
-                    <li className="nav-item dropdown">
-                      <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Estadísticas
-                      </a>
-                      <ul className="dropdown-menu">
-                        <li className="nav-item"><Link className="nav-link" to="/estadisticas">Estadísticas</Link></li>
-                      </ul>
-                    </li>
-                  )}
- 
-                  {hasAnyRole(['SUPERVISOR']) && (
-                    <li className="nav-item dropdown">
-                      <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Seguimiento y Control
-                      </a>
-                      <ul className="dropdown-menu">
-                        <li><Link className="dropdown-item" to="/seguimiento/proyectos">A Proyectos</Link></li>
-                      </ul>
-                    </li>
-                  )}
- 
-                  {/* Participaciones — ROLES_CREACION_PROYECTO = Facultad, Grupo */}
-                  {hasAnyRole(['FACULTAD', 'GRUPO']) && (
-                    <li className="nav-item dropdown">
-                      <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Participaciones
-                      </a>
-                      <ul className="dropdown-menu">
-                        <li><Link className="dropdown-item" to="/convocatorias">Convocatorias Abiertas</Link></li>
-                        {hasAnyRole(['FACULTAD']) && (
-                          <li><Link className="dropdown-item" to="/participaciones/proyectos-facultad">Proyectos en curso (Facultad)</Link></li>
-                        )}
-                        {hasAnyRole(['GRUPO']) && (
-                          <li><Link className="dropdown-item" to="/participaciones/proyectos-grupo">Proyectos en curso (Grupo)</Link></li>
-                        )}
-                      </ul>
-                    </li>
-                  )}
- 
-                  {hasAnyRole(['CINTERNO', 'SUPERVISOR', 'FACULTAD', 'GRUPO', 'CEXTERNO']) && (
-                    <li className="nav-item dropdown">
-                      <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Proyectos
-                      </a>
-                      <ul className="dropdown-menu">
-                        {hasAnyRole(['CINTERNO']) && (
-                          <>
-                            <li><Link className="dropdown-item" to="/calificar">Proyectos por calificar</Link></li>
-                            <li><Link className="dropdown-item" to="/proyectos?estado=aprobado">Proyectos aprobados</Link></li>
-                            <li><Link className="dropdown-item" to="/proyectos?estado=rechazado">Proyectos rechazados</Link></li>
-                          </>
-                        )}
-                        {hasAnyRole(['CINTERNO', 'CEXTERNO']) && (
-                          <li><Link className="dropdown-item" to="/proyectos">Todos los Proyectos</Link></li>
-                        )}
-                        {hasAnyRole(['SUPERVISOR']) && (
-                          <li><Link className="dropdown-item" to="/proyectos?rol=supervisor">Mis Proyectos (Supervisor)</Link></li>
-                        )}
-                        {hasAnyRole(['FACULTAD']) && (
-                          <li><Link className="dropdown-item" to="/proyectos?rol=facultad">Proyectos de mi Facultad</Link></li>
-                        )}
-                        {hasAnyRole(['GRUPO']) && (
-                          <li><Link className="dropdown-item" to="/proyectos?rol=grupo">Proyectos de mi Grupo</Link></li>
-                        )}
-                      </ul>
-                    </li>
-                  )}
-                  {(roles.includes('CINTERNO') || roles.includes('SOPORTE')) && (
-                    <li className="nav-item">
-                      <Link className="nav-link" to="/historial">Historial</Link>
-                    </li>
-                  )}
 
+                  {/* ============================================================ */}
+                  {/* Bloque INVESTIGACIÓN FORMAL — solo si sistemaActivo === 'formal' */}
+                  {/* ============================================================ */}
+                  {esFormal && (
+                    <>
+                      {/* Externos — proyectos externos: ProyectoViewSet.crear_externo = EsCExterno */}
+                      {hasAnyRole(['CEXTERNO']) && (
+                        <li className="nav-item dropdown">
+                          <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Externos
+                          </a>
+                          <ul className="dropdown-menu">
+                            <li><Link className="dropdown-item" to="/proyectos/crear?tipo=externo">Crear Proyecto Externo</Link></li>
+                            <li><Link className="dropdown-item" to="/proyectos?tipo=externo">Administrar Proyectos Externos</Link></li>
+                          </ul>
+                        </li>
+                      )}
+
+                      {/* Convocatoria — ConvocatoriaViewSet: internas/externas/cambiar-estado = EsCInterno */}
+                      {hasAnyRole(['CINTERNO']) && (
+                        <li className="nav-item dropdown">
+                          <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Convocatoria
+                          </a>
+                          <ul className="dropdown-menu">
+                            <li><Link className="dropdown-item" to="/convocatoria/administrar">Administrar Convocatoria</Link></li>
+                          </ul>
+                        </li>
+                      )}
+
+                      {/* Participaciones — ROLES_CREACION_PROYECTO = Facultad, Grupo (TieneAmbitoFormal) */}
+                      {hasAnyRole(['FACULTAD', 'GRUPO']) && (
+                        <li className="nav-item dropdown">
+                          <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Participaciones
+                          </a>
+                          <ul className="dropdown-menu">
+                            <li><Link className="dropdown-item" to="/convocatorias">Convocatorias Abiertas</Link></li>
+                            {hasAnyRole(['FACULTAD']) && (
+                              <li><Link className="dropdown-item" to="/participaciones/proyectos-facultad">Proyectos en curso (Facultad)</Link></li>
+                            )}
+                            {hasAnyRole(['GRUPO']) && (
+                              <li><Link className="dropdown-item" to="/participaciones/proyectos-grupo">Proyectos en curso (Grupo)</Link></li>
+                            )}
+                          </ul>
+                        </li>
+                      )}
+
+                      {hasAnyRole(['CINTERNO', 'SUPERVISOR', 'FACULTAD', 'GRUPO', 'CEXTERNO']) && (
+                        <li className="nav-item dropdown">
+                          <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Proyectos
+                          </a>
+                          <ul className="dropdown-menu">
+                            {hasAnyRole(['CINTERNO']) && (
+                              <>
+                                <li><Link className="dropdown-item" to="/calificar">Proyectos por calificar</Link></li>
+                                <li><Link className="dropdown-item" to="/proyectos?estado=aprobado">Proyectos aprobados</Link></li>
+                                <li><Link className="dropdown-item" to="/proyectos?estado=rechazado">Proyectos rechazados</Link></li>
+                              </>
+                            )}
+                            {hasAnyRole(['CINTERNO', 'CEXTERNO']) && (
+                              <li><Link className="dropdown-item" to="/proyectos">Todos los Proyectos</Link></li>
+                            )}
+                            {hasAnyRole(['SUPERVISOR']) && (
+                              <li><Link className="dropdown-item" to="/proyectos?rol=supervisor">Mis Proyectos (Supervisor)</Link></li>
+                            )}
+                            {hasAnyRole(['FACULTAD']) && (
+                              <li><Link className="dropdown-item" to="/proyectos?rol=facultad">Proyectos de mi Facultad</Link></li>
+                            )}
+                            {hasAnyRole(['GRUPO']) && (
+                              <li><Link className="dropdown-item" to="/proyectos?rol=grupo">Proyectos de mi Grupo</Link></li>
+                            )}
+                          </ul>
+                        </li>
+                      )}
+
+                      {hasAnyRole(['SUPERVISOR']) && (
+                        <li className="nav-item dropdown">
+                          <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Seguimiento y Control
+                          </a>
+                          <ul className="dropdown-menu">
+                            <li><Link className="dropdown-item" to="/seguimiento/proyectos">A Proyectos</Link></li>
+                          </ul>
+                        </li>
+                      )}
+
+                      {(roles.includes('CINTERNO') || roles.includes('SOPORTE')) && (
+                        <li className="nav-item">
+                          <Link className="nav-link" to="/historial">Historial</Link>
+                        </li>
+                      )}
+
+                      {hasAnyRole(['FACULTAD', 'GRUPO', 'CINTERNO', 'CEXTERNO', 'ASESOR', 'SUPERVISOR', 'DECANO', 'GERENTE']) && (
+                        <li className="nav-item dropdown">
+                          <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Estadísticas
+                          </a>
+                          <ul className="dropdown-menu">
+                            <li className="nav-item"><Link className="nav-link" to="/estadisticasFormal">Estadísticas</Link></li>
+                          </ul>
+                        </li>
+                      )}
+                    </>
+                  )}                  
+
+                  {/* CRM — no confirmado si el backend la restringe por ámbito;
+                      queda visible en ambos hasta verificarlo */}
                   <li className="nav-item dropdown">
                     <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                       CRM
@@ -230,14 +249,92 @@ const Navbar = () => {
                     </ul>
                   </li>
 
+                  {/* ================================================================ */}
+                  {/* Bloque INVESTIGACIÓN FORMATIVA — solo si sistemaActivo === 'formativa' */}
+                  {/* ================================================================ */}
+                  {esFormativa && (
+                    <li className="nav-item dropdown">
+                      <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Investigación Formativa
+                      </a>
+                      <ul className="dropdown-menu" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+                        <li><Link className="dropdown-item" to="/formativa">Inicio</Link></li>
+
+                        <li><h6 className="dropdown-header">Procesos</h6></li>
+                        <li><Link className="dropdown-item" to="/formativa/procesos">Procesos Formativos</Link></li>
+                        <li><Link className="dropdown-item" to="/formativa/postulaciones">Postulaciones</Link></li>
+                        <li><Link className="dropdown-item" to="/formativa/planes-trabajo">Planes de Trabajo</Link></li>
+                        <li><Link className="dropdown-item" to="/formativa/vinculos-proyecto">Vínculos con Proyectos Formales</Link></li>
+
+                        <li><hr className="dropdown-divider" /></li>
+                        <li><h6 className="dropdown-header">Personas</h6></li>
+                        <li><Link className="dropdown-item" to="/formativa/estudiantes">Estudiantes</Link></li>
+                        <li><Link className="dropdown-item" to="/formativa/participantes">Participantes de Proceso</Link></li>
+                        <li><Link className="dropdown-item" to="/formativa/tutores">Tutores</Link></li>
+                        {/* Crear Usuario: acción de VinculacionViewSet (crear-estudiante/
+                            crear-jurado/crear-tutor), permission_classes=[EsFacultad].
+                            El backend no exige ambito='formativa' en este endpoint (no
+                            tiene TieneAmbitoFormal/TieneAmbitoFormativa), pero por
+                            coherencia funcional se ubica aquí y no en Participaciones. */}
+                        {hasAnyRole(['FACULTAD']) && (
+                          <li><Link className="dropdown-item" to="/integracion/vinculacion-facultad">Crear Usuario (Estudiante/Jurado/Tutor)</Link></li>
+                        )}
+                        {hasAnyRole(['FACULTAD']) && (
+                          <li className="nav-item dropdown">
+                          <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Estadísticas
+                          </a>
+                          <ul className="dropdown-menu">
+                            <li className="nav-item"><Link className="nav-link" to="/estadisticasFormativa">Estadísticas</Link></li>
+                          </ul>
+                        </li>
+                        )}
+
+                        <li><hr className="dropdown-divider" /></li>
+                        <li><h6 className="dropdown-header">Modalidades</h6></li>
+                        <li><Link className="dropdown-item" to="/formativa/modalidades">Modalidades</Link></li>
+                        <li><Link className="dropdown-item" to="/formativa/modalidades-facultad">Modalidades por Facultad</Link></li>
+                        <li><Link className="dropdown-item" to="/formativa/requisitos-modalidad">Requisitos de Modalidad</Link></li>
+
+                        <li><hr className="dropdown-divider" /></li>
+                        <li><h6 className="dropdown-header">Flujo de Proceso</h6></li>
+                        <li><Link className="dropdown-item" to="/formativa/flujos">Flujos de Proceso</Link></li>
+                        <li><Link className="dropdown-item" to="/formativa/etapas-flujo">Etapas de Flujo</Link></li>
+                        <li><Link className="dropdown-item" to="/formativa/transiciones-flujo">Transiciones de Flujo</Link></li>
+                        <li><Link className="dropdown-item" to="/formativa/reglas-flujo">Reglas de Flujo</Link></li>
+                        <li><Link className="dropdown-item" to="/formativa/instancias-etapa">Instancias de Etapa</Link></li>
+
+                        <li><hr className="dropdown-divider" /></li>
+                        <li><h6 className="dropdown-header">Evaluación</h6></li>
+                        <li><Link className="dropdown-item" to="/formativa/evaluaciones">Evaluaciones de Proceso</Link></li>
+                        <li><Link className="dropdown-item" to="/formativa/eventos-evaluativos">Sustentaciones</Link></li>
+                        <li><Link className="dropdown-item" to="/formativa/revisiones">Revisiones</Link></li>
+                        <li><Link className="dropdown-item" to="/formativa/validaciones-antiplagio">Validaciones de Antiplagio</Link></li>
+                        <li><Link className="dropdown-item" to="/formativa/segundas-instancias">Segundas Instancias</Link></li>
+
+                        <li><hr className="dropdown-divider" /></li>
+                        <li><h6 className="dropdown-header">Actividades y Horas</h6></li>
+                        <li><Link className="dropdown-item" to="/formativa/actividades">Actividades Formativas</Link></li>
+                        <li><Link className="dropdown-item" to="/formativa/registros-actividades">Registros de Actividades</Link></li>
+                        <li><Link className="dropdown-item" to="/formativa/registros-horas">Control de Horas</Link></li>
+
+                        <li><hr className="dropdown-divider" /></li>
+                        <li><h6 className="dropdown-header">Otros</h6></li>
+                        <li><Link className="dropdown-item" to="/formativa/banco-ideas">Banco de Ideas</Link></li>
+                        <li><Link className="dropdown-item" to="/formativa/certificaciones-externas">Certificaciones Externas</Link></li>
+                        <li><Link className="dropdown-item" to="/formativa/homologaciones">Homologaciones</Link></li>
+                      </ul>
+                    </li>
+                  )}
+
+                  {/* Documentos/Aprobaciones/Tareas — no confirmado si son exclusivas
+                      de un ámbito (apps.common suele ser compartida); visibles en ambos */}
                   {hasAnyRole(['DECANO', 'SUPERVISOR', 'GERENTE']) && (
                     <li><Link className="dropdown-item" to="/documentos/pendientes-firma">Documentos Pendientes de Firma</Link></li>
                   )}
-
                   {hasAnyRole(['DECANO', 'SUPERVISOR', 'FACULTAD', 'GRUPO', 'CINTERNO', 'CEXTERNO']) && (
                     <li><Link className="dropdown-item" to="/aprobaciones">Aprobaciones</Link></li>
                   )}
-
                   <li><Link className="dropdown-item" to="/firmas/pendientes">Mis Firmas Pendientes</Link></li>
                   <li><Link className="dropdown-item" to="/documentos/por-tipo">Documentos por Tipo</Link></li>
                   <li><Link className="dropdown-item" to="/plantillas-documento">Plantillas de Documento</Link></li>
@@ -246,7 +343,7 @@ const Navbar = () => {
                   )}
                   {user?.is_staff && (
                     <li><Link className="dropdown-item" to="/notificaciones/recordatorios">Recordatorios Masivos</Link></li>
-                  )}                  
+                  )}
 
                   {/* Notificaciones — mismo patrón de dropdown Bootstrap usado en Catálogos/Convocatoria */}
                   <li className="nav-item dropdown">
@@ -304,8 +401,8 @@ const Navbar = () => {
                         ))
                       )}
                     </ul>
-                  </li>                  
-                  
+                  </li>
+
                   <Button label="Cerrar Sesión" icon="pi pi-sign-out" className="p-button-text p-button-sm nav-item nav-link" onClick={handleLogout} />
                 </>
               ) : (

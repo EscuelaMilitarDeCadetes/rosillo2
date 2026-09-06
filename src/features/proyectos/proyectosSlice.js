@@ -224,6 +224,26 @@ export const fetchProyectosPorGrupo = createAsyncThunk(
   }
 );
 
+// Thunk para las opciones de los dropdowns de filtro (convocatoria, años).
+export const fetchOpcionesFiltroProyectos = createAsyncThunk(
+  'proyectos/fetchOpcionesFiltroProyectos',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(
+        'investigacion-formal/proyecto-convocatoria/opciones-filtro/'
+      );
+      return {
+        convocatorias: response.data.convocatorias.map((c) => ({ label: c, value: c })),
+        aniosInicio: response.data.anios_inicio.map((a) => ({ label: String(a), value: a })),
+        aniosFin: response.data.anios_fin.map((a) => ({ label: String(a), value: a })),
+        aniosConvocatoria: response.data.anios_convocatoria.map((a) => ({ label: String(a), value: a })),
+      };
+    } catch (error) {
+      return rejectWithValue('Error al cargar las opciones de filtro.');
+    }
+  }
+);
+
 const proyectosSlice = createSlice({
   name: "proyectos",
   initialState: {
@@ -238,6 +258,9 @@ const proyectosSlice = createSlice({
     errorProyectosPorRol: null,
     loadingPorEstadoAprobado: false,
     errorPorEstadoAprobado: null,
+    opcionesFiltro: { convocatorias: [], aniosInicio: [], aniosFin: [], aniosConvocatoria: [] },
+    loadingOpcionesFiltro: false,
+    errorOpcionesFiltro: null,
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -383,6 +406,18 @@ const proyectosSlice = createSlice({
       .addCase(fetchProyectosPorEstadoAprobado.rejected, (state, action) => {
         state.loadingPorEstadoAprobado = false;
         state.errorPorEstadoAprobado = action.payload;
+      })
+      .addCase(fetchOpcionesFiltroProyectos.pending, (state) => {
+        state.loadingOpcionesFiltro = true;
+        state.errorOpcionesFiltro = null;
+      })
+      .addCase(fetchOpcionesFiltroProyectos.fulfilled, (state, action) => {
+        state.loadingOpcionesFiltro = false;
+        state.opcionesFiltro = action.payload;
+      })
+      .addCase(fetchOpcionesFiltroProyectos.rejected, (state, action) => {
+        state.loadingOpcionesFiltro = false;
+        state.errorOpcionesFiltro = action.payload;
       });
   },
 });
