@@ -1,9 +1,13 @@
 from apps.common.pagination import CommonPageNumberPagination
+from apps.usuarios.permissions.es_cinterno import EsCInterno
 from apps.usuarios.permissions.es_soporte import EsSoporte
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from django.conf import settings
+from django.http import FileResponse
+import os
 from apps.common.serializers import PlantillaDocumentoSerializer
 from apps.common.services.plantilla_documento_service import PlantillaDocumentoService
 
@@ -13,11 +17,11 @@ class PlantillaDocumentoViewSet(viewsets.ViewSet):
     pagination_class = CommonPageNumberPagination
 
     def get_permissions(self):
-        acciones_autoservicio = ['list', 'retrieve', 'por_tipo_documento']
+        acciones_autoservicio = ['list', 'retrieve', 'por_tipo_documento', 'descargar']
         if self.action in acciones_autoservicio:
             permission_classes = [IsAuthenticated]
         else:
-            permission_classes = [EsSoporte]
+            permission_classes = [EsSoporte | EsCInterno]
         return [permission() for permission in permission_classes]
 
     def list(self, request):
@@ -59,3 +63,13 @@ class PlantillaDocumentoViewSet(viewsets.ViewSet):
         if plantilla is None:
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(self.serializer_class(plantilla).data)
+    
+    @action(detail=True, methods=["get"], url_path="descargar")
+    def descargar(self, request, pk=None):
+        plantilla = PlantillaDocumentoService.obtener(pk)
+        ruta = plantilla.ruta_documento
+        ruta_absoluta = ruta if os.path.isabs(ruta) else os.path.join(str(settings.DOCUMENTOS_ROOT), ruta)
+        if not os.path.exists(ruta_absoluta):
+            return Response({"error": "El archivo no se encuentra en disco."}, status=status.HTTP_404_NOT_FOUND)
+        nombre_archivo = os.path.basename(plantilla.ruta_documento)
+        return FileResponse(open(ruta_absoluta, "rb"), as_attachment=True, filename=nombre_archivo)

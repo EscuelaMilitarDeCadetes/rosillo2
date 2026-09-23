@@ -118,7 +118,6 @@ class ProyectoXConvocatoriaService:
         para casos donde se requiera forzar el cierre manualmente."""
         vinculo = ProyectoXConvocatoriaSelector.obtener(proyecto_x_convocatoria_id)
         ProyectoXConvocatoriaValidator.validar_finalizar_calificacion(vinculo, aprobado)
-
         vinculo.estado_finalizado_calificacion = True
         vinculo.calificacion_ultimo_filtro_calificacion = (
             'APROBADO' if aprobado else 'NO_APROBADO'
@@ -126,11 +125,9 @@ class ProyectoXConvocatoriaService:
         vinculo.save(update_fields=[
             'estado_finalizado_calificacion', 'calificacion_ultimo_filtro_calificacion',
         ])
-
         proyecto = vinculo.proyecto
         proyecto.estado_aprobado = 'APROBADO' if aprobado else 'NO_APROBADO'
         proyecto.save(update_fields=['estado_aprobado'])
-
         HistorialService.registrar(
             ejecutor,
             f"Se finalizó la calificación del proyecto '{vinculo.proyecto.titulo}' "
@@ -167,7 +164,7 @@ class ProyectoXConvocatoriaService:
         y aprobado en ambos filtros, replicando el comportamiento del
         Thymeleaf original para convocatorias externas.
         """
-        ProyectoXConvocatoriaValidator.validar_creacion(proyecto_id, convocatoria_id)
+        ProyectoXConvocatoriaValidator.validar_creacion_ya_finalizado(convocatoria_id, proyecto_id)
         aplicar = ProyectoXConvocatoria.objects.create(
             proyecto_id=proyecto_id,
             convocatoria_id=convocatoria_id,
@@ -216,6 +213,7 @@ class ProyectoXConvocatoriaService:
              igual que el bucle sobre tipoCalificacionRepositorio.findAll().
         """
         from apps.investigacion_formal.services.proyecto_service import ProyectoService
+        DOCUMENTOS_QUE_YA_VIENEN_FIRMADOS = {"Propuesta del proyecto", "Carta de Compromiso", "Documento de Alianza"}
         if not doc_proyecto:
             raise ValidationError(
                 {"doc_proyecto": "El documento del proyecto es obligatorio para participar en la convocatoria."}
@@ -243,7 +241,7 @@ class ProyectoXConvocatoriaService:
             ejecutor=ejecutor,
         )
         documentos_a_crear = [
-            ("Documento de Proyecto", doc_proyecto),
+            ("Propuesta del proyecto", doc_proyecto),
             ("Carta de Compromiso", doc_carta),
             ("Documento de Alianza", doc_alianza),
         ]
@@ -262,6 +260,7 @@ class ProyectoXConvocatoriaService:
                 ip_creacion=ip_creacion,
                 ejecutor=ejecutor,
                 objeto=proyecto,
+                estado='FIRMADO' if nombre_tipo in DOCUMENTOS_QUE_YA_VIENEN_FIRMADOS else 'BORRADOR',
                 carpeta='proyectos',
             )
         vinculo = ProyectoXConvocatoriaService.crear(

@@ -258,12 +258,14 @@ CELERY_BEAT_SCHEDULE = {
 # El valor está en bytes. 100MB = 100 * 1024 * 1024 = 104857600 bytes.
 DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600
 FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600
+DIA_LIMITE_INFORME_SEGUIMIENTO = int(os.getenv('DIA_LIMITE_INFORME_SEGUIMIENTO', '25'))
 
 # --- CONFIGURACIÓN PARA CORS ---
 # Cada ambiente define su propio CORS_ALLOWED_ORIGINS vía .env (ver
 # local.py/development.py/stage.py/production.py). base.py deja un
 # default vacío a propósito, para que ningún ambiente herede por error
 # el origen de desarrollo (localhost:3000) si alguien olvida configurarlo.
+CORS_EXPOSE_HEADERS = ['Content-Disposition']
 CORS_ALLOWED_ORIGINS = [
     origin.strip()
     for origin in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')

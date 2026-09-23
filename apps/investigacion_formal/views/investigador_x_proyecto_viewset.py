@@ -12,7 +12,7 @@ from apps.investigacion_formal.services.investigador_completo_service import (
     InvestigadorCompletoService,
 )
 from apps.investigacion_formal.permissions import (
-    ROLES_LECTURA_INVESTIGACION_FORMAL, ROLES_ESCRITURA_GESTION, ROLES_CREACION_OPERATIVA, combinar,
+    ROLES_LECTURA_INVESTIGACION_FORMAL, ROLES_ESCRITURA_GESTION, ROLES_CREACION_OPERATIVA, ProyectoTieneActaInicio, combinar,
 )
 from apps.usuarios.permissions import TieneAmbitoFormal
 
@@ -23,7 +23,7 @@ class InvestigadorXProyectoViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action in ["create", "registrar_completo"]:
-            return [combinar(ROLES_CREACION_OPERATIVA), TieneAmbitoFormal()]
+            return [combinar(ROLES_CREACION_OPERATIVA), TieneAmbitoFormal(), ProyectoTieneActaInicio()]
         elif self.action in ["update", "destroy"]:
             return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormal()]
         else:  # list, retrieve, por_proyecto

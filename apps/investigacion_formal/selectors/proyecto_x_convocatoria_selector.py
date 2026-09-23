@@ -2,7 +2,10 @@
 from apps.investigacion_formal.models import ProyectoXConvocatoria
 from django.db.models import Exists, OuterRef
 from apps.investigacion_formal.models import InvestigadorXProyecto, ProductoXProyecto
-
+from apps.investigacion_formal.models.objetivos import Objetivos
+from apps.investigacion_formal.selectors.responsable_proyecto import (
+    q_por_facultad, q_por_grupo, q_por_responsable_codificado,
+)
 
 class ProyectoXConvocatoriaSelector:
 
@@ -60,7 +63,7 @@ class ProyectoXConvocatoriaSelector:
         return (
             ProyectoXConvocatoria.objects
             .select_related('convocatoria', 'proyecto')
-            .filter(estado_finalizado_calificacion=False)
+            .filter(estado_finalizado_calificacion=False, convocatoria__estado=False)
         )
 
     @staticmethod
@@ -80,11 +83,7 @@ class ProyectoXConvocatoriaSelector:
         return (
             ProyectoXConvocatoria.objects
             .select_related('convocatoria', 'proyecto')
-            .filter(
-                proyecto__usuario__asignaciones__estado=True,
-                proyecto__usuario__asignaciones__persona__personaxgrupo__estado=True,
-                proyecto__usuario__asignaciones__persona__personaxgrupo__facultad_id=facultad_id,
-            )
+            .filter(q_por_facultad(facultad_id, prefix="proyecto__"))
             .distinct()
         )
 
@@ -93,11 +92,7 @@ class ProyectoXConvocatoriaSelector:
         return (
             ProyectoXConvocatoria.objects
             .select_related('convocatoria', 'proyecto')
-            .filter(
-                proyecto__usuario__asignaciones__estado=True,
-                proyecto__usuario__asignaciones__persona__personaxgrupo__estado=True,
-                proyecto__usuario__asignaciones__persona__personaxgrupo__grupo_id=grupo_id,
-            )
+            .filter(q_por_grupo(grupo_id, prefix="proyecto__"))
             .distinct()
         )
 
@@ -127,7 +122,7 @@ class ProyectoXConvocatoriaSelector:
         """
         from django.db.models import Q
         qs = ProyectoXConvocatoria.objects.select_related(
-            'proyecto', 'convocatoria', 'proyecto__usuario__persona'
+            'proyecto', 'convocatoria'
         ).all()
         filtros = Q()
         if convocatoria:
@@ -141,32 +136,11 @@ class ProyectoXConvocatoriaSelector:
         if alianza is not None:
             filtros &= Q(proyecto__alianza=alianza)
         if responsable:
-            base = Q(
-                proyecto__usuario__asignaciones__estado=True,
-                proyecto__usuario__asignaciones__persona__personaxgrupo__estado=True,
-            )
-            if responsable.startswith('FAC:'):
-                abreviatura = responsable[len('FAC:'):]
-                filtros &= base & Q(
-                    proyecto__usuario__asignaciones__persona__personaxgrupo__facultad__abreviatura=abreviatura
-                )
-            elif responsable.startswith('GRU:'):
-                sigla = responsable[len('GRU:'):]
-                filtros &= base & Q(
-                    proyecto__usuario__asignaciones__persona__personaxgrupo__grupo__sigla_grupo=sigla
-                )
+            filtros &= q_por_responsable_codificado(responsable, prefix="proyecto__")
         if facultad_id is not None:
-            filtros &= Q(
-                proyecto__usuario__asignaciones__estado=True,
-                proyecto__usuario__asignaciones__persona__personaxgrupo__estado=True,
-                proyecto__usuario__asignaciones__persona__personaxgrupo__facultad_id=facultad_id,
-            )
+            filtros &= q_por_facultad(facultad_id, prefix="proyecto__")
         if grupo_id is not None:
-            filtros &= Q(
-                proyecto__usuario__asignaciones__estado=True,
-                proyecto__usuario__asignaciones__persona__personaxgrupo__estado=True,
-                proyecto__usuario__asignaciones__persona__personaxgrupo__grupo_id=grupo_id,
-            )
+            filtros &= q_por_grupo(grupo_id, prefix="proyecto__")
         if calificacion:
             filtros &= Q(calificacion_ultimo_filtro_calificacion=calificacion)
         if estado_finalizado_calificacion is not None:
@@ -189,6 +163,9 @@ class ProyectoXConvocatoriaSelector:
             ),
             tiene_productos=Exists(
                 ProductoXProyecto.objects.filter(proyecto_id=OuterRef('proyecto_id'))
+            ),
+            tiene_objetivos=Exists(
+                Objetivos.objects.filter(proyecto_id=OuterRef('proyecto_id'), estado=True)
             ),
         )
         return qs.filter(filtros).distinct().order_by('-proyecto__fecha_inicio')

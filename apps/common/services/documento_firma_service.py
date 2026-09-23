@@ -95,6 +95,10 @@ class DocumentoFirmaService:
         DocumentoFirmaValidator.validar_archivo_pdf(archivo)
         ruta_relativa = default_storage.save(f"{carpeta}/{archivo.name}", ContentFile(archivo.read()))
         ruta_documento = default_storage.path(ruta_relativa)
+        from apps.common.selectors.tipo_documento_selector import TipoDocumentoSelector
+        tipo_documento = TipoDocumentoSelector.buscar(tipo_documento_id)
+        if tipo_documento and tipo_documento.es_informe_seguimiento:
+            DocumentoFirmaService._marcar_si_es_tardio(ruta_documento)
         return DocumentoFirmaService.crear(
             tipo_documento_id=tipo_documento_id,
             ruta_documento=ruta_documento,
@@ -205,12 +209,10 @@ class DocumentoFirmaService:
                 f"El archivo ya no existe en la ruta '{documento.ruta_documento}'."
             )
             return False
-
         coincide = (hash_actual == documento.hash_documento)
         documento.integridad_ok = coincide
         documento.fecha_ultima_verificacion_integridad = timezone.now()
         documento.save(update_fields=['integridad_ok', 'fecha_ultima_verificacion_integridad'])
-
         if not coincide:
             DocumentoFirmaService._alertar_integridad(
                 documento,
@@ -252,3 +254,80 @@ class DocumentoFirmaService:
             except Exception:
                 logger.exception(f"Fallo verificando integridad del documento id={documento.pk}")
         return resultados
+    
+    @staticmethod
+    def _marcar_si_es_tardio(ruta_documento):
+        """
+        Si hoy ya pasó el día límite del mes (settings.DIA_LIMITE_INFORME_SEGUIMIENTO),
+        estampa la nota de entrega tardía ANTES de que crear() calcule el hash —
+        así el hash de integridad queda calculado sobre el archivo ya anotado,
+        y verificar_integridad() nunca reporta un falso "archivo alterado".
+        """
+        from django.conf import settings
+        hoy = timezone.now()
+        if hoy.day <= settings.DIA_LIMITE_INFORME_SEGUIMIENTO:
+            return
+        texto_nota = (
+            f"Se entrega después de la fecha estipulada, "
+            f"fecha de recepción del documento {hoy.strftime('%d/%m/%Y')}."
+        )
+        DocumentoFirmaService._estampar_nota_pie(ruta_documento, texto_nota)
+
+    @staticmethod
+    def _estampar_nota_pie(ruta_documento, texto_nota):
+        """Overlay con reportlab fusionado (pypdf) en el pie de la última página."""
+        from io import BytesIO
+        from reportlab.pdfgen import canvas
+        from pypdf import PdfReader, PdfWriter
+        try:
+            reader = PdfReader(ruta_documento)
+        except Exception:
+            logger.exception(
+                f"No se pudo leer el PDF en '{ruta_documento}' para estampar la nota de entrega tardía."
+            )
+            return
+        if not reader.pages:
+            return
+        ultima_pagina = reader.pages[-1]
+        ancho = float(ultima_pagina.mediabox.width)
+        alto = float(ultima_pagina.mediabox.height)
+        buffer = BytesIO()
+        c = canvas.Canvas(buffer, pagesize=(ancho, alto))
+        c.setFont("Helvetica-Oblique", 8)
+        c.drawString(30, 20, texto_nota)
+        c.save()
+        buffer.seek(0)
+        ultima_pagina.merge_page(PdfReader(buffer).pages[0])
+        writer = PdfWriter()
+        for pagina in reader.pages:
+            writer.add_page(pagina)
+        with open(ruta_documento, "wb") as f:
+            writer.write(f)
+
+    @staticmethod
+    def notificar_cinterno_carga(documento, ejecutor):
+        """
+        Notifica al único usuario CINTERNO activo (regla de negocio: solo puede
+        haber uno activo a la vez) cuando FACULTAD/GRUPO cargan un documento de
+        gestión del proyecto, para que sepa cómo se modificó.
+        """
+        from apps.usuarios.models import RolXUsuario
+        cinterno = (
+            RolXUsuario.objects
+            .filter(rol__nombre_rol='CINTERNO', estado=True, usuario__is_active=True)
+            .select_related('usuario')
+            .first()
+        )
+        if cinterno is None:
+            return
+        objeto_desc = str(documento.objeto_relacionado) if documento.objeto_relacionado else "un proyecto"
+        NotificacionService.crear(
+            usuario_destino_id=cinterno.usuario_id,
+            mensaje=(
+                f"'{ejecutor.username}' cargó el documento "
+                f"'{documento.tipo_documento.nombre_documento}' (versión {documento.version}) "
+                f"en {objeto_desc}."
+            ),
+            tipo='info',
+            notificar_email=True,
+        )

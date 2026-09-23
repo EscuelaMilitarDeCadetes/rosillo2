@@ -1,4 +1,6 @@
 from rest_framework.exceptions import ValidationError
+from apps.institucional.selectors.facultad_escuela_selector import FacultadEscuelaSelector
+from apps.institucional.selectors.grupo_investigacion_selector import GrupoInvestigacionSelector
 
 from apps.investigacion_formal.selectors.proyecto_selector import ProyectoSelector
 
@@ -77,7 +79,53 @@ class ProyectoValidator:
     def validar_eliminacion(proyecto):
         if not proyecto.estado:
             raise ValidationError("Este proyecto ya se encuentra desactivado.")
-
+        
+    @staticmethod
+    def validar_responsable_externo(grupo_investigacion_id, facultad_id):
+        """
+        Réplica de la regla del formulario Thymeleaf de /pexternos:
+        - 'Grupo de investigación' es SIEMPRE obligatorio en un proyecto externo.
+        - 'Facultad' solo se pide explícitamente cuando el grupo tiene MÁS DE UNA
+        facultad asociada en FacultadXGrupo. Si el grupo tiene exactamente una, 
+        se autoasigna sin exigirla del cliente. Si no tiene
+        ninguna, no debe enviarse facultad_id.
+        """
+        if not grupo_investigacion_id:
+            raise ValidationError(
+                {"grupo_investigacion": "Debe seleccionar el grupo de investigación responsable del proyecto."}
+            )
+        grupo = GrupoInvestigacionSelector.buscar(grupo_investigacion_id)
+        if grupo is None:
+            raise ValidationError(
+                {"grupo_investigacion": "El grupo de investigación seleccionado no existe."}
+            )
+        facultades_del_grupo = list(FacultadEscuelaSelector.listar_facultades_grupo(grupo_investigacion_id))
+        n = len(facultades_del_grupo)
+        if n == 0:
+            if facultad_id:
+                raise ValidationError(
+                    {"facultad": "Este grupo de investigación no está asociado a ninguna facultad; no debe enviarse 'facultad'."}
+                )
+            return grupo, None
+        if n == 1:
+            # Sin ambigüedad: se autoasigna, se envíe o no desde el cliente.
+            unica = facultades_del_grupo[0]
+            if facultad_id and int(facultad_id) != unica.pk:
+                raise ValidationError(
+                    {"facultad": "La facultad enviada no corresponde a la única facultad asociada a este grupo."}
+                )
+            return grupo, unica.pk
+        # n > 1: grupo transversal, aquí sí hay elección real que hacer.
+        if not facultad_id:
+            raise ValidationError(
+                {"facultad": "Debe seleccionar la facultad responsable dentro de este grupo."}
+            )
+        if not any(f.pk == int(facultad_id) for f in facultades_del_grupo):
+            raise ValidationError(
+                {"facultad": "La facultad seleccionada no pertenece al grupo de investigación elegido."}
+            )
+        return grupo, int(facultad_id)
+    
     @staticmethod
     def _validar_usuario(usuario_id):
         if not usuario_id:

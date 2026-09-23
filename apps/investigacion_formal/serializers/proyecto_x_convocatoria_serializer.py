@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from apps.investigacion_formal.models import ProyectoXConvocatoria, Monto
-from apps.institucional.models import PersonaXGrupo
+from apps.investigacion_formal.selectors.responsable_proyecto import etiqueta_responsable
 
 
 class ProyectoXConvocatoriaSerializer(serializers.ModelSerializer):
@@ -19,6 +19,7 @@ class ProyectoXConvocatoriaSerializer(serializers.ModelSerializer):
     monto_total = serializers.SerializerMethodField()
     tiene_investigadores = serializers.BooleanField(read_only=True)
     tiene_productos = serializers.BooleanField(read_only=True)
+    tiene_objetivos = serializers.BooleanField(read_only=True)
     responsable = serializers.SerializerMethodField()
 
     class Meta:
@@ -83,26 +84,4 @@ class ProyectoXConvocatoriaSerializer(serializers.ModelSerializer):
         return monto.total
     
     def get_responsable(self, obj):
-        """
-        Réplica de usuarioFk.personaFk.personaXGrupoList[0] del original:
-        sigla del grupo o abreviatura de la facultad del investigador
-        responsable del proyecto. Misma consulta que
-        ExportacionService._facultad_grupo_label().
-        """
-        pxg = (
-            PersonaXGrupo.objects
-            .filter(
-                persona__asignaciones__usuario_id=obj.proyecto.usuario_id,
-                persona__asignaciones__estado=True,
-                estado=True,
-            )
-            .select_related('facultad', 'grupo')
-            .first()
-        )
-        if pxg is None:
-            return None
-        if pxg.facultad_id:
-            return pxg.facultad.abreviatura
-        if pxg.grupo_id:
-            return pxg.grupo.sigla_grupo
-        return None
+        return etiqueta_responsable(obj.proyecto)

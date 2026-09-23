@@ -12,7 +12,7 @@ class ProductoXProyectoSerializer(serializers.ModelSerializer):
         source='producto_x_grupo.producto_minciencias.nomenclatura',
         read_only=True
     )
-    grupo_nombre = serializers.CharField(              
+    grupo_nombre = serializers.CharField(
         source='producto_x_grupo.grupo_minciencias.nombre_grupo_minciencias',
         read_only=True
     )
@@ -20,10 +20,7 @@ class ProductoXProyectoSerializer(serializers.ModelSerializer):
         source='proyecto.titulo',
         read_only=True
     )
-    tipo_documento_nombre = serializers.CharField(
-        source='tipo_documento.nombre_documento',
-        read_only=True
-    )
+
     class Meta:
         model = ProductoXProyecto
         fields = '__all__'

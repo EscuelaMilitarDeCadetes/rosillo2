@@ -16,6 +16,9 @@ class Proyecto(models.Model):
     fecha_fin = models.DateField(null=True, blank=True)
     codigo = models.CharField(max_length=50)
     gruplac = models.BooleanField(default=False)
+    
+    grupo_investigacion = models.ForeignKey('institucional.GrupoInvestigacion', on_delete=models.PROTECT, null=True, blank=True, related_name='proyectos_externos')
+    facultad = models.ForeignKey('institucional.FacultadEscuela', on_delete=models.PROTECT, null=True, blank=True, related_name='proyectos_externos', help_text="Solo aplica si 'grupo_investigacion' es transversal a varias facultades (ver FacultadXGrupo), p.ej. Ciencias Militares.")
 
     def __str__(self):
         return f'{self.codigo} {self.titulo}'

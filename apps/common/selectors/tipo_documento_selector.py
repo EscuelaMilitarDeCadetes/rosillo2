@@ -3,8 +3,11 @@ from apps.common.models import TipoDocumento
 
 class TipoDocumentoSelector:
     @staticmethod
-    def listar():
-        return TipoDocumento.objects.all().order_by('nombre_documento')
+    def listar(investigacion=None):
+        qs = TipoDocumento.objects.all()
+        if investigacion is not None:
+            qs = qs.filter(investigacion=investigacion)
+        return qs.order_by('nombre_documento')
 
     @staticmethod
     def obtener(tipo_documento_id):
@@ -19,8 +22,11 @@ class TipoDocumentoSelector:
         return TipoDocumento.objects.filter(nombre_documento__iexact=nombre_documento).first()
 
     @staticmethod
-    def listar_por_grupo(grupo):
-        return TipoDocumento.objects.filter(grupo__iexact=grupo).order_by('nombre_documento')
+    def listar_por_grupo(grupo, investigacion=None):
+        qs = TipoDocumento.objects.filter(grupo__iexact=grupo)
+        if investigacion is not None:
+            qs = qs.filter(investigacion=investigacion)
+        return qs.order_by('nombre_documento')
 
     @staticmethod
     def existe_nombre(nombre_documento, excluir_id=None):

@@ -1,14 +1,17 @@
 """
 Combinaciones de permisos reutilizadas por múltiples ViewSets del módulo
 investigacion_formal. Existe para evitar que la misma combinación de roles
-se repita textualmente en 10 archivos distintos (ver hallazgo INV-11 de la
-auditoría V2): un cambio de política de roles se hace UNA vez aquí, no en
-cada ViewSet.
+se repita textualmente en 10 archivos distintos,: un cambio de política de 
+roles se hace UNA vez aquí, no en cada ViewSet.
 
 IMPORTANTE: estas son listas de CLASES de permiso (no instancias). Cada
 ViewSet las combina con | dentro de su propio get_permissions(), igual que
 antes — este archivo no cambia el comportamiento, solo centraliza la lista.
 """
+from apps.investigacion_formal.selectors.objetivo_x_punto_selector import ObjetivoXPuntoSelector
+from apps.investigacion_formal.selectors.objetivos_selector import ObjetivosSelector
+from apps.investigacion_formal.selectors.proyecto_selector import ProyectoSelector
+from rest_framework.permissions import BasePermission
 from apps.usuarios.permissions import (
     EsFacultad, EsGrupo, EsCInterno, EsCExterno,
     EsAsesor, EsSupervisor, EsDecano, EsGerente, EsSoporte,
@@ -48,6 +51,9 @@ ROLES_CREACION_PROYECTO = [EsFacultad, EsGrupo]
 # directamente, solo quienes intervienen en el proceso de calificación).
 ROLES_CONSULTA_CALIFICACION = [EsSupervisor, EsCInterno, EsCExterno]
 
+# Roles que ven la tabla de convocatorias abiertas en el inicio
+ROLES_VEN_CONVOCATORIAS_ABIERTAS = [EsAsesor, EsCInterno, EsFacultad, EsGrupo]
+
 
 
 def combinar(clases_permiso):
@@ -56,3 +62,37 @@ def combinar(clases_permiso):
     for clase in clases_permiso[1:]:
         permiso_combinado = permiso_combinado | clase
     return permiso_combinado()
+
+
+class ProyectoTieneActaInicio(BasePermission):
+    """
+    Bloquea a FACULTAD/GRUPO en acciones que dependen de que el proyecto ya
+    tenga cargada el acta de inicio. CINTERNO/CEXTERNO no se ven afectados.
+    """
+    message = "Esta acción se habilita cuando CINTERNO cargue el acta de inicio del proyecto."
+
+    def has_permission(self, request, view):
+        if request.user.has_role('CINTERNO') or request.user.has_role('CEXTERNO'):
+            return True
+        proyecto_id = self._resolver_proyecto_id(request, view)
+        if not proyecto_id:
+            return True  # que falle más adelante por validación normal, no aquí
+        return ProyectoSelector.tiene_acta_inicio(proyecto_id)
+
+    @staticmethod
+    def _resolver_proyecto_id(request, view):
+        # Investigador, Objetivos (general/específico), Producto: el body trae "proyecto".
+        proyecto_id = request.data.get('proyecto') or view.kwargs.get('proyecto_id')
+        if proyecto_id:
+            return proyecto_id
+        # ObjetivoXPuntoViewSet.create: el body trae "objetivo", no "proyecto".
+        objetivo_id = request.data.get('objetivo')
+        if objetivo_id:
+            objetivo = ObjetivosSelector.obtener(objetivo_id)
+            return objetivo.proyecto_id if objetivo else None
+        # ObjetivoXPuntoViewSet.agregar_avance: la URL trae "punto_control_id".
+        punto_control_id = view.kwargs.get('punto_control_id')
+        if punto_control_id:
+            vinculo = ObjetivoXPuntoSelector.obtener_activo_por_punto_control(punto_control_id)
+            return vinculo.objetivo.proyecto_id if vinculo else None
+        return None

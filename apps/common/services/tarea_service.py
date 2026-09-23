@@ -18,13 +18,14 @@ class TareaService:
     @staticmethod
     @transaction.atomic
     def crear(asignado_a_id, descripcion, objeto, ejecutor, fecha_limite=None):
-        content_type = ContentType.objects.get_for_model(objeto)
-        TareaValidator.validar_creacion(asignado_a_id, descripcion, content_type.pk, objeto.pk)
+        content_type = ContentType.objects.get_for_model(objeto) if objeto is not None else None
+        object_id = objeto.pk if objeto is not None else None
+        TareaValidator.validar_creacion(asignado_a_id, descripcion, content_type.pk if content_type else None, object_id)
         tarea = Tarea.objects.create(
             asignado_a_id=asignado_a_id,
             descripcion=descripcion.strip(),
             content_type=content_type,
-            object_id=objeto.pk,
+            object_id=object_id,
             fecha_limite=fecha_limite,
         )
         HistorialService.registrar(
@@ -91,3 +92,26 @@ class TareaService:
     @staticmethod
     def listar_proximas_a_vencer(dias=3):
         return TareaSelector.listar_proximas_a_vencer(dias=dias)
+    
+    @staticmethod
+    @transaction.atomic
+    def crear_recordatorio(usuario_id, descripcion, objeto, ejecutor, fecha_limite=None):
+        """Crea una tarea evitando duplicar recordatorios abiertos idénticos
+        sobre el mismo objeto (p.ej. si se recalifica una fase dos veces)."""
+        content_type = ContentType.objects.get_for_model(objeto)
+        ya_existe = Tarea.objects.filter(
+            asignado_a_id=usuario_id,
+            descripcion=descripcion,
+            content_type=content_type,
+            object_id=objeto.pk,
+            completada=False,
+        ).exists()
+        if ya_existe:
+            return None
+        return TareaService.crear(
+            asignado_a_id=usuario_id,
+            descripcion=descripcion,
+            objeto=objeto,
+            ejecutor=ejecutor,
+            fecha_limite=fecha_limite,
+        )

@@ -11,7 +11,8 @@ from apps.investigacion_formal.services.proyecto_x_convocatoria_service import (
     ProyectoXConvocatoriaService,
 )
 from apps.investigacion_formal.permissions import (
-    ROLES_LECTURA_INVESTIGACION_FORMAL, ROLES_CREACION_PROYECTO, combinar,
+    ROLES_LECTURA_INVESTIGACION_FORMAL, ROLES_CREACION_PROYECTO,
+    ROLES_VEN_CONVOCATORIAS_ABIERTAS, combinar,
 )
 from apps.usuarios.permissions import EsAsesor, EsCInterno, TieneAmbitoFormal
 
@@ -25,10 +26,12 @@ class ConvocatoriaViewSet(viewsets.ViewSet):
             permission_classes = [EsAsesor]
         elif self.action == "cambiar_estado":
             permission_classes = [EsCInterno]
-        elif self.action in ["list", "retrieve"]:
+        elif self.action in ["list", "retrieve", "internas"]:
             return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL), TieneAmbitoFormal()]
         elif self.action == "participar":
             return [combinar(ROLES_CREACION_PROYECTO), TieneAmbitoFormal()]
+        elif self.action == "abiertas":
+            return [combinar(ROLES_VEN_CONVOCATORIAS_ABIERTAS), TieneAmbitoFormal()]
         else:  # internas
             permission_classes = [EsCInterno]
         return [permission() for permission in permission_classes] + [TieneAmbitoFormal()]
@@ -50,9 +53,7 @@ class ConvocatoriaViewSet(viewsets.ViewSet):
             anio_convocatoria=request.data.get("anio_convocatoria"),
             inicio=request.data.get("inicio"),
             cierre=request.data.get("cierre"),
-            interno=True,  # Regla de autorización: solo EsAsesor llega aquí (get_permissions),
-                            # y EsAsesor solo puede crear convocatorias internas. Se ignora
-                            # cualquier valor de "interno" que venga en el payload del cliente.
+            interno=True,  
             archivo=request.FILES.get("archivo"),
             ip_creacion=request.META.get("REMOTE_ADDR", "0.0.0.0"),
             ejecutor=request.user,
@@ -78,6 +79,13 @@ class ConvocatoriaViewSet(viewsets.ViewSet):
         serializer = self.serializer_class(page, many=True)
         return paginator.get_paginated_response(serializer.data)
     
+    @action(detail=False, methods=["get"], url_path="abiertas")
+    def abiertas(self, request):
+        """Convocatorias internas activas para la pantalla de inicio.
+        Sin paginación: normalmente hay una o dos abiertas."""
+        convocatorias = ConvocatoriaService.listar_abiertas()
+        return Response(self.serializer_class(convocatorias, many=True).data)
+    
     @action(detail=True, methods=["post"], url_path="participar")
     def participar(self, request, pk=None):
         """
@@ -90,8 +98,8 @@ class ConvocatoriaViewSet(viewsets.ViewSet):
         vinculo = ProyectoXConvocatoriaService.participar_convocatoria(
             convocatoria_id=pk,
             titulo=request.data.get("titulo"),
-            alianza=request.data.get("alianza"),
-            financiado=request.data.get("financiado"),
+            alianza=self._parse_bool(request.data.get("alianza")),
+            financiado=self._parse_bool(request.data.get("financiado")),
             unidad_ejecutora=request.data.get("unidad_ejecutora"),
             linea_investigacion=request.data.get("linea_investigacion"),
             valor_solicitado=request.data.get("valor_solicitado"),

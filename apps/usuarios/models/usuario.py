@@ -19,6 +19,16 @@ class Usuario(AbstractUser):
                    "cada Facultad gestione solo las cuentas que ella misma creó.",
     )
 
+    def has_role(self, nombre_rol):
+        """
+        True si el usuario tiene el rol indicado activo (RolXUsuario.estado=True).
+        Misma condición que usan los permisos EsDecano, EsSoporte, etc.
+        """
+        return self.roles_usuario.filter(
+            rol__nombre_rol=nombre_rol,
+            estado=True,
+        ).exists()
+    
     def __str__(self):
         return self.username
 

@@ -248,3 +248,17 @@ class ProyectoXConvocatoriaViewSet(viewsets.ViewSet):
             "anios_fin": anios_fin,
             "anios_convocatoria": anios_convocatoria,
         })
+    
+    @staticmethod
+    def _parse_bool(valor):
+        """
+        Convierte un valor de query param (siempre string en HTTP) a bool
+        real, o None si el parámetro no fue enviado (para omitir el filtro).
+        NUNCA usar bool(str) directamente: bool("false") es True en Python,
+        porque cualquier string no vacío es "truthy".
+        """
+        if valor is None or valor == '':
+            return None
+        if isinstance(valor, bool):
+            return valor
+        return str(valor).strip().lower() in ("true", "1")

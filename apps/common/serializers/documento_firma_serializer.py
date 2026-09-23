@@ -10,6 +10,7 @@ class DocumentoFirmaSerializer(serializers.ModelSerializer):
     objeto_tipo = serializers.SerializerMethodField()
     objeto_id = serializers.IntegerField(source='object_id', read_only=True)
     objeto_descripcion = serializers.SerializerMethodField()
+    tiene_firmantes = serializers.SerializerMethodField()
 
     class Meta:
         model = DocumentoFirma
@@ -23,3 +24,6 @@ class DocumentoFirmaSerializer(serializers.ModelSerializer):
 
     def get_objeto_descripcion(self, obj):
         return str(obj.objeto_relacionado) if obj.objeto_relacionado else None
+    
+    def get_tiene_firmantes(self, obj):
+        return obj.documentofirmante_set.exists()

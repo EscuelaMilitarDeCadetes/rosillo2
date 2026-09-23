@@ -31,6 +31,12 @@ class MontoValidator:
                     f"al valor ya ejecutado ({ejecutado})."
                 )}
             )
+    
+    @staticmethod
+    def validar_contrapartida(contrapartida):
+        if contrapartida is None:
+            raise ValidationError({"contrapartida": "La contrapartida es obligatoria."})
+        MontoValidator._validar_valor_no_negativo(contrapartida, "contrapartida")
 
     @staticmethod
     def _validar_proyecto(proyecto_id):

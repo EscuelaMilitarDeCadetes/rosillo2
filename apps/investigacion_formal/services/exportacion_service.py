@@ -17,8 +17,6 @@ from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.units import mm
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-
-from apps.institucional.models import PersonaXGrupo
 from apps.investigacion_formal.selectors.investigador_x_proyecto_selector import (
     InvestigadorXProyectoSelector,
 )
@@ -27,6 +25,7 @@ from apps.investigacion_formal.selectors.producto_x_proyecto_selector import (
 )
 from apps.investigacion_formal.selectors.monto_selector import MontoSelector
 from apps.investigacion_formal.services.avance_service import AvanceService
+from apps.investigacion_formal.selectors.responsable_proyecto import etiqueta_responsable
 
 ENCABEZADOS = [
     "Código", "Facultad/Grupo", "Proyecto", "Inicio", "Fin", "% Avance",
@@ -44,30 +43,14 @@ class ExportacionService:
     # Armado de filas (compartido entre Excel y PDF)
     # ------------------------------------------------------------------
     @staticmethod
-    def _facultad_grupo_label(usuario_id):
-        pxg = (
-            PersonaXGrupo.objects
-            .filter(
-                persona__asignaciones__usuario_id=usuario_id,
-                persona__asignaciones__estado=True,
-                estado=True,
-            )
-            .select_related('facultad', 'grupo')
-            .first()
-        )
-        if pxg is None:
-            return "N/A"
-        if pxg.facultad_id:
-            return pxg.facultad.abreviatura
-        if pxg.grupo_id:
-            return pxg.grupo.sigla_grupo
-        return "N/A"
-
-    @staticmethod
     def _formatear_moneda(valor):
         if valor is None or valor <= 0:
             return "N/A"
         return f"${valor:,.2f}"
+    
+    @staticmethod
+    def _facultad_grupo_label(proyecto):
+        return etiqueta_responsable(proyecto) or "N/A"
 
     @staticmethod
     def _formatear_fecha(fecha):
@@ -106,7 +89,7 @@ class ExportacionService:
 
         return [
             proyecto.codigo or "Sin código",
-            ExportacionService._facultad_grupo_label(proyecto.usuario_id),
+            ExportacionService._facultad_grupo_label(proyecto),
             proyecto.titulo,
             ExportacionService._formatear_fecha(proyecto.fecha_inicio),
             ExportacionService._formatear_fecha(proyecto.fecha_fin),

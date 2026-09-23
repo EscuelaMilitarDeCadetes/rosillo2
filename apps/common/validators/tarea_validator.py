@@ -27,8 +27,7 @@ class TareaValidator:
 
     @staticmethod
     def _validar_objeto_relacionado(content_type_id, object_id):
-        if not content_type_id or not object_id:
+        if bool(content_type_id) != bool(object_id):
             raise ValidationError(
-                "Toda tarea debe estar asociada a un objeto específico "
-                "(content_type y object_id son obligatorios)."
+                "content_type y object_id deben enviarse juntos o ninguno."
             )

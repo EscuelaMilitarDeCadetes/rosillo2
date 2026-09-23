@@ -1,4 +1,6 @@
 from django.db import transaction
+from apps.investigacion_formal.services.proyecto_setup_service import ProyectoSetupService
+from rest_framework.exceptions import ValidationError
 
 from apps.investigacion_formal.models import ProductoXProyecto
 from apps.investigacion_formal.selectors.producto_x_proyecto_selector import (
@@ -8,9 +10,18 @@ from apps.investigacion_formal.validators.producto_x_proyecto_validator import (
     ProductoXProyectoValidator,
 )
 from apps.common.services.historial_service import HistorialService
+from apps.common.services.documento_firma_service import DocumentoFirmaService
+from apps.common.selectors.tipo_documento_selector import TipoDocumentoSelector
 
 
 class ProductoXProyectoService:
+
+    # Tipo de documento fijo para toda entrega de producto: el usuario nunca
+    # lo elige (a diferencia de participar_convocatoria, que sí deja elegir
+    # entre "Propuesta del proyecto"/"Carta de Compromiso"/"Documento de
+    # Alianza"). Se resuelve por nombre, no por pk fijo, para no depender del
+    # orden en que se corrieron los seeds en cada entorno.
+    NOMBRE_TIPO_DOCUMENTO_ENTREGABLE = "Entregables"
 
     @staticmethod
     def listar():
@@ -49,6 +60,7 @@ class ProductoXProyectoService:
             entregado=False,
             gruplac=False,
         )
+        ProyectoSetupService.verificar_configuracion_completa(producto.proyecto_id, ejecutor=ejecutor)
         HistorialService.registrar(
             ejecutor,
             f"Se asignó el producto "
@@ -60,16 +72,41 @@ class ProductoXProyectoService:
 
     @staticmethod
     @transaction.atomic
-    def registrar_entrega(producto_x_proyecto_id, documento, tipo_documento_id, ejecutor):
-        """Réplica de cargarDocumentoProducto: marca el producto como entregado
-        y asocia el documento cargado."""
+    def registrar_entrega(producto_x_proyecto_id, archivo, ip_creacion, ejecutor):
+        """Réplica de cargarDocumentoProducto: marca el producto como
+        entregado y sube el archivo del entregable a través del punto de
+        entrada único DocumentoFirmaService.crear_desde_archivo(), en la
+        misma carpeta ('proyectos') que la propuesta del proyecto y la carta
+        de compromiso. El tipo de documento es siempre 'Entregables' (no lo
+        elige el usuario) y el documento se crea directamente en estado
+        'FIRMADO' porque no pasa por ningún flujo de firmas dentro de la
+        plataforma."""
         producto = ProductoXProyectoSelector.obtener(producto_x_proyecto_id)
-        ProductoXProyectoValidator.validar_entrega(documento, tipo_documento_id)
+        ProductoXProyectoValidator.validar_entrega(archivo)
 
-        producto.documento = documento
-        producto.tipo_documento_id = tipo_documento_id
+        tipo_documento = TipoDocumentoSelector.obtener_por_nombre(
+            ProductoXProyectoService.NOMBRE_TIPO_DOCUMENTO_ENTREGABLE
+        )
+        if tipo_documento is None:
+            raise ValidationError(
+                f"No existe el TipoDocumento "
+                f"'{ProductoXProyectoService.NOMBRE_TIPO_DOCUMENTO_ENTREGABLE}' "
+                f"(seed pendiente: nombre_documento="
+                f"'{ProductoXProyectoService.NOMBRE_TIPO_DOCUMENTO_ENTREGABLE}')."
+            )
+
+        DocumentoFirmaService.crear_desde_archivo(
+            tipo_documento_id=tipo_documento.pk,
+            archivo=archivo,
+            ip_creacion=ip_creacion,
+            ejecutor=ejecutor,
+            objeto=producto,
+            estado='FIRMADO',
+            carpeta='proyectos',
+        )
+
         producto.entregado = True
-        producto.save(update_fields=['documento', 'tipo_documento', 'entregado'])
+        producto.save(update_fields=['entregado'])
 
         HistorialService.registrar(
             ejecutor,
@@ -109,7 +146,6 @@ class ProductoXProyectoService:
             producto.proyecto_id,
             nueva_categoria,
             nuevo_puntaje,
-            producto.tipo_documento_id,
         )
 
         producto.categoria = nueva_categoria.strip()

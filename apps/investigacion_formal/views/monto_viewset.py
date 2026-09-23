@@ -16,7 +16,7 @@ class MontoViewSet(viewsets.ViewSet):
     pagination_class = InvestigacionFormalPageNumberPagination
 
     def get_permissions(self):
-        if self.action in ["create", "asignar_aprobado", "editar_valor_aprobado"]:
+        if self.action in ["create", "asignar_aprobado", "asignar_contrapartida", "editar_valor_aprobado"]:
             return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormal()]
         else:  # list, retrieve, por_proyecto, aprobados_calificados, contrapartida_calificados, totales_calificados, avance_presupuestal
             return [combinar(ROLES_LECTURA_INVESTIGACION_FORMAL), TieneAmbitoFormal()]
@@ -94,3 +94,12 @@ class MontoViewSet(viewsets.ViewSet):
         """
         avance = MontoService.calcular_avance_presupuestal(proyecto_id)
         return Response({"proyecto_id": int(proyecto_id), "avance_presupuestal": avance})
+    
+    @action(detail=True, methods=["patch"], url_path="asignar-contrapartida")
+    def asignar_contrapartida(self, request, pk=None):
+        monto = MontoService.asignar_contrapartida(
+            monto_id=pk,
+            contrapartida=request.data.get("contrapartida"),
+            ejecutor=request.user,
+        )
+        return Response(self.serializer_class(monto).data)

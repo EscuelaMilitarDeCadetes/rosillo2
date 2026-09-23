@@ -11,7 +11,7 @@ from apps.investigacion_formal.services.producto_x_proyecto_service import (
     ProductoXProyectoService,
 )
 from apps.investigacion_formal.permissions import (
-    ROLES_CREACION_OPERATIVA, ROLES_ESCRITURA_GESTION, ROLES_LECTURA_INVESTIGACION_FORMAL, combinar,
+    ROLES_CREACION_OPERATIVA, ROLES_ESCRITURA_GESTION, ROLES_LECTURA_INVESTIGACION_FORMAL, ProyectoTieneActaInicio, combinar,
 )
 
 
@@ -21,7 +21,7 @@ class ProductoXProyectoViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action == "create":
-            return [combinar(ROLES_CREACION_OPERATIVA), TieneAmbitoFormal()]
+            return [combinar(ROLES_CREACION_OPERATIVA), TieneAmbitoFormal(), ProyectoTieneActaInicio()]
         elif self.action in ["update", "destroy", "registrar_entrega", "subir_a_gruplac"]:
             return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormal()]
         else:  # list, retrieve, por_proyecto, pendientes, entregados
@@ -65,8 +65,8 @@ class ProductoXProyectoViewSet(viewsets.ViewSet):
     def registrar_entrega(self, request, pk=None):
         producto = ProductoXProyectoService.registrar_entrega(
             producto_x_proyecto_id=pk,
-            documento=request.data.get("documento"),
-            tipo_documento_id=request.data.get("tipo_documento"),
+            archivo=request.FILES.get("archivo"),
+            ip_creacion=request.META.get("REMOTE_ADDR", "0.0.0.0"),
             ejecutor=request.user,
         )
         return Response(self.serializer_class(producto).data)

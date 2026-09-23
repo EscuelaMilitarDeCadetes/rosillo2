@@ -10,35 +10,34 @@ CATEGORIAS_VALIDAS_MAX_LEN = 30
 class ProductoXProyectoValidator:
 
     @staticmethod
-    def validar_creacion(producto_x_grupo_id, proyecto_id, categoria, puntaje, tipo_documento_id=None):
+    def validar_creacion(producto_x_grupo_id, proyecto_id, categoria, puntaje):
         ProductoXProyectoValidator._validar_producto_x_grupo(producto_x_grupo_id)
         ProductoXProyectoValidator._validar_proyecto(proyecto_id)
         ProductoXProyectoValidator._validar_categoria(categoria)
         ProductoXProyectoValidator._validar_puntaje(puntaje)
-        ProductoXProyectoValidator._validar_unicidad(
-            producto_x_grupo_id, proyecto_id, tipo_documento_id
-        )
+        ProductoXProyectoValidator._validar_unicidad(producto_x_grupo_id, proyecto_id)
 
     @staticmethod
     def validar_actualizacion(producto_x_proyecto_id, producto_x_grupo_id, proyecto_id,
-                               categoria, puntaje, tipo_documento_id=None):
+                               categoria, puntaje):
         ProductoXProyectoValidator._validar_producto_x_grupo(producto_x_grupo_id)
         ProductoXProyectoValidator._validar_proyecto(proyecto_id)
         ProductoXProyectoValidator._validar_categoria(categoria)
         ProductoXProyectoValidator._validar_puntaje(puntaje)
         ProductoXProyectoValidator._validar_unicidad(
-            producto_x_grupo_id, proyecto_id, tipo_documento_id,
-            excluir_id=producto_x_proyecto_id,
+            producto_x_grupo_id, proyecto_id, excluir_id=producto_x_proyecto_id,
         )
 
     @staticmethod
-    def validar_entrega(documento, tipo_documento_id):
+    def validar_entrega(archivo):
         """Reglas para cargarDocumentoProducto: al marcar un producto como
-        entregado, el documento y su tipo son obligatorios."""
-        if not documento or not documento.strip():
-            raise ValidationError({"documento": "El documento del producto entregado es obligatorio."})
-        if not tipo_documento_id:
-            raise ValidationError({"tipo_documento": "El tipo de documento entregado es obligatorio."})
+        entregado, el archivo del entregable es obligatorio. La validación de
+        que sea un PDF válido (tipo de contenido y tamaño máximo) la aplica
+        DocumentoFirmaValidator.validar_archivo_pdf() dentro de
+        DocumentoFirmaService.crear_desde_archivo() — punto de entrada único
+        para todos los módulos — así que no se duplica aquí."""
+        if not archivo:
+            raise ValidationError({"archivo": "El archivo del producto entregado es obligatorio."})
 
     @staticmethod
     def validar_eliminacion(producto_x_proyecto):
@@ -78,11 +77,10 @@ class ProductoXProyectoValidator:
             raise ValidationError({"puntaje": "El puntaje debe ser un entero no negativo."})
 
     @staticmethod
-    def _validar_unicidad(producto_x_grupo_id, proyecto_id, tipo_documento_id, excluir_id=None):
+    def _validar_unicidad(producto_x_grupo_id, proyecto_id, excluir_id=None):
         if ProductoXProyectoSelector.existe_combinacion(
-            producto_x_grupo_id, proyecto_id, tipo_documento_id, excluir_id=excluir_id
+            producto_x_grupo_id, proyecto_id, excluir_id=excluir_id
         ):
             raise ValidationError(
-                "Ya existe este mismo producto registrado para este proyecto con "
-                "el mismo tipo de documento."
+                "Ya existe este mismo producto registrado para este proyecto."
             )

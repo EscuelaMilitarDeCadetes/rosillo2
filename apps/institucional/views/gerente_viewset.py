@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from apps.institucional.serializers import GerenteSerializer
+from apps.usuarios.permissions.es_cinterno import EsCInterno
 from apps.usuarios.permissions.es_soporte import EsSoporte
 from apps.institucional.services.gerente_service import GerenteService
 
@@ -24,7 +25,7 @@ class GerenteViewSet(viewsets.ViewSet):
         if self.action in ['list', 'retrieve', 'actual', 'historico']:
             permission_classes = [IsAuthenticated]
         else:
-            permission_classes = [EsSoporte]
+            permission_classes = [EsSoporte | EsCInterno]
         return [permission() for permission in permission_classes]
 
     def list(self, request):

@@ -15,6 +15,20 @@ class ProyectoXConvocatoriaValidator:
         ProyectoXConvocatoriaValidator._validar_proyecto(proyecto_id)
         ProyectoXConvocatoriaValidator._validar_convocatoria_activa(convocatoria_id)
         ProyectoXConvocatoriaValidator._validar_unicidad(convocatoria_id, proyecto_id)
+        
+    @staticmethod
+    def validar_creacion_ya_finalizado(convocatoria_id, proyecto_id):
+        """
+        Variante de validar_creacion() exclusiva para proyectos externos
+        (ProyectoXConvocatoriaService.crear_ya_finalizado_aprobado): la
+        convocatoria sintética se crea y se cierra (estado=False) en el
+        mismo acto por diseño (ConvocatoriaService.crear_proyecto_externo),
+        así que a diferencia de la postulación normal NO debe exigirse que
+        esté activa.
+        """
+        ProyectoXConvocatoriaValidator._validar_convocatoria(convocatoria_id)
+        ProyectoXConvocatoriaValidator._validar_proyecto(proyecto_id)
+        ProyectoXConvocatoriaValidator._validar_unicidad(convocatoria_id, proyecto_id)
 
     @staticmethod
     def validar_habilitar_correccion(proyecto_x_convocatoria):

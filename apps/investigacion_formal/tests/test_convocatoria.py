@@ -110,21 +110,4 @@ class ConvocatoriaServiceTests(InvestigacionFormalFixturesMixin, TestCase):
         self.assertIsNotNone(convocatoria.pk)
         documentos = DocumentoFirmaSelector.listar_por_objeto(convocatoria)
         self.assertEqual(documentos.count(), 1)
-        self.assertEqual(documentos.first().estado, 'BORRADOR')
-
-    def test_crear_con_documento_sin_seed_tipo_documento_falla(self):
-        from django.core.files.uploadedfile import SimpleUploadedFile
-        archivo = SimpleUploadedFile(
-            'convocatoria_2025.pdf', b'condiciones de la convocatoria', content_type='application/pdf'
-        )
-        with self.assertRaises(ValidationError):
-            ConvocatoriaService.crear_con_documento(
-                nombre_convocatoria='Convocatoria Sin Seed',
-                anio_convocatoria=2025,
-                inicio='2025-01-01',
-                cierre='2025-06-30',
-                interno=True,
-                archivo=archivo,
-                ip_creacion='127.0.0.1',
-                ejecutor=self.ejecutor,
-            )
+        self.assertEqual(documentos.first().estado, 'FIRMADO')

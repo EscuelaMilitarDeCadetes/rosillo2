@@ -161,7 +161,7 @@ class TareaAdmin(admin.ModelAdmin):
 
 @admin.register(TipoDocumento)
 class TipoDocumentoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'nombre_documento', 'grupo')
+    list_display = ('id', 'nombre_documento', 'grupo', 'investigacion', 'es_obligatorio')
     search_fields = ('nombre_documento',)
     list_filter = ('grupo',)
     ordering = ('nombre_documento',)

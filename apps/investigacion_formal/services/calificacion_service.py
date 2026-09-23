@@ -1,5 +1,6 @@
 from django.db import transaction
 
+from apps.common.services.tarea_service import TareaService
 from apps.investigacion_formal.models import Calificacion
 from apps.investigacion_formal.selectors.calificacion_selector import CalificacionSelector
 from apps.investigacion_formal.validators.calificacion_validator import CalificacionValidator
@@ -119,6 +120,15 @@ class CalificacionService:
                     tipo='exito',
                     url_relacionada=f"/investigacion-formal/proyectos/{proyecto.pk}",
                     notificar_email=True,
+                )
+                TareaService.crear_recordatorio(
+                    usuario_id=ejecutor.pk,
+                    descripcion=(
+                        f"Asignar fecha de inicio y fin al proyecto aprobado "
+                        f"'{proyecto.titulo}'"
+                    ),
+                    objeto=proyecto,
+                    ejecutor=ejecutor,
                 )
             else:
                 NotificacionService.crear(

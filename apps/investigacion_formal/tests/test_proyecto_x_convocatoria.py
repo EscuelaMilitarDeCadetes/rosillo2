@@ -123,14 +123,29 @@ class ProyectoXConvocatoriaServiceTests(InvestigacionFormalFixturesMixin, TestCa
         vinculo.refresh_from_db()
         self.assertFalse(vinculo.estado)
 
-    def test_listar_sin_calificar(self):
+    def test_listar_sin_calificar_no_incluye_convocatoria_activa(self):
         ProyectoXConvocatoriaService.crear(
             convocatoria_id=self.convocatoria.pk,
             proyecto_id=self.proyecto.pk,
             ejecutor=self.ejecutor,
         )
         resultado = ProyectoXConvocatoriaService.listar_sin_calificar()
+        self.assertEqual(resultado.count(), 0)
+
+    def test_listar_sin_calificar_incluye_convocatoria_cerrada(self):
+        from apps.investigacion_formal.services.convocatoria_service import ConvocatoriaService
+
+        vinculo = ProyectoXConvocatoriaService.crear(
+            convocatoria_id=self.convocatoria.pk,
+            proyecto_id=self.proyecto.pk,
+            ejecutor=self.ejecutor,
+        )
+        ConvocatoriaService.cambiar_estado(
+            convocatoria_id=self.convocatoria.pk, nuevo_estado=False, ejecutor=self.ejecutor,
+        )
+        resultado = ProyectoXConvocatoriaService.listar_sin_calificar()
         self.assertEqual(resultado.count(), 1)
+        self.assertEqual(resultado.first().pk, vinculo.pk)
 
     def test_listar_calificados_filtra_por_calificacion(self):
         vinculo = ProyectoXConvocatoriaService.crear(

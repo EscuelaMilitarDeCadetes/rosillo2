@@ -6,6 +6,11 @@ from rest_framework.exceptions import ValidationError
 from .base import InvestigacionFormalFixturesMixin
 from apps.investigacion_formal.services.proyecto_service import ProyectoService
 
+from apps.usuarios.models import Usuario
+from apps.institucional.models import Persona, Gerente
+from apps.investigacion_formal.models import Monto
+from apps.investigacion_formal.services.monto_service import MontoService
+
 
 class ProyectoServiceTests(InvestigacionFormalFixturesMixin, TestCase):
 
@@ -162,3 +167,38 @@ class ProyectoServiceTests(InvestigacionFormalFixturesMixin, TestCase):
                 financiado=False, unidad_ejecutora='ING', linea_investigacion='Tecnología',
                 ejecutor=self.ejecutor, codigo='ING2020-I01',
             )
+    
+    def _crear_proyecto_externo(self):
+        # unique_together (usuario, gerente): self.usuario_proyecto/self.gerente
+        # ya están tomados por self.proyecto, así que se crea una pareja nueva.
+        usuario = Usuario.objects.create_user(
+            username='externo@esmic.edu.co', email='externo@esmic.edu.co', password='externo123',
+        )
+        persona = Persona.objects.create(
+            grado=self.grado, nombre='Externo', apellido='Prueba',
+            documento='8888800001', celular='3009999999', correo='externo@esmic.edu.co',
+        )
+        gerente = Gerente.objects.create(persona=persona, estado=True)
+        return ProyectoService.crear_proyecto_externo(
+            usuario_id=usuario.pk, gerente_id=gerente.pk,
+            titulo='Proyecto externo de prueba', unidad_ejecutora='ING',
+            linea_investigacion='Tecnología', entidad='Minciencias',
+            valor_solicitado=32000000, alianza=False, financiado=True,
+            ejecutor=self.ejecutor, grupo_investigacion_id=self.grupo.pk,
+        )
+
+    def test_crear_proyecto_externo_inicializa_contrapartida_y_total(self):
+        proyecto = self._crear_proyecto_externo()
+        monto = Monto.objects.get(proyecto=proyecto)
+        self.assertEqual(monto.aprobado, 32000000)
+        self.assertEqual(monto.contrapartida, 0)
+        self.assertEqual(monto.total, 32000000)
+
+    def test_proyecto_externo_permite_asignar_contrapartida(self):
+        proyecto = self._crear_proyecto_externo()
+        monto = Monto.objects.get(proyecto=proyecto)
+        actualizado = MontoService.asignar_contrapartida(
+            monto_id=monto.pk, contrapartida=8000000, ejecutor=self.ejecutor,
+        )
+        self.assertEqual(actualizado.aprobado, 32000000)
+        self.assertEqual(actualizado.total, 40000000)

@@ -4,7 +4,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from apps.investigacion_formal.permissions import (
-    ROLES_LECTURA_INVESTIGACION_FORMAL, ROLES_ESCRITURA_GESTION, ROLES_CREACION_OPERATIVA, combinar,
+    ROLES_LECTURA_INVESTIGACION_FORMAL, ROLES_ESCRITURA_GESTION, ROLES_CREACION_OPERATIVA, ProyectoTieneActaInicio, combinar,
 )
 from apps.investigacion_formal.serializers.objetivos_serializer import ObjetivosSerializer
 from apps.investigacion_formal.services.objetivos_service import ObjetivosService
@@ -16,7 +16,7 @@ class ObjetivosViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action in ["create", "crear_objetivo_general", "crear_objetivo_especifico"]:
-            return [combinar(ROLES_CREACION_OPERATIVA), TieneAmbitoFormal()]
+            return [combinar(ROLES_CREACION_OPERATIVA), TieneAmbitoFormal(), ProyectoTieneActaInicio()]
         elif self.action in ["update", "destroy"]:
             return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormal()]
         else:  # list, retrieve, por_proyecto, objetivo_general

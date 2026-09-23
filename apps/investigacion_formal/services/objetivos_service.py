@@ -2,6 +2,7 @@ from django.db import transaction
 
 from apps.investigacion_formal.models import Objetivos
 from apps.investigacion_formal.selectors.objetivos_selector import ObjetivosSelector
+from apps.investigacion_formal.services.proyecto_setup_service import ProyectoSetupService
 from apps.investigacion_formal.validators.objetivos_validator import ObjetivosValidator
 from apps.common.services.historial_service import HistorialService
 
@@ -36,6 +37,7 @@ class ObjetivosService:
             clase='PRINCIPAL',
             estado=True,
         )
+        ProyectoSetupService.verificar_configuracion_completa(proyecto_id, ejecutor=ejecutor)
         HistorialService.registrar(
             ejecutor,
             f"Se creó el objetivo general del proyecto '{creado.proyecto.titulo}' "
@@ -54,6 +56,7 @@ class ObjetivosService:
             clase='ESPECIFICO',
             estado=True,
         )
+        ProyectoSetupService.verificar_configuracion_completa(proyecto_id, ejecutor=ejecutor)
         HistorialService.registrar(
             ejecutor,
             f"Se creó el objetivo específico '{creado.objetivo}' del proyecto "

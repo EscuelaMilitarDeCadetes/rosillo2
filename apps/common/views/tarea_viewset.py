@@ -41,13 +41,15 @@ class TareaViewSet(viewsets.ViewSet):
         return Response(self.serializer_class(tarea).data)
 
     def create(self, request):
-        content_type = ContentType.objects.get(
-            app_label=request.data.get("content_type_app_label"),
-            model=request.data.get("content_type_model"),
-        )
-        objeto = content_type.get_object_for_this_type(pk=request.data.get("object_id"))
+        app_label = request.data.get("content_type_app_label")
+        model = request.data.get("content_type_model")
+        object_id = request.data.get("object_id")
+        objeto = None
+        if app_label and model and object_id:
+            content_type = ContentType.objects.get(app_label=app_label, model=model)
+            objeto = content_type.get_object_for_this_type(pk=object_id)
         tarea = TareaService.crear(
-            asignado_a_id=request.data.get("asignado_a"),
+            asignado_a_id=request.user.pk,   # siempre el usuario autenticado
             descripcion=request.data.get("descripcion"),
             objeto=objeto,
             ejecutor=request.user,

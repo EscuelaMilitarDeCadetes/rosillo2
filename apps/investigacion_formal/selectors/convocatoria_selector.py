@@ -1,5 +1,3 @@
-from django.utils import timezone
-
 from apps.investigacion_formal.models import Convocatoria
 
 
@@ -34,6 +32,14 @@ class ConvocatoriaSelector:
         if estado is not None:
             qs = qs.filter(estado=estado)
         return qs.order_by('-anio_convocatoria')
+    
+    @staticmethod
+    def listar_abiertas():
+        return (
+            Convocatoria.objects
+            .filter(interno=True, estado=True)
+            .order_by('-anio_convocatoria', 'cierre')
+        )
     
     @staticmethod
     def buscar_por_nombre(nombre_convocatoria):

@@ -4,6 +4,7 @@ from apps.investigacion_formal.models import InvestigadorXProyecto
 from apps.investigacion_formal.selectors.investigador_x_proyecto_selector import (
     InvestigadorXProyectoSelector,
 )
+from apps.investigacion_formal.services.proyecto_setup_service import ProyectoSetupService
 from apps.investigacion_formal.validators.investigador_x_proyecto_validator import (
     InvestigadorXProyectoValidator,
 )
@@ -32,9 +33,6 @@ class InvestigadorXProyectoService:
         InvestigadorXProyectoValidator.validar_creacion(
             rol_investigador_id, proyecto_id, persona_x_grupo_id, orcid
         )
-
-        # CORREGIDO (INV-05): el unique_together del modelo es sobre
-        # (rol_investigador, proyecto, persona_x_grupo) SIN importar estado.
         # Si existe un registro inactivo con esa misma combinación (la
         # persona fue retirada antes con este mismo rol), se reactiva en vez
         # de intentar crear uno nuevo que violaría la restricción de BD.
@@ -54,7 +52,6 @@ class InvestigadorXProyectoService:
                 objeto=existente,
             )
             return existente
-
         investigador = InvestigadorXProyecto.objects.create(
             rol_investigador_id=rol_investigador_id,
             proyecto_id=proyecto_id,
@@ -62,6 +59,7 @@ class InvestigadorXProyectoService:
             orcid=orcid,
             estado=True,
         )
+        ProyectoSetupService.verificar_configuracion_completa(proyecto_id, ejecutor=ejecutor)
         HistorialService.registrar(
             ejecutor,
             f"Se vinculó a '{investigador.persona_x_grupo.persona.nombre} "

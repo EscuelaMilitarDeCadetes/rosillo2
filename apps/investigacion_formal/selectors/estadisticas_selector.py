@@ -1,39 +1,23 @@
 # apps/investigacion_formal/selectors/estadisticas_selector.py
 from django.db.models import Count, Avg, Q, F
 from django.db.models.functions import ExtractYear
+from apps.investigacion_formal.selectors.responsable_proyecto import q_por_facultad, q_por_grupo
 
 from apps.investigacion_formal.models import Proyecto, Monto
 
 
 def _filtrar_proyecto_por_facultad_grupo(qs, facultad_id=None, grupo_id=None):
     if facultad_id is not None:
-        qs = qs.filter(
-            usuario__asignaciones__estado=True,
-            usuario__asignaciones__persona__personaxgrupo__estado=True,
-            usuario__asignaciones__persona__personaxgrupo__facultad_id=facultad_id,
-        )
+        qs = qs.filter(q_por_facultad(facultad_id, prefix=""))
     if grupo_id is not None:
-        qs = qs.filter(
-            usuario__asignaciones__estado=True,
-            usuario__asignaciones__persona__personaxgrupo__estado=True,
-            usuario__asignaciones__persona__personaxgrupo__grupo_id=grupo_id,
-        )
+        qs = qs.filter(q_por_grupo(grupo_id, prefix=""))
     return qs.distinct()
-
 
 def _filtrar_monto_por_facultad_grupo(qs, facultad_id=None, grupo_id=None):
     if facultad_id is not None:
-        qs = qs.filter(
-            proyecto__usuario__asignaciones__estado=True,
-            proyecto__usuario__asignaciones__persona__personaxgrupo__estado=True,
-            proyecto__usuario__asignaciones__persona__personaxgrupo__facultad_id=facultad_id,
-        )
+        qs = qs.filter(q_por_facultad(facultad_id, prefix="proyecto__"))
     if grupo_id is not None:
-        qs = qs.filter(
-            proyecto__usuario__asignaciones__estado=True,
-            proyecto__usuario__asignaciones__persona__personaxgrupo__estado=True,
-            proyecto__usuario__asignaciones__persona__personaxgrupo__grupo_id=grupo_id,
-        )
+        qs = qs.filter(q_por_grupo(grupo_id, prefix="proyecto__"))
     return qs.distinct()
 
 

@@ -7,7 +7,7 @@ class ProductoXProyectoSelector:
     def listar():
         return (
             ProductoXProyecto.objects
-            .select_related('producto_x_grupo', 'proyecto', 'tipo_documento')
+            .select_related('producto_x_grupo', 'proyecto')
             .all()
         )
 
@@ -15,7 +15,7 @@ class ProductoXProyectoSelector:
     def obtener(producto_x_proyecto_id):
         return (
             ProductoXProyecto.objects
-            .select_related('producto_x_grupo', 'proyecto', 'tipo_documento')
+            .select_related('producto_x_grupo', 'proyecto')
             .get(pk=producto_x_proyecto_id)
         )
 
@@ -24,7 +24,7 @@ class ProductoXProyectoSelector:
         """Equivalente a findByTituloProyectoFk / getDocumentosXProductosXProyecto."""
         qs = (
             ProductoXProyecto.objects
-            .select_related('producto_x_grupo', 'tipo_documento')
+            .select_related('producto_x_grupo')
             .filter(proyecto_id=proyecto_id)
         )
         if solo_activos:
@@ -44,16 +44,15 @@ class ProductoXProyectoSelector:
     def listar_entregados_por_proyecto(proyecto_id):
         return (
             ProductoXProyecto.objects
-            .select_related('producto_x_grupo', 'tipo_documento')
+            .select_related('producto_x_grupo')
             .filter(proyecto_id=proyecto_id, entregado=True, activo=True)
         )
 
     @staticmethod
-    def existe_combinacion(producto_x_grupo_id, proyecto_id, tipo_documento_id, excluir_id=None):
+    def existe_combinacion(producto_x_grupo_id, proyecto_id, excluir_id=None):
         qs = ProductoXProyecto.objects.filter(
             producto_x_grupo_id=producto_x_grupo_id,
             proyecto_id=proyecto_id,
-            tipo_documento_id=tipo_documento_id,
         )
         if excluir_id is not None:
             qs = qs.exclude(pk=excluir_id)

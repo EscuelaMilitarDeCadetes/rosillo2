@@ -9,7 +9,7 @@ from apps.investigacion_formal.serializers.objetivo_x_punto_serializer import (
 )
 from apps.investigacion_formal.services.objetivo_x_punto_service import ObjetivoXPuntoService
 from apps.investigacion_formal.permissions import (
-    ROLES_LECTURA_INVESTIGACION_FORMAL, ROLES_ESCRITURA_GESTION, ROLES_CREACION_OPERATIVA, combinar,
+    ROLES_LECTURA_INVESTIGACION_FORMAL, ROLES_ESCRITURA_GESTION, ROLES_CREACION_OPERATIVA, ProyectoTieneActaInicio, combinar,
 )
 from apps.investigacion_formal.services.avance_service import AvanceService
 
@@ -20,7 +20,7 @@ class ObjetivoXPuntoViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
         if self.action in ["create", "agregar_avance"]:
-            return [combinar(ROLES_CREACION_OPERATIVA), TieneAmbitoFormal()]
+            return [combinar(ROLES_CREACION_OPERATIVA), TieneAmbitoFormal(), ProyectoTieneActaInicio()]
         elif self.action in ["destroy"]:
             return [combinar(ROLES_ESCRITURA_GESTION), TieneAmbitoFormal()]
         else:  # list, retrieve, por_proyecto, por_objetivo

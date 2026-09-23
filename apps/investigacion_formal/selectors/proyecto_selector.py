@@ -93,3 +93,16 @@ class ProyectoSelector:
         if excluir_id is not None:
             qs = qs.exclude(pk=excluir_id)
         return qs.exists()
+    
+    @staticmethod
+    def tiene_acta_inicio(proyecto_id):
+        from django.contrib.contenttypes.models import ContentType
+        from apps.common.models import DocumentoFirma
+        from apps.investigacion_formal.models import Proyecto
+
+        content_type = ContentType.objects.get_for_model(Proyecto)
+        return DocumentoFirma.objects.filter(
+            content_type=content_type,
+            object_id=proyecto_id,
+            tipo_documento__es_acta_inicio=True,
+        ).exists()

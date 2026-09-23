@@ -1,3 +1,7 @@
+from django.utils import timezone
+
+from apps.common.models.documento_firma import DocumentoFirma
+from apps.common.models.tipo_documento import TipoDocumento
 from apps.common.pagination import CommonPageNumberPagination
 from apps.usuarios.permissions.es_cexterno import EsCExterno
 from apps.usuarios.permissions.es_cinterno import EsCInterno
@@ -16,6 +20,18 @@ from apps.common.services.documento_firma_service import DocumentoFirmaService
 from django.http import FileResponse
 import os
 
+NOMBRES_TIPO_DOCUMENTO_CARGA_FACULTAD_GRUPO = {
+    "Control de cambios",
+    "Control de cambios - tiempo",
+    "Control de cambios - investigador",
+    "Control de cambios - costo",
+    "Control de cambios - producto",
+    "Entregables",
+    "Informe técnico",
+    "Informe de supervisión",
+    "Concepto técnico",
+    "Informe final",
+}
 
 def _resolver_objeto_generico(data):
     app_label = data.get("content_type_app_label")
@@ -53,6 +69,46 @@ class DocumentoFirmaViewSet(viewsets.ViewSet):
         return Response(self.serializer_class(documento).data)
 
     def create(self, request):
+        tipo_documento_id = request.data.get('tipo_documento')
+        content_type_app_label = request.data.get('content_type_app_label')
+        content_type_model = request.data.get('content_type_model')
+        object_id = request.data.get('object_id')
+        es_cinterno_cexterno = request.user.has_role('CINTERNO') or request.user.has_role('CEXTERNO')
+        tipo = TipoDocumento.objects.filter(pk=tipo_documento_id).first()
+        if not es_cinterno_cexterno:
+            nombre_tipo = tipo.nombre_documento if tipo else None
+            puede_cargar = tipo and (
+                tipo.es_informe_seguimiento
+                or nombre_tipo in NOMBRES_TIPO_DOCUMENTO_CARGA_FACULTAD_GRUPO
+            )
+            if not puede_cargar:
+                return Response(
+                    {"detail": "Con este rol no puede cargar este tipo de documento."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if content_type_app_label and content_type_model and object_id:
+                content_type = ContentType.objects.get(app_label=content_type_app_label, model=content_type_model)
+                tiene_acta = DocumentoFirma.objects.filter(
+                    content_type=content_type, object_id=object_id, tipo_documento__es_acta_inicio=True,
+                ).exists()
+                if not tiene_acta:
+                    return Response(
+                        {"detail": "Aún no se puede cargar el documento: falta el acta de inicio."},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+                if tipo.es_informe_seguimiento:
+                    hoy = timezone.now()
+                    ya_subido_este_mes = DocumentoFirma.objects.filter(
+                        content_type=content_type, object_id=object_id,
+                        tipo_documento__es_informe_seguimiento=True,
+                        fecha_creacion__year=hoy.year,
+                        fecha_creacion__month=hoy.month,
+                    ).exists()
+                    if ya_subido_este_mes:
+                        return Response(
+                            {"detail": "Ya se cargó el informe de seguimiento de este mes. Podrá cargar el siguiente el próximo mes."},
+                            status=status.HTTP_403_FORBIDDEN,
+                        )
         objeto = _resolver_objeto_generico(request.data)
         archivo = request.FILES.get("archivo")
         kwargs = dict(
@@ -67,6 +123,8 @@ class DocumentoFirmaViewSet(viewsets.ViewSet):
             if archivo is not None
             else DocumentoFirmaService.crear(ruta_documento=request.data.get("ruta_documento"), **kwargs)
         )
+        if not es_cinterno_cexterno:
+            DocumentoFirmaService.notificar_cinterno_carga(documento, ejecutor=request.user)
         return Response(self.serializer_class(documento).data, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, pk=None):

@@ -1,9 +1,11 @@
+from django.contrib.contenttypes.models import ContentType
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from rest_framework.exceptions import ValidationError
 
 from .base import InvestigacionFormalFixturesMixin
-from apps.investigacion_formal.models import TipoProducto
-from apps.common.models import TipoDocumento
+from apps.investigacion_formal.models import ProductoXProyecto, TipoProducto
+from apps.common.models import DocumentoFirma, TipoDocumento
 from apps.investigacion_formal.services.producto_minciencias_service import (
     ProductoMincienciasService,
 )
@@ -12,6 +14,10 @@ from apps.investigacion_formal.services.producto_x_grupo_service import Producto
 from apps.investigacion_formal.services.producto_x_proyecto_service import (
     ProductoXProyectoService,
 )
+
+
+def _archivo_pdf_prueba(nombre='entregable.pdf'):
+    return SimpleUploadedFile(nombre, b'%PDF-1.4 contenido de prueba', content_type='application/pdf')
 
 
 class ProductoXProyectoServiceTests(InvestigacionFormalFixturesMixin, TestCase):
@@ -34,9 +40,9 @@ class ProductoXProyectoServiceTests(InvestigacionFormalFixturesMixin, TestCase):
             tipo_producto_id=tipo_producto.pk,
             ejecutor=self.ejecutor,
         )
-        self.tipo_documento = TipoDocumento.objects.create(
-            nombre_documento='Certificado de Producto', grupo='proyecto',
-        )
+        # Requerido por registrar_entrega(), que resuelve este TipoDocumento
+        # por nombre internamente (ver ProductoXProyectoService.NOMBRE_TIPO_DOCUMENTO_ENTREGABLE).
+        TipoDocumento.objects.create(nombre_documento='Entregables', grupo='proyecto')
 
     def test_crear_producto_x_proyecto_exitoso(self):
         producto = ProductoXProyectoService.crear(
@@ -69,12 +75,17 @@ class ProductoXProyectoServiceTests(InvestigacionFormalFixturesMixin, TestCase):
         )
         entregado = ProductoXProyectoService.registrar_entrega(
             producto_x_proyecto_id=producto.pk,
-            documento='certificado_producto.pdf',
-            tipo_documento_id=self.tipo_documento.pk,
+            archivo=_archivo_pdf_prueba(),
+            ip_creacion='127.0.0.1',
             ejecutor=self.ejecutor,
         )
         self.assertTrue(entregado.entregado)
-        self.assertEqual(entregado.documento, 'certificado_producto.pdf')
+        documento = DocumentoFirma.objects.get(
+            content_type=ContentType.objects.get_for_model(ProductoXProyecto),
+            object_id=entregado.pk,
+        )
+        self.assertEqual(documento.tipo_documento.nombre_documento, 'Entregables')
+        self.assertEqual(documento.estado, 'FIRMADO')
 
     def test_registrar_entrega_sin_documento_falla(self):
         producto = ProductoXProyectoService.crear(
@@ -87,8 +98,8 @@ class ProductoXProyectoServiceTests(InvestigacionFormalFixturesMixin, TestCase):
         with self.assertRaises(ValidationError):
             ProductoXProyectoService.registrar_entrega(
                 producto_x_proyecto_id=producto.pk,
-                documento='',
-                tipo_documento_id=self.tipo_documento.pk,
+                archivo=None,
+                ip_creacion='127.0.0.1',
                 ejecutor=self.ejecutor,
             )
 
@@ -148,8 +159,8 @@ class ProductoXProyectoServiceTests(InvestigacionFormalFixturesMixin, TestCase):
         )
         ProductoXProyectoService.registrar_entrega(
             producto_x_proyecto_id=producto.pk,
-            documento='doc.pdf',
-            tipo_documento_id=self.tipo_documento.pk,
+            archivo=_archivo_pdf_prueba('doc.pdf'),
+            ip_creacion='127.0.0.1',
             ejecutor=self.ejecutor,
         )
         resultado = ProductoXProyectoService.listar_entregados_por_proyecto(self.proyecto.pk)

@@ -85,9 +85,9 @@ class ProductoXGrupoAdmin(admin.ModelAdmin):
 
 @admin.register(ProductoXProyecto)
 class ProductoXProyectoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'producto_x_grupo__producto_minciencias__nombre_producto', 'producto_x_grupo__grupo_minciencias__nombre_grupo_minciencias', 'proyecto__titulo', 'tipo_documento', 'activo', 'entregado', 'categoria', 'puntaje', 'gruplac')
-    search_fields = ('producto_x_grupo__producto_minciencias__nombre_producto', 'producto_x_grupo__grupo_minciencias__nombre_grupo_minciencias', 'proyecto__titulo', 'tipo_documento', 'activo', 'entregado', 'categoria', 'puntaje', 'gruplac')
-    list_filter = ('producto_x_grupo__producto_minciencias__nombre_producto', 'producto_x_grupo__grupo_minciencias__nombre_grupo_minciencias', 'proyecto__titulo', 'tipo_documento', 'activo', 'entregado', 'categoria', 'puntaje', 'gruplac')
+    list_display = ('id', 'producto_x_grupo__producto_minciencias__nombre_producto', 'producto_x_grupo__grupo_minciencias__nombre_grupo_minciencias', 'proyecto__titulo', 'activo', 'entregado', 'categoria', 'puntaje', 'gruplac')
+    search_fields = ('producto_x_grupo__producto_minciencias__nombre_producto', 'producto_x_grupo__grupo_minciencias__nombre_grupo_minciencias', 'proyecto__titulo', 'activo', 'entregado', 'categoria', 'puntaje', 'gruplac')
+    list_filter = ('producto_x_grupo__producto_minciencias__nombre_producto', 'producto_x_grupo__grupo_minciencias__nombre_grupo_minciencias', 'proyecto__titulo', 'activo', 'entregado', 'categoria', 'puntaje', 'gruplac')
 
 
 # ======================================================

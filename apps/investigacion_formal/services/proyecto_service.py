@@ -3,8 +3,10 @@ from datetime import datetime
 
 from django.db import transaction
 
+from apps.common.services.tarea_service import TareaService
 from apps.investigacion_formal.models import Proyecto
 from apps.investigacion_formal.selectors.proyecto_selector import ProyectoSelector
+from apps.institucional.models import PersonaXGrupo
 from apps.investigacion_formal.validators.proyecto_validator import ProyectoValidator
 from apps.common.services.historial_service import HistorialService
 from django.utils import timezone
@@ -118,12 +120,36 @@ class ProyectoService:
         # o ya se le generó antes), nunca se regenera ni se sobreescribe.
         if not proyecto.codigo:
             anio = fecha_inicio.year
-            prefijo = f"{proyecto.unidad_ejecutora}{anio}-{'I' if proyecto.interno else 'E'}"
+            pxg = (
+                PersonaXGrupo.objects
+                .filter(
+                    persona__asignaciones__usuario_id=proyecto.usuario_id,
+                    persona__asignaciones__estado=True,
+                    estado=True,
+                )
+                .select_related('facultad', 'grupo')
+                .first()
+            )
+            if pxg and pxg.facultad_id:
+                sigla = pxg.facultad.abreviatura
+            elif pxg and pxg.grupo_id:
+                sigla = pxg.grupo.sigla_grupo
+            else:
+                sigla = proyecto.unidad_ejecutora
+            prefijo = f"{sigla}{anio}-{'I' if proyecto.interno else 'E'}"
             cantidad = ProyectoSelector.contar_aprobados_por_prefijo(prefijo)
             proyecto.codigo = f"{prefijo}{cantidad + 1:02d}"
             campos_a_guardar.append('codigo')
-
         proyecto.save(update_fields=campos_a_guardar)
+        TareaService.crear_recordatorio(
+            usuario_id=proyecto.usuario_id,
+            descripcion=(
+                f"Agregar investigadores, productos y objetivos/puntos de control "
+                f"al proyecto '{proyecto.titulo}'"
+            ),
+            objeto=proyecto,
+            ejecutor=ejecutor,
+        )
         HistorialService.registrar(
             ejecutor,
             f"Se asignó el tiempo de ejecución al proyecto '{proyecto.titulo}' "
@@ -213,22 +239,24 @@ class ProyectoService:
     @staticmethod
     @transaction.atomic
     def crear_proyecto_externo(usuario_id, gerente_id, titulo, unidad_ejecutora,
-                                linea_investigacion, entidad, valor_solicitado,
-                                alianza, financiado, ejecutor):
+                               linea_investigacion, entidad, valor_solicitado,
+                               alianza, financiado, ejecutor,
+                               grupo_investigacion_id=None, facultad_id=None):
         """
-        Réplica de ProyectosExternosControlador.crearProyecto() +
-        ProyectoServicioImpl.crearProyecto() del Thymeleaf original.
-
-        Regla de negocio (01_architecture.md, flujo de investigación formal,
-        paso 5): los proyectos de convocatoria externa se aprueban
+        Los proyectos de convocatoria externa se aprueban
         automáticamente, sin pasar por las 6 fases de Calificacion que sí
         aplican a los proyectos internos.
+        grupo_investigacion_id/facultad_id reemplazan la derivación
+        automática desde PersonaXGrupo del usuario creador (CEXTERNO), que
+        no aplica a proyectos externos porque esa cuenta no representa
+        ninguna facultad/grupo real.
         """
+        grupo, facultad_id_valido = ProyectoValidator.validar_responsable_externo(
+            grupo_investigacion_id, facultad_id,
+        )
         anio_actual = timezone.now().year
         nombre_convocatoria_externa = f"{entidad} {anio_actual}"
-        convocatoria = ConvocatoriaSelector.buscar_por_nombre(
-            nombre_convocatoria_externa
-        )
+        convocatoria = ConvocatoriaSelector.buscar_por_nombre(nombre_convocatoria_externa)
         if convocatoria is None:
             convocatoria = ConvocatoriaService.crear(
                 nombre_convocatoria=nombre_convocatoria_externa,
@@ -238,9 +266,6 @@ class ProyectoService:
                 interno=False,
                 ejecutor=ejecutor,
             )
-            # Las convocatorias externas sintéticas nacen inactivas: no son
-            # una convocatoria "real" abierta a postulación, solo agrupan
-            # proyectos externos para reportes homogéneos con los internos.
             ConvocatoriaService.cambiar_estado(
                 convocatoria_id=convocatoria.pk, nuevo_estado=False, ejecutor=ejecutor,
             )
@@ -254,16 +279,21 @@ class ProyectoService:
             unidad_ejecutora=unidad_ejecutora,
             linea_investigacion=linea_investigacion,
             ejecutor=ejecutor,
-            estado_aprobado='APROBADO',  # auto-aprobación, regla de negocio
+            estado_aprobado='APROBADO',
         )
+        #Fija el responsable institucional del proyecto externo.
+        proyecto.grupo_investigacion_id = grupo.pk
+        proyecto.facultad_id = facultad_id_valido
+        proyecto.save(update_fields=['grupo_investigacion', 'facultad'])
         Monto.objects.create(
             proyecto=proyecto,
             solicitado=valor_solicitado or 0,
             aprobado=valor_solicitado or 0,
             asignado=timezone.now().date(),
             ejecutado=0,
+            contrapartida=0,
+            total=valor_solicitado or 0,
         )
-        # Nace "ya calificado": no pasa por las 6 fases de Calificacion.
         ProyectoXConvocatoriaService.crear_ya_finalizado_aprobado(
             proyecto_id=proyecto.pk,
             convocatoria_id=convocatoria.pk,
@@ -271,8 +301,9 @@ class ProyectoService:
         )
         HistorialService.registrar(
             ejecutor,
-            f"Se creó el proyecto externo '{proyecto.titulo}' con "
-            f"aprobación automática (entidad='{entidad}').",
+            f"Se creó el proyecto externo '{proyecto.titulo}' con aprobación "
+            f"automática (entidad='{entidad}', grupo='{grupo.sigla_grupo}'"
+            f"{', facultad=' + str(facultad_id_valido) if facultad_id_valido else ''}).",
             objeto=proyecto,
         )
         return proyecto

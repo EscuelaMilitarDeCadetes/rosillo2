@@ -5,15 +5,18 @@ from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
 from rest_framework_simplejwt.tokens import AccessToken
 from django.contrib.auth import get_user_model
+import logging
 
 Usuario = get_user_model()
+logger = logging.getLogger(__name__)
 
 @database_sync_to_async
 def obtener_usuario_desde_token(token):
     try:
         access = AccessToken(token)
         return Usuario.objects.get(id=access['user_id'])
-    except Exception:
+    except Exception as e:
+        logger.warning(f"WS JWT auth falló: {type(e).__name__}: {e}")
         return AnonymousUser()
 
 class JWTAuthMiddleware(BaseMiddleware):

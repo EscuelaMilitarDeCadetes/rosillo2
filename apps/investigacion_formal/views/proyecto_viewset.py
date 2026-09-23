@@ -152,6 +152,8 @@ class ProyectoViewSet(viewsets.ViewSet):
             valor_solicitado=request.data.get("valor_solicitado"),
             alianza=request.data.get("alianza"),
             financiado=request.data.get("financiado"),
+            grupo_investigacion_id=request.data.get("grupo_investigacion"),
+            facultad_id=request.data.get("facultad"),
             ejecutor=request.user,
         )
         return Response(self.serializer_class(proyecto).data, status=status.HTTP_201_CREATED)

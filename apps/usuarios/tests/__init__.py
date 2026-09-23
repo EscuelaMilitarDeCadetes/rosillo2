@@ -8,3 +8,4 @@ from .test_usuario_viewset import UsuarioViewSetTests
 from .test_usuario_persona import UsuarioXPersonaTests
 from .test_usuario_persona_viewset import UsuarioXPersonaViewsetTests
 from .test_rol_plataforma_tipo_vinculacion import RolPlataformaTipoVinculacionTests
+from .test_has_role import HasRoleTests

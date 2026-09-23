@@ -11,8 +11,8 @@ class Tarea(models.Model):
     fecha_limite = models.DateField(null=True, blank=True)
     
     # Para vincular a CUALQUIER objeto: un Proyecto, una Tesis, un DocumentoFirma, etc.
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True)
+    object_id = models.PositiveIntegerField(null=True, blank=True)
     objeto_relacionado = GenericForeignKey('content_type', 'object_id')
 
     class Meta:

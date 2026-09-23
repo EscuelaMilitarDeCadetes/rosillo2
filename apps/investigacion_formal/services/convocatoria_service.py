@@ -23,6 +23,10 @@ class ConvocatoriaService:
     @staticmethod
     def listar_internas(estado=None):
         return ConvocatoriaSelector.listar_internas(estado=estado)
+    
+    @staticmethod
+    def listar_abiertas():
+        return ConvocatoriaSelector.listar_abiertas()
 
     @staticmethod
     @transaction.atomic
@@ -79,7 +83,7 @@ class ConvocatoriaService:
             ip_creacion=ip_creacion,
             ejecutor=ejecutor,
             objeto=convocatoria,
-            estado='BORRADOR',
+            estado='FIRMADO',
             carpeta='convocatorias',
         )
         return convocatoria
