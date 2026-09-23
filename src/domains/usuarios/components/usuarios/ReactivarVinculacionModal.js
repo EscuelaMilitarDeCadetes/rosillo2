@@ -10,7 +10,7 @@ import {
   fetchHistorialPersona,
   reactivarPersonaDeGrupo,
   fetchGroupUsers,
-} from "../../features/usuarios/personaGrupoSlice.js";
+} from "../../../../features/usuarios/personaGrupoSlice.js";
 
 /*
   Modal para restituir la función "Activar Usuario" 

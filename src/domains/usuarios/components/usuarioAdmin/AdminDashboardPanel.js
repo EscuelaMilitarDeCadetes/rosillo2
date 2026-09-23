@@ -5,7 +5,7 @@ import { Card } from 'primereact/card';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { ProgressSpinner } from 'primereact/progressspinner';
-import { fetchAdminDashboard } from '../../features/usuarioAdmin/usuarioAdminSlice';
+import { fetchAdminDashboard } from '../../../../features/usuarioAdmin/usuarioAdminSlice';
 
 
 const AdminDashboardPanel = () => {

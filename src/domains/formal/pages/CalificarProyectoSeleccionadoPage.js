@@ -1,6 +1,6 @@
 // src/domains/formal/pages/CalificarProyectoSeleccionadoPage.js
 import React from 'react';
-import CalificacionForm from '../../../components/calificaciones/CalificacionForm'
+import CalificacionForm from '../components/calificaciones/CalificacionForm'
 
 const CalificarProyectoSeleccionadoPage = () => {
   return (

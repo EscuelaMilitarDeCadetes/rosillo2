@@ -3,39 +3,29 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
-import { Dropdown } from 'primereact/dropdown';
-import { InputText } from 'primereact/inputtext';
+import { FileUpload } from 'primereact/fileupload';
 import {
   registrarEntregaProducto,
 } from '../../../../features/proyectos/productosSlice';
-import {
-  fetchTiposDocumentoProyecto,
-} from '../../../../features/proyectos/documentosSlice';
 
-// Registra la entrega de un producto ya asignado al proyecto: adjunta el
-// enlace/URL del documento (GET productos-proyecto/{id}/registrar-entrega/
-// en el backend guarda "documento" como texto, no como archivo subido) y
-// lo marca como entregado.
+// Registra la entrega de un producto ya asignado al proyecto: sube el
+// archivo PDF del entregable y lo marca como entregado.
 const RegistrarEntregaProductoModal = ({ visible, onHide, proyectoId, producto }) => {
   const dispatch = useDispatch();
-  const { tiposDocumentoProyecto, loading, error } = useSelector((state) => state.documentos);
-  const [documento, setDocumento] = useState('');
-  const [tipoDocumentoId, setTipoDocumentoId] = useState(null);
+  const { loading, error } = useSelector((state) => state.productos);
+  const [archivo, setArchivo] = useState(null);
   const [validationError, setValidationError] = useState('');
 
   useEffect(() => {
-    if (visible) {
-      dispatch(fetchTiposDocumentoProyecto());
-    } else {
-      setDocumento('');
-      setTipoDocumentoId(null);
+    if (!visible) {
+      setArchivo(null);
       setValidationError('');
     }
-  }, [visible, dispatch]);
+  }, [visible]);
 
   const handleSubmit = () => {
-    if (!documento.trim() || !tipoDocumentoId) {
-      setValidationError('Debe indicar el enlace del documento y su tipo.');
+    if (!archivo) {
+      setValidationError('Debe adjuntar el archivo PDF del entregable.');
       return;
     }
     setValidationError('');
@@ -43,8 +33,7 @@ const RegistrarEntregaProductoModal = ({ visible, onHide, proyectoId, producto }
       registrarEntregaProducto({
         productoXProyectoId: producto.id,
         proyectoId,
-        documento: documento.trim(),
-        tipoDocumentoId,
+        archivo,
       })
     ).then((result) => {
       if (registrarEntregaProducto.fulfilled.match(result)) {
@@ -69,21 +58,18 @@ const RegistrarEntregaProductoModal = ({ visible, onHide, proyectoId, producto }
       )}
       <div className="p-fluid">
         <div className="field mb-3">
-          <label htmlFor="tipoDocumento">Tipo de Documento</label>
-          <Dropdown
-            inputId="tipoDocumento"
-            value={tipoDocumentoId}
-            options={tiposDocumentoProyecto}
-            onChange={(e) => setTipoDocumentoId(e.value)}
-            optionLabel="nombre_documento"
-            optionValue="id"
-            filter
-            placeholder="Seleccione el tipo de documento"
+          <label htmlFor="archivoEntregable">Archivo del Entregable (PDF)</label>
+          <FileUpload
+            id="archivoEntregable"
+            customUpload
+            uploadHandler={(e) => setArchivo(e.files[0])}
+            chooseLabel="Seleccionar Archivo"
+            mode="basic"
+            auto
+            accept="application/pdf"
+            maxFileSize={15000000}
           />
-        </div>
-        <div className="field mb-3">
-          <label htmlFor="documento">Enlace del Documento (Drive, GrupLAC, etc.)</label>
-          <InputText id="documento" value={documento} onChange={(e) => setDocumento(e.target.value)} placeholder="https://..." />
+          {archivo && <small className="p-text-secondary ms-2">{archivo.name}</small>}
         </div>
         {validationError && <div className="alert alert-danger mt-3">{validationError}</div>}
         {error && <div className="alert alert-danger mt-3">{error}</div>}

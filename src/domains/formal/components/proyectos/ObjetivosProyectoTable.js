@@ -14,12 +14,13 @@ import {
   fetchObjetivosPorProyecto,
   fetchObjetivoXPuntoPorProyecto,
   eliminarObjetivo,
-} from '../../features/proyectos/objetivosSlice';
+} from '../../../../features/proyectos/objetivosSlice';
 
-const ROLES_PUEDEN_GESTIONAR = ['FACULTAD', 'GRUPO', 'CINTERNO', 'CEXTERNO'];
+const ROLES_PUEDEN_GESTIONAR_OBJETIVOS = ['CINTERNO', 'CEXTERNO'];
+const ROLES_PUEDEN_AGREGAR_AVANCE = ['FACULTAD', 'GRUPO'];
 
 
-const ObjetivosProyectoTable = ({ proyectoId }) => {
+const ObjetivosProyectoTable = ({ proyectoId, readOnly = false }) => {
   const dispatch = useDispatch();
   const { roles } = useSelector((state) => state.auth);
   const { objetivos, objetivoXPunto, loading, deletingId } = useSelector((state) => state.objetivos);
@@ -44,7 +45,8 @@ const ObjetivosProyectoTable = ({ proyectoId }) => {
   }, [dispatch, proyectoId]);
 
   const hasAnyRole = (requiredRoles) => requiredRoles.some((rol) => roles.includes(rol));
-  const puedeGestionar = hasAnyRole(ROLES_PUEDEN_GESTIONAR);
+  const puedeGestionar = !readOnly && hasAnyRole(ROLES_PUEDEN_GESTIONAR_OBJETIVOS);
+  const puedeAgregarAvance = hasAnyRole(ROLES_PUEDEN_AGREGAR_AVANCE);
 
   const objetivoGeneral = objetivos.find((o) => o.clase === 'PRINCIPAL' && o.estado);
   const objetivosEspecificos = objetivos.filter((o) => o.clase === 'ESPECIFICO' && o.estado);
@@ -100,22 +102,6 @@ const ObjetivosProyectoTable = ({ proyectoId }) => {
         {objetivoGeneral ? (
           <div className="d-flex justify-content-between align-items-start">
             <p className="mb-0">{objetivoGeneral.objetivo}</p>
-            {puedeGestionar && (
-              <div className="flex-shrink-0 ms-2">
-                <Button
-                  icon="pi pi-pencil"
-                  className="p-button-rounded p-button-text p-button-warning"
-                  onClick={() => setObjetivoAEditar(objetivoGeneral)}
-                  tooltip="Editar objetivo general"
-                />
-                <Button
-                  icon="pi pi-trash"
-                  className="p-button-rounded p-button-text p-button-danger"
-                  onClick={() => setObjetivoAEliminar(objetivoGeneral)}
-                  tooltip="Eliminar objetivo general"
-                />
-              </div>
-            )}
           </div>
         ) : (
           <p className="text-muted mb-0">Este proyecto aún no tiene un objetivo general registrado.</p>
@@ -130,18 +116,15 @@ const ObjetivosProyectoTable = ({ proyectoId }) => {
           dataKey="id"
         >
           <Column field="objetivo" header="Objetivo Específico" />
-          {puedeGestionar && (
-            <Column body={accionesObjetivoTemplate} header="Acciones" style={{ width: '8rem' }} />
-          )}
         </DataTable>
       </Card>
 
       <div className="d-flex justify-content-end mb-3 gap-2">
         {puedeGestionar && (
-          <>
-            <Button label="Agregar Objetivo" icon="pi pi-plus" onClick={() => setIsAddObjetivoModalVisible(true)} />
-            <Button label="Agregar Avance" icon="pi pi-chart-line" className="p-button-secondary" onClick={() => setIsAddAvanceModalVisible(true)} />
-          </>
+          <Button label="Agregar Objetivo" icon="pi pi-plus" onClick={() => setIsAddObjetivoModalVisible(true)} />
+        )}
+        {puedeAgregarAvance && (
+          <Button label="Agregar Avance" icon="pi pi-chart-line" className="p-button-secondary" onClick={() => setIsAddAvanceModalVisible(true)} />
         )}
       </div>
       <DataTable

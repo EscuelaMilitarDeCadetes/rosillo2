@@ -2,7 +2,7 @@
 import React from "react";
 import { Dropdown } from "primereact/dropdown";
 import { Message } from "primereact/message";
-import { TIPOS_USUARIO_SOPORTE } from "../../../../features/usuarios/tipos_usuario_soporte";
+import { TIPOS_USUARIO_SOPORTE } from "../../../../../../features/usuarios/tipos_usuario_soporte";
 
 const StepTipoUsuario = ({ tipoKey, tipoSeleccionado, rolPlataformaResuelto, metadataLoading, onChange }) => (
   <div className="p-fluid">

@@ -83,14 +83,20 @@ export const uploadProductoToGruplac = createAsyncThunk(
   }
 );
 
-// Thunk para registrar la entrega de un producto (adjuntar documento/link y marcarlo como entregado)
+// Thunk para registrar la entrega de un producto: sube el archivo del
+// entregable como PDF (multipart) — el backend fija por su cuenta el
+// TipoDocumento "Entregables" y lo guarda en la misma carpeta ('proyectos')
+// que la propuesta y la carta de compromiso, vía DocumentoFirma.
 export const registrarEntregaProducto = createAsyncThunk(
   "proyectos/registrarEntregaProducto",
-  async ({ productoXProyectoId, proyectoId, documento, tipoDocumentoId }, { dispatch, rejectWithValue }) => {
+  async ({ productoXProyectoId, proyectoId, archivo }, { dispatch, rejectWithValue }) => {
     try {
+      const formData = new FormData();
+      formData.append("archivo", archivo);
       const response = await axiosInstance.patch(
         `${BASE}${productoXProyectoId}/registrar-entrega/`,
-        { documento, tipo_documento: tipoDocumentoId }
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
       );
       dispatch(fetchProductosPorProyecto(proyectoId));
       return response.data;
@@ -102,6 +108,51 @@ export const registrarEntregaProducto = createAsyncThunk(
           : (data && Object.values(data).flat().join(" ")) ||
             "Error al registrar la entrega del producto.";
       return rejectWithValue(mensaje);
+    }
+  }
+);
+
+// Thunk para descargar el documento de entrega de un producto. El backend ya
+// no expone un campo "documento" (URL) en ProductoXProyecto: el archivo vive
+// en DocumentoFirma, vinculado por content_type/object_id, así que primero
+// se resuelve cuál DocumentoFirma corresponde (mismo patrón que
+// descargarDocumentoConvocatoria) y luego se descarga.
+export const descargarDocumentoEntregaProducto = createAsyncThunk(
+  "proyectos/descargarDocumentoEntregaProducto",
+  async (productoXProyectoId, { rejectWithValue }) => {
+    try {
+      const porObjeto = await axiosInstance.get("common/documento-firma/por-objeto/", {
+        params: {
+          content_type_app_label: "investigacion_formal",
+          content_type_model: "productoxproyecto",
+          object_id: productoXProyectoId,
+        },
+      });
+      const documentos = porObjeto.data;
+      if (!documentos || documentos.length === 0) {
+        return rejectWithValue("Este producto no tiene un documento de entrega registrado.");
+      }
+      const documentoId = documentos[0].id;
+      const response = await axiosInstance.get(`common/documento-firma/${documentoId}/descargar/`, {
+        responseType: "blob",
+      });
+      const disposition = response.headers["content-disposition"];
+      let filename = "entregable-producto.pdf";
+      if (disposition) {
+        const match = disposition.match(/filename="?([^"]+)"?/);
+        if (match && match[1]) filename = match[1];
+      }
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      return { productoXProyectoId };
+    } catch (error) {
+      return rejectWithValue("No se pudo descargar el documento del producto.");
     }
   }
 );
@@ -146,6 +197,7 @@ const productosSlice = createSlice({
     productos: [],
     loading: false,
     error: null,
+    descargandoDocumentoId: null,
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -227,6 +279,15 @@ const productosSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+      .addCase(descargarDocumentoEntregaProducto.pending, (state, action) => {
+        state.descargandoDocumentoId = action.meta.arg;
+      })
+      .addCase(descargarDocumentoEntregaProducto.fulfilled, (state) => {
+        state.descargandoDocumentoId = null;
+      })
+      .addCase(descargarDocumentoEntregaProducto.rejected, (state) => {
+        state.descargandoDocumentoId = null;
+      });
   },
 });
 

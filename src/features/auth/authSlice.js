@@ -40,6 +40,12 @@ export const loginUser = createAsyncThunk(
 );
 
 // --- RESTAURAR SESIÓN AL RECARGAR LA PÁGINA ---
+// NOTA (fix 403 tras F5): isAuthenticated se restaura sincrónicamente desde
+// localStorage en el estado inicial, pero `roles` NO — depende de este thunk
+// asíncrono. Si PrivateRoute evalúa allowedRoles antes de que este thunk
+// resuelva, ve roles=[] y expulsa al usuario a /forbidden aunque sí tenga el
+// rol correcto. `sessionChecked` existe para que PrivateRoute pueda esperar
+// (mostrando un loader) en vez de redirigir prematuramente.
 export const loadSession = createAsyncThunk(
   'auth/loadSession',
   async (_, { rejectWithValue }) => {
@@ -116,6 +122,10 @@ const initialState = {
   sistemaActivo: localStorage.getItem('sistemaActivo') || null,
   loading: false,
   error: null,
+  // true una vez que loadSession (o loginUser) resolvió al menos una vez.
+  // Mientras sea false con isAuthenticated=true, PrivateRoute no debe decidir
+  // aún si el usuario tiene o no los allowedRoles de la ruta.
+  sessionChecked: false,
 };
 
 const authSlice = createSlice({
@@ -153,6 +163,7 @@ const authSlice = createSlice({
         state.debeCambiarPassword = action.payload.debeCambiarPassword;
         state.sistemaActivo = action.payload.sistema;
         state.error = null;
+        state.sessionChecked = true;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
@@ -160,6 +171,7 @@ const authSlice = createSlice({
         state.user = null;
         state.roles = [];
         state.error = action.payload || 'Fallo en el inicio de sesión';
+        state.sessionChecked = true;
       })
       .addCase(changePassword.fulfilled, (state) => {
         state.debeCambiarPassword = false;
@@ -173,6 +185,7 @@ const authSlice = createSlice({
         state.personaId = action.payload.personaId;
         state.debeCambiarPassword = action.payload.debeCambiarPassword;
         state.sistemaActivo = action.payload.sistema;
+        state.sessionChecked = true;
       })
       .addCase(loadSession.rejected, (state) => {
         state.isAuthenticated = false;
@@ -182,6 +195,7 @@ const authSlice = createSlice({
         state.grupoId = null;
         state.personaId = null;
         state.sistemaActivo = null;
+        state.sessionChecked = true;
       })
       .addCase(logoutUser.fulfilled, (state) => {
         state.isAuthenticated = false;
@@ -190,6 +204,7 @@ const authSlice = createSlice({
         state.debeCambiarPassword = false;
         state.sistemaActivo = null;
         state.error = null;
+        state.sessionChecked = true;
       })
       .addCase(logoutUser.rejected, (state) => {
         state.isAuthenticated = false;
@@ -198,6 +213,7 @@ const authSlice = createSlice({
         state.facultadId = null;
         state.grupoId = null;
         state.personaId = null;
+        state.sessionChecked = true;
       });
   },
 });

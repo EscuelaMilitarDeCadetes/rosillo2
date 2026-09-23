@@ -8,7 +8,7 @@ import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Tag } from 'primereact/tag';
-import { fetchProjectsByConvocatoria } from '../../features/convocatorias/convocatoriasSlice';
+import { fetchProjectsByConvocatoria } from '../../../../features/convocatorias/convocatoriasSlice';
 
 const ProjectsByConvocatoriaModal = ({ visible, onHide, convocatoria }) => {
   const dispatch = useDispatch();

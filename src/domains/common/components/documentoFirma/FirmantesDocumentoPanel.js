@@ -15,7 +15,7 @@ import {
   generarCodigoFirmante,
   limpiarErrorDocumentoFirmante,
   limpiarCodigoEnviado,
-} from '../../features/documentoFirmante/documentoFirmanteSlice';
+} from '../../../../features/documentoFirmante/documentoFirmanteSlice';
 import ConfirmationModal from '../../../../components/common/ConfirmationModal';
 import AsignarFirmantesModal from './AsignarFirmantesModal';
 

@@ -24,20 +24,16 @@ export const fetchTareas = createAsyncThunk(
 // Tesis, DocumentoFirma, etc.
 export const crearTarea = createAsyncThunk(
   "tarea/crearTarea",
-  async (
-    { asignadoAId, descripcion, fechaLimite, contentTypeAppLabel, contentTypeModel, objectId },
-    { rejectWithValue }
-  ) => {
-    try {
-      const response = await axiosInstance.post(BASE, {
-        asignado_a: asignadoAId,
-        descripcion,
-        fecha_limite: fechaLimite || undefined,
-        content_type_app_label: contentTypeAppLabel,
-        content_type_model: contentTypeModel,
-        object_id: objectId,
-      });
-      return response.data;
+  async ({ descripcion, fechaLimite, contentTypeAppLabel, contentTypeModel, objectId }, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.post(BASE, {
+      descripcion,
+      fecha_limite: fechaLimite || undefined,
+      content_type_app_label: contentTypeAppLabel,
+      content_type_model: contentTypeModel,
+      object_id: objectId,
+    });
+    return response.data;
     } catch (error) {
       const data = error.response?.data;
       const mensaje =

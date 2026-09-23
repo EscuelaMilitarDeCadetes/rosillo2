@@ -4,8 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
-import { editarFechaCierre } from '../../features/proyectos/proyectosSlice';
-import ConfirmationModal from '../common/ConfirmationModal';
+import { editarFechaCierre } from '../../../../features/proyectos/proyectosSlice';
+import ConfirmationModal from '../../../../components/common/ConfirmationModal';
 
 const EditProjectDatesModal = ({ visible, onHide, proyecto }) => {
   const dispatch = useDispatch();
@@ -39,7 +39,6 @@ const EditProjectDatesModal = ({ visible, onHide, proyecto }) => {
 
   const handleShowConfirmation = () => {
     if (validateForm()) {
-      onHide();
       setIsConfirmVisible(true);
     }
   };
@@ -49,6 +48,7 @@ const EditProjectDatesModal = ({ visible, onHide, proyecto }) => {
     dispatch(editarFechaCierre({ proyectoId: proyecto.id, fechaFin: formattedFechaFin })).then((result) => {
       if (editarFechaCierre.fulfilled.match(result)) {
         setIsConfirmVisible(false);
+        onHide();
       }
     });
   };

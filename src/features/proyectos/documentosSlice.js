@@ -37,6 +37,9 @@ export const addDocumentoProyecto = createAsyncThunk(
       formData.append("object_id", proyectoId);
       formData.append("tipo_documento", data.tipo_documento);
       formData.append("archivo", data.documento_file, data.documento_file.name);
+      if (data.estado) {
+        formData.append("estado", data.estado);
+      }
       await axiosInstance.post("common/documento-firma/", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });

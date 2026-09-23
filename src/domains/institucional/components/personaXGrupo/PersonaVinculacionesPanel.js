@@ -10,7 +10,7 @@ import {
   fetchPerfilInstitucionalPersona,
   fetchPorPersona,
   limpiarPerfilPersona,
-} from '../../features/personaXGrupo/personaXGrupoSlice';
+} from '../../../../features/personaXGrupo/personaXGrupoSlice';
 
 /**
  * Panel de consulta "Perfil institucional de una Persona": agrupa en una

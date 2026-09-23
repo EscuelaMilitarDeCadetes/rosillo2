@@ -1,12 +1,12 @@
 // src/domains/usuarios/components/usuarios/GroupUsersTable.js
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchGroupUsers, borrarPersonaDeGrupo } from "../../features/usuarios/personaGrupoSlice.js";
+import { fetchGroupUsers, borrarPersonaDeGrupo } from "../../../../features/usuarios/personaGrupoSlice.js";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { Message } from "primereact/message";
-import ConfirmationModal from "../common/ConfirmationModal";
+import ConfirmationModal from "../../../../components/common/ConfirmationModal.js";
 import ReactivarVinculacionModal from "./ReactivarVinculacionModal";
 
 /**

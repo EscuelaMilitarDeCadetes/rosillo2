@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Puerto del backend Django
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082/api/';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api/';
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -91,7 +91,7 @@ axiosInstance.interceptors.response.use(
     }
 
     // --- 403: autenticado pero sin permiso para ese recurso ---
-    if (status === 403) {
+    if (status === 403 && !originalRequest?.suppressErrorRedirect) {
       window.location.href = '/forbidden';
     }
 

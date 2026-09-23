@@ -5,7 +5,7 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
-import { buscarRolXUsuario } from '../../features/usuarios/rolesUsuarioSlice';
+import { buscarRolXUsuario } from '../../../../features/usuarios/rolesUsuarioSlice';
 
 
 const BuscarRolXUsuarioPanel = () => {

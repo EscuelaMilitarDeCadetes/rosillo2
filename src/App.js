@@ -5,6 +5,7 @@ import {
   Routes,
   Route,
   Navigate,
+  useLocation
 } from "react-router-dom";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
@@ -132,18 +133,17 @@ const DashboardPage = () => (
   </div>
 );
 
-function App() {
-  const dispatch = useDispatch();
+const HIDE_NAVBAR_PATHS = ["/", "/login/formal", "/login/formativa"];
 
-  useEffect(() => {
-    dispatch(loadSession());
-  }, [dispatch]);
+function AppContent() {
+  const location = useLocation();
+  const hideNavbar = HIDE_NAVBAR_PATHS.includes(location.pathname);
+
   return (
-    <Router>
-      <div className="d-flex flex-column min-vh-100">
-        <Navbar />
-        <main className="flex-grow-1">
-          <Routes>
+    <div className="d-flex flex-column min-vh-100">
+      {!hideNavbar && <Navbar />}
+      <main className="flex-grow-1">
+        <Routes>
             {/* Rutas públicas */}
             <Route path="/login" element={<Navigate to="/" replace />} />
             <Route path="/" element={<LandingPage />} />
@@ -151,6 +151,7 @@ function App() {
             <Route path="/login/formativa" element={<FormativaLoginPage />} />            
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/plantillas-documento" element={<PlantillasDocumentoPage />} />
             {/* Páginas de error: públicas a propósito. */}
             <Route path="/error" element={<ErrorPageLayout />} />
             <Route path="/forbidden" element={<ForbiddenPage />} />
@@ -158,8 +159,7 @@ function App() {
             {/* Rutas protegidas: cualquier autenticado, sin rol específico */}
             <Route element={<PrivateRoute requiredAmbito="formal" />}>
               {/* Rutas comunes. */}
-              <Route path="/formal" element={<FormalHomePage />} />
-              <Route path="/formativa" element={<FormativaHomePage />} />
+              <Route path="/formal" element={<FormalHomePage />} />              
               <Route path="/perfil" element={<ProfilePage />} />
               <Route path="/cambiar-password" element={<ChangePasswordPage />} />
               <Route path="/ayuda" element={<HelpPage />} />
@@ -169,13 +169,11 @@ function App() {
               <Route path="/crm/indicadores-impacto" element={<IndicadoresImpactoPage />} />
             </Route>
             <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["CINTERNO"]} />}>
-              <Route path="/calificar" element={<CalificarProyectosPage />} />
-              <Route path="/institucional/gerentes" element={<GerentesPage />} />
+              <Route path="/calificar" element={<CalificarProyectosPage />} />              
               <Route path="/calificar/:id" element={<CalificarProyectoSeleccionadoPage />} />
               <Route path="/documentos/por-tipo" element={<DocumentosPorTipoPage />} />
               <Route path="/firmas/pendientes" element={<MisFirmasPendientesPage />} />
-              <Route path="/notificaciones/recordatorios" element={<RecordatoriosPage />} />
-              <Route path="/plantillas-documento" element={<PlantillasDocumentoPage />} />
+              <Route path="/notificaciones/recordatorios" element={<RecordatoriosPage />} />              
             </Route>
             <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["FACULTAD"]} />}>
               <Route path="/participaciones/proyectos-facultad" element={<CalificarProyectosXFacultadPage />} />
@@ -188,39 +186,6 @@ function App() {
             </Route>
             <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["CEXTERNO"]} />}>
               <Route path="/proyectos/crear" element={<CrearProyectoExternoPage />} />
-            </Route>
-            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["DECANO", "SUPERVISOR", "FACULTAD", "GRUPO", "CINTERNO", "CEXTERNO"]} />}>
-              <Route path="/aprobaciones" element={<AprobacionesPage />} />
-              <Route path="/tareas" element={<TareasPage />} />
-            </Route>            
-            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["FACULTAD", "GRUPO"]} />}>
-              <Route path="/convocatorias" element={<UserConvocatoriaPage />} />
-              <Route path="/mis-proyectos" element={<MisProyectosPage />} />
-              <Route path="/participar/:id" element={<UserParticiparConvocatoriaPage />} />
-            </Route>            
-            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["CINTERNO", "ASESOR"]} />}>
-              <Route path="/convocatoria/administrar" element={<AdminConvocatoriasPage />} />
-            </Route>
-            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={['SOPORTE', 'SUPERVISOR']} />}>
-              <Route path="/historial" element={<HistorialPage />} />
-            </Route>
-            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={['DECANO', 'SUPERVISOR', 'GERENTE']} />}>
-              <Route path="/documentos/pendientes-firma" element={<DocumentosPendientesFirmaPage />} />
-            </Route>
-            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={['SOPORTE', 'CINTERNO', 'CEXTERNO', 'FACULTAD']} />}>
-              <Route path="/crm/entidades-externas" element={<EntidadesExternasPage />} />
-            </Route>
-            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["FACULTAD", "GRUPO", "CINTERNO", "CEXTERNO", "ASESOR", "SUPERVISOR", "DECANO", "GERENTE"]} />}>
-              <Route path="/proyectos" element={<ProjectsListPage />} />
-              <Route path="/proyectos/:id" element={<AllInfoProyectPage />} />
-              <Route path="/formal/proyectos/por-estado-aprobado" element={<ProyectosPorEstadoAprobadoPage />} />
-              <Route path="/estadisticasFormal" element={<EstadisticasFormalDashboardPage />} />
-              <Route path="/formal/reportes/montos-calificados" element={<ReporteMontosCalificadosPage />} />
-            </Route>
-            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={['SOPORTE', 'SUPERVISOR', 'ASESOR', 'FACULTAD', 'GRUPO', 'CINTERNO', 'CEXTERNO', 'DECANO']} />}>
-              <Route path="/institucional/personas" element={<PersonasPage />} />
-              <Route path="/institucional/persona-grupo" element={<PersonaXGrupoPage />} />
-              <Route path="/usuarios/admin" element={<UsuarioAdminPage />} />
             </Route>
             <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["SOPORTE"]} />}>
               <Route path="/catalogos/roles-plataforma" element={<RolPlataformaPage />} />
@@ -240,11 +205,49 @@ function App() {
               <Route path="/usuarios" element={<UsersPage />} />
               <Route path="/usuarios/usuario-persona" element={<UsuarioXPersonaPage />} />
             </Route>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["FACULTAD", "GRUPO"]} />}>
+              <Route path="/convocatorias" element={<UserConvocatoriaPage />} />
+              <Route path="/mis-proyectos" element={<MisProyectosPage />} />
+              <Route path="/participar/:id" element={<UserParticiparConvocatoriaPage />} />
+            </Route>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["CINTERNO", "ASESOR"]} />}>
+              <Route path="/convocatoria/administrar" element={<AdminConvocatoriasPage />} />
+            </Route>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={['SOPORTE', 'SUPERVISOR']} />}>
+              <Route path="/historial" element={<HistorialPage />} />
+            </Route>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["CINTERNO", "SOPORTE"]} />}>
+              <Route path="/institucional/gerentes" element={<GerentesPage />} />
+            </Route>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={['DECANO', 'SUPERVISOR', 'GERENTE']} />}>
+              <Route path="/documentos/pendientes-firma" element={<DocumentosPendientesFirmaPage />} />
+            </Route>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={['SOPORTE', 'CINTERNO', 'CEXTERNO', 'FACULTAD']} />}>
+              <Route path="/crm/entidades-externas" element={<EntidadesExternasPage />} />
+            </Route>            
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["DECANO", "SUPERVISOR", "FACULTAD", "GRUPO", "CINTERNO", "CEXTERNO"]} />}>
+              <Route path="/aprobaciones" element={<AprobacionesPage />} />
+              <Route path="/tareas" element={<TareasPage />} />
+            </Route>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={["FACULTAD", "GRUPO", "CINTERNO", "CEXTERNO", "ASESOR", "SUPERVISOR", "DECANO", "GERENTE"]} />}>
+              <Route path="/proyectos" element={<ProjectsListPage />} />
+              <Route path="/proyectos/:id" element={<AllInfoProyectPage />} />
+              <Route path="/formal/proyectos/por-estado-aprobado" element={<ProyectosPorEstadoAprobadoPage />} />
+              <Route path="/estadisticasFormal" element={<EstadisticasFormalDashboardPage />} />
+              <Route path="/formal/reportes/montos-calificados" element={<ReporteMontosCalificadosPage />} />
+            </Route>
+            <Route element={<PrivateRoute requiredAmbito="formal" allowedRoles={['SOPORTE', 'SUPERVISOR', 'ASESOR', 'FACULTAD', 'GRUPO', 'CINTERNO', 'CEXTERNO', 'DECANO']} />}>
+              <Route path="/institucional/personas" element={<PersonasPage />} />
+              <Route path="/institucional/persona-grupo" element={<PersonaXGrupoPage />} />
+              <Route path="/usuarios/admin" element={<UsuarioAdminPage />} />
+            </Route>
+            
             
             {/* Investigación Formativa — protegida por rol (no confirmado por
                 entidad, ver nota anterior) Y por ámbito: requiere haber
                 entrado por login/formativa/ (sistemaActivo === 'formativa') */}
             <Route element={<PrivateRoute requiredAmbito="formativa" />}>
+              <Route path="/formativa" element={<FormativaHomePage />} />
               <Route path="/formativa/procesos" element={<ProcesosFormativosPage />} />
               <Route path="/formativa/postulaciones" element={<PostulacionesProcesoPage />} />
               <Route path="/formativa/planes-trabajo" element={<PlanesTrabajoPage />} />
@@ -290,9 +293,22 @@ function App() {
             {/* Comodín 404: SIEMPRE al final */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
-        </main>
-        <Footer />
-      </div>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+function App() {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(loadSession());
+  }, [dispatch]);
+
+  return (
+    <Router>
+      <AppContent />
     </Router>
   );
 }

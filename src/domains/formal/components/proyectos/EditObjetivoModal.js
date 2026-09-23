@@ -5,7 +5,7 @@ import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Message } from 'primereact/message';
-import { actualizarObjetivo } from '../../features/proyectos/objetivosSlice';
+import { actualizarObjetivo } from '../../../../features/proyectos/objetivosSlice';
 
 const EditObjetivoModal = ({ visible, onHide, objetivo, proyectoId }) => {
   const dispatch = useDispatch();

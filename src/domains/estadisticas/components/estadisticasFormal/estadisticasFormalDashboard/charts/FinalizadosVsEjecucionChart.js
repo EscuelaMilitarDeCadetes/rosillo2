@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Chart } from 'primereact/chart';
 import { Panel } from 'primereact/panel';
 import { ProgressSpinner } from 'primereact/progressspinner';
-import { fetchFinalizadosVsEjecucion } from '../../../../../features/estadisticas/estadisticasFormalSlice';
+import { fetchFinalizadosVsEjecucion } from '../../../../../../features/estadisticas/estadisticasFormalSlice';
 import { filtrosPorAnio } from '../filtrosPorAnio';
 
 const FinalizadosVsEjecucionChart = ({ comunes }) => {

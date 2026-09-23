@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from 'primereact/button';
-import ConvocatoriasAbiertasTable from '../../../components/convocatorias/ConvocatoriasAbiertasTable';
+import ConvocatoriasAbiertasTable from '../components/convocatorias/ConvocatoriasAbiertasTable';
 
 const UserConvocatoriaPage = () => {
   const navigate = useNavigate();

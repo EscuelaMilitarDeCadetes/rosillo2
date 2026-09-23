@@ -11,7 +11,7 @@ import {
   crearPlantilla,
   actualizarPlantilla,
   limpiarErrorPlantillaDocumento,
-} from '../../features/plantillaDocumento/plantillaDocumentoSlice';
+} from '../../../../features/plantillaDocumento/plantillaDocumentoSlice';
 
 // Crear o editar (CRUD -> create / update). ruta_documento es un CharField
 // en el backend: se pide como texto (ruta o URL del archivo ya almacenado),

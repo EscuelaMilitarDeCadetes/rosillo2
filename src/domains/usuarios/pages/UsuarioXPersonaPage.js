@@ -1,8 +1,8 @@
 // src/domains/usuarios/pages/UsuarioXPersonaPage.js
 import React, { useState } from 'react';
 import { TabView, TabPanel } from 'primereact/tabview';
-import UsuarioXPersonaTable from '../../../components/usuarioXPersona/UsuarioXPersonaTable';
-import RotacionesTable from '../../../components/usuarioXPersona/RotacionesTable';
+import UsuarioXPersonaTable from '../components/usuarioXPersona/UsuarioXPersonaTable';
+import RotacionesTable from '../components/usuarioXPersona/RotacionesTable';
 
 const UsuarioXPersonaPage = () => {
   const [activeTab, setActiveTab] = useState(0);

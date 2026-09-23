@@ -5,7 +5,7 @@ import { Card } from 'primereact/card';
 import { InputSwitch } from 'primereact/inputswitch';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import CatalogPage from '../../../components/catalogos/CatalogPage';
+import CatalogPage from '../components/catalogos/CatalogPage';
 import { CATALOGOS_CONFIG } from '../../../features/catalogos/catalogosConfig';
 import {
   fetchTiposRubroAplicables,

@@ -18,7 +18,7 @@ import {
 } from '../../../../features/segundaInstancia/segundaInstanciaSlice';
 import ConfirmationModal from '../../../../components/common/ConfirmationModal';
 import SolicitarActivacionDecanoModal from './SolicitarActivacionDecanoModal';
-import DecisionDecanoActivacionModal from './DecisionDecanoActivacionModal';
+import DecisionDecanoActivacionModal from './DecisionActivacionDecanoModal';
 import AprobacionesPendientesTable from '../../../common/components/aprobacion/AprobacionesPendientesTable';
 
 const SegundaInstanciaTable = () => {

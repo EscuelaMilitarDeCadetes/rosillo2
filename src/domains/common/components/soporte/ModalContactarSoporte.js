@@ -6,7 +6,7 @@ import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Button } from 'primereact/button';
 import { Message } from 'primereact/message';
-import { enviarSolicitudSoporte, limpiarEstadoSoporte } from '../../features/soporte/soporteSlice';
+import { enviarSolicitudSoporte, limpiarEstadoSoporte } from '../../../../features/soporte/soporteSlice';
 
 const ModalContactarSoporte = ({ visible, onHide }) => {
   const dispatch = useDispatch();

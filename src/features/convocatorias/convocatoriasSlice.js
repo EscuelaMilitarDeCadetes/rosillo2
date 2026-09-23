@@ -44,10 +44,8 @@ export const fetchOpenConvocatorias = createAsyncThunk(
   'convocatorias/fetchOpen',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`${BASE}internas/`, {
-        params: { estado: true, page_size: 200 },
-      });
-      return response.data.results ?? [];
+      const response = await axiosInstance.get(`${BASE}abiertas/`);
+      return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.detail || "Error al cargar las convocatorias");
     }

@@ -1,8 +1,8 @@
 // src/domains/institucional/pages/PersonaXGrupoPage.js
 import React, { useState } from 'react';
 import { TabView, TabPanel } from 'primereact/tabview';
-import ConGrupoTable from '../../../components/personaXGrupo/ConGrupoTable';
-import PersonaVinculacionesPanel from '../../../components/personaXGrupo/PersonaVinculacionesPanel';
+import ConGrupoTable from '../components/personaXGrupo/ConGrupoTable';
+import PersonaVinculacionesPanel from '../components/personaXGrupo/PersonaVinculacionesPanel';
 
 const PersonaXGrupoPage = () => {
   const [activeTab, setActiveTab] = useState(0);

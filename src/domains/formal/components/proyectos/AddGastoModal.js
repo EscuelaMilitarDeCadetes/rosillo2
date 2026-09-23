@@ -8,8 +8,8 @@ import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { FileUpload } from 'primereact/fileupload';
-import { addGasto } from '../../features/proyectos/gastoSlice';
-import ConfirmationModal from '../common/ConfirmationModal';
+import { addGasto } from '../../../../features/proyectos/gastoSlice';
+import ConfirmationModal from '../../../../components/common/ConfirmationModal';
 
 const AddGastoModal = ({ visible, onHide, proyectoId, montoId }) => {
   const dispatch = useDispatch();
@@ -46,7 +46,6 @@ const AddGastoModal = ({ visible, onHide, proyectoId, montoId }) => {
 
   const handleShowConfirmation = () => {
     if (validateForm()) {
-      onHide();
       setIsConfirmVisible(true);
     }
   };
@@ -66,6 +65,7 @@ const AddGastoModal = ({ visible, onHide, proyectoId, montoId }) => {
     dispatch(addGasto(payload)).then((result) => {
       if (addGasto.fulfilled.match(result)) {
         setIsConfirmVisible(false);
+        onHide();
       }
     });
   };

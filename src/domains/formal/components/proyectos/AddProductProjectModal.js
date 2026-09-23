@@ -6,14 +6,17 @@ import { Button } from 'primereact/button';
 import { Dropdown } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
-import { addProductoProyecto } from '../../../../features/proyectos/productosSlice';
+import { addProductoProyecto, fetchProductosPorProyecto } from '../../../../features/proyectos/productosSlice';
+import ListaAsignados from './ListaAsignados';
+import { fetchMetadata } from '../../../../features/metadata/metadataSlice';
 import ConfirmationModal from '../../../../components/common/ConfirmationModal';
 
 
-const AddProductoProyectoModal = ({ visible, onHide, proyectoId }) => {
+const AddProductoProyectoModal = ({ visible, onHide, proyectoId, mostrarAsignados = false }) => {
   const dispatch = useDispatch();
-  const { productosMinciencias, tiposProducto } = useSelector((state) => state.metadata); 
-  const { loading, error } = useSelector((state) => state.productos);
+  const { productosMinciencias } = useSelector((state) => state.metadata); 
+  const { productos, loading, error } = useSelector((state) => state.productos);
+  const [asignadosListos, setAsignadosListos] = useState(false);
 
   const [selectedProductoMinciencias, setSelectedProductoMinciencias] = useState(null);
   const [categoria, setCategoria] = useState('');
@@ -30,6 +33,20 @@ const AddProductoProyectoModal = ({ visible, onHide, proyectoId }) => {
     }
   }, [visible]);
 
+  useEffect(() => {
+    if (visible && productosMinciencias.length === 0) dispatch(fetchMetadata());
+  }, [visible, dispatch, productosMinciencias.length]);
+
+  useEffect(() => {
+    if (!visible) { setAsignadosListos(false); return; }
+    if (!mostrarAsignados || !proyectoId) return;
+    let cancelado = false;
+    dispatch(fetchProductosPorProyecto(proyectoId)).finally(() => {
+      if (!cancelado) setAsignadosListos(true);
+    });
+    return () => { cancelado = true; };
+  }, [visible, mostrarAsignados, proyectoId, dispatch]);
+
   const validateForm = () => {
     if (!selectedProductoMinciencias || !categoria || puntaje <= 0) {
       setValidationError('Debe seleccionar un producto, ingresar una categoría y un puntaje válido.');
@@ -41,7 +58,6 @@ const AddProductoProyectoModal = ({ visible, onHide, proyectoId }) => {
 
   const handleShowConfirmation = () => {
     if (validateForm()) {
-      onHide();
       setIsConfirmVisible(true);
     }
   };
@@ -58,6 +74,7 @@ const AddProductoProyectoModal = ({ visible, onHide, proyectoId }) => {
     dispatch(addProductoProyecto(payload)).then((result) => {
       if (addProductoProyecto.fulfilled.match(result)) {
         setIsConfirmVisible(false);
+        onHide();
       }
     });
   };
@@ -73,6 +90,17 @@ const AddProductoProyectoModal = ({ visible, onHide, proyectoId }) => {
     <>
       <Dialog header="Agregar Producto al Proyecto" visible={visible} style={{ width: '40vw' }} footer={renderFooter} onHide={onHide}>
         <div className="p-fluid">
+          {mostrarAsignados && (
+            <ListaAsignados
+              titulo="Productos ya asignados a este proyecto"
+              cargando={!asignadosListos}
+              items={productos.filter((p) => p.estado !== false)}
+              vacio="Este proyecto aún no tiene productos."
+              renderItem={(p) => (
+                <><strong>{p.producto_nombre}</strong> – {p.producto_nomenclatura} · {p.puntaje} pts</>
+              )}
+            />
+          )}
           <div className="field mb-3">
             <label htmlFor="productoMinciencias">Producto Minciencias</label>
             <Dropdown inputId="productoMinciencias" value={selectedProductoMinciencias} options={productosMinciencias} onChange={(e) => setSelectedProductoMinciencias(e.value)} optionLabel="nombre_producto" optionValue="id" filter placeholder="Seleccione un producto" />

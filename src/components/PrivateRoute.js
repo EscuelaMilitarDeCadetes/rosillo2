@@ -1,6 +1,7 @@
 // src/components/PrivateRoute.js
 import React from 'react';
 import { useSelector } from 'react-redux';
+import { ProgressSpinner } from 'primereact/progressspinner';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 const RUTA_CAMBIAR_PASSWORD = '/cambiar-password';
@@ -16,8 +17,17 @@ const RUTA_CAMBIAR_PASSWORD = '/cambiar-password';
  * en particular, así que no rompe ninguna ruta existente que no pase la prop. 
  */
 const PrivateRoute = ({ allowedRoles = [], requiredAmbito = null }) => {
-  const { isAuthenticated, roles, debeCambiarPassword, sistemaActivo } = useSelector((state) => state.auth);
+  const { isAuthenticated, roles, debeCambiarPassword, sistemaActivo, sessionChecked } =
+    useSelector((state) => state.auth);
   const location = useLocation();
+
+  if (!sessionChecked) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
+        <ProgressSpinner />
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;

@@ -19,20 +19,13 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { isAuthenticated, roles, sistemaActivo } = useSelector((state) => state.auth);
 
-  // "/" es la LandingPage: si el usuario ya inició sesión, debe
-  // volver al home de SU dominio (formal o formativa), no a la LandingPage.
   const inicioHref = isAuthenticated ? `/${sistemaActivo || 'formal'}` : '/';
 
-  // Función auxiliar para verificar si el usuario tiene al menos uno de los roles
   const hasAnyRole = (requiredRoles) => {
     if (!isAuthenticated || !roles) return false;
     return requiredRoles.some(role => roles.includes(role));
   };
 
-  // Ámbito de sesión: refleja el claim 'ambito' del JWT, fijado según el
-  // endpoint de login usado (login/formal/ vs login/formativa/). Se usa
-  // para separar los menús de cada dominio, igual que hasAnyRole separa
-  // por rol de plataforma.
   const esFormal = isAuthenticated && sistemaActivo === 'formal';
   const esFormativa = isAuthenticated && sistemaActivo === 'formativa';
 
@@ -41,7 +34,7 @@ const Navbar = () => {
     navigate(`/login/${sistemaActivo || 'formal'}`);
   };
 
-  useNotificacionesWebSocket(); // abre y mantiene la conexión mientras el Navbar está montado
+  useNotificacionesWebSocket();
 
   useEffect(() => {
     if (user?.id) {
@@ -72,7 +65,6 @@ const Navbar = () => {
 
   return (
     <header>
-      {/* Encabezado superior con el banner */}
       <main style={{ height: '10rem', width: '100%' }}>
         <div className="container text-center" style={{ height: '10rem', width: '100%' }}>
           <div className="row" style={{ height: '10rem' }}>
@@ -82,7 +74,6 @@ const Navbar = () => {
           </div>
         </div>
       </main>
-      {/* Menú de navegación principal */}
       <nav className="navbar navbar-expand-lg navbar-dark text-center" style={{ backgroundColor: '#162749' }}>
         <div className="container-fluid">
           <Link className="navbar-brand border-bottom text-center" style={{ marginLeft: '8px' }} to={inicioHref}>JOSÉ MARIA ROSILLO</Link>
@@ -94,13 +85,12 @@ const Navbar = () => {
               <Link className="nav-item nav-link active" to={inicioHref}>Inicio</Link>
               {isAuthenticated ? (
                 <>
-                  {/* Usuarios — RolXUsuarioViewSet / acciones sensibles de UsuarioViewSet = EsSoporte */}
                   {hasAnyRole(['SOPORTE']) && (
                     <Link className="nav-item nav-link" to="/usuarios">Usuarios</Link>
                   )}
                   {hasAnyRole(['SOPORTE']) && (
                     <li className="nav-item dropdown">
-                      <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      <a className="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Catálogos
                       </a>
                       <ul className="dropdown-menu">
@@ -120,22 +110,15 @@ const Navbar = () => {
                         <li><Link className="dropdown-item" to="/catalogos/tipo-rubro">Tipos de Rubro</Link></li>
                       </ul>
                     </li>
-                  )}
-                  {hasAnyRole(['FACULTAD']) && (
-                    <Link className="nav-item nav-link" to="/usuarios/admin">Administración de Usuarios</Link>
-                  )}
+                  )}                  
                   <Link className="nav-item nav-link" to="/perfil">Mi perfil</Link>
                   <Link className="nav-item nav-link" to="/ayuda">Ayuda</Link>
 
-                  {/* ============================================================ */}
-                  {/* Bloque INVESTIGACIÓN FORMAL — solo si sistemaActivo === 'formal' */}
-                  {/* ============================================================ */}
                   {esFormal && (
                     <>
-                      {/* Externos — proyectos externos: ProyectoViewSet.crear_externo = EsCExterno */}
                       {hasAnyRole(['CEXTERNO']) && (
                         <li className="nav-item dropdown">
-                          <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          <a className="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             Externos
                           </a>
                           <ul className="dropdown-menu">
@@ -145,10 +128,9 @@ const Navbar = () => {
                         </li>
                       )}
 
-                      {/* Convocatoria — ConvocatoriaViewSet: internas/externas/cambiar-estado = EsCInterno */}
-                      {hasAnyRole(['CINTERNO']) && (
+                      {hasAnyRole(['CINTERNO', 'ASESOR']) && (
                         <li className="nav-item dropdown">
-                          <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          <a className="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             Convocatoria
                           </a>
                           <ul className="dropdown-menu">
@@ -157,10 +139,9 @@ const Navbar = () => {
                         </li>
                       )}
 
-                      {/* Participaciones — ROLES_CREACION_PROYECTO = Facultad, Grupo (TieneAmbitoFormal) */}
                       {hasAnyRole(['FACULTAD', 'GRUPO']) && (
                         <li className="nav-item dropdown">
-                          <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          <a className="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             Participaciones
                           </a>
                           <ul className="dropdown-menu">
@@ -175,9 +156,24 @@ const Navbar = () => {
                         </li>
                       )}
 
+                      {hasAnyRole(['CINTERNO', 'SOPORTE']) && (
+                        <li className="nav-item dropdown">
+                          <a className="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            CRM
+                          </a>
+                          <ul className="dropdown-menu">
+                            {hasAnyRole(['SOPORTE', 'CINTERNO', 'CEXTERNO', 'FACULTAD']) && (
+                              <li><Link className="dropdown-item" to="/crm/entidades-externas">Entidades Externas</Link></li>
+                            )}
+                            <li><Link className="dropdown-item" to="/crm/indicadores-impacto">Indicadores de Impacto</Link></li>
+                            <li><Link className="dropdown-item" to="/crm/interacciones">Interacciones</Link></li>
+                          </ul>
+                        </li>
+                      )}
+
                       {hasAnyRole(['CINTERNO', 'SUPERVISOR', 'FACULTAD', 'GRUPO', 'CEXTERNO']) && (
                         <li className="nav-item dropdown">
-                          <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          <a className="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             Proyectos
                           </a>
                           <ul className="dropdown-menu">
@@ -206,7 +202,7 @@ const Navbar = () => {
 
                       {hasAnyRole(['SUPERVISOR']) && (
                         <li className="nav-item dropdown">
-                          <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          <a className="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             Seguimiento y Control
                           </a>
                           <ul className="dropdown-menu">
@@ -216,45 +212,32 @@ const Navbar = () => {
                       )}
 
                       {(roles.includes('CINTERNO') || roles.includes('SOPORTE')) && (
-                        <li className="nav-item">
-                          <Link className="nav-link" to="/historial">Historial</Link>
-                        </li>
+                        <li className="nav-item"><Link className="nav-link" to="/historial">Historial</Link></li>
+                      )}
+
+                      {(roles.includes('CINTERNO') || roles.includes('SOPORTE') || roles.includes('FACULTAD') || roles.includes('GRUPO')) && (
+                        <li className="nav-item"><Link className="nav-link" to="/plantillas-documento">Plantillas de Documento</Link></li>
+                      )}
+
+                      {(roles.includes('CINTERNO') || roles.includes('SOPORTE')) && (
+                        <li className="nav-item"><Link className="nav-link" to="/institucional/gerentes">Gerentes</Link></li>
                       )}
 
                       {hasAnyRole(['FACULTAD', 'GRUPO', 'CINTERNO', 'CEXTERNO', 'ASESOR', 'SUPERVISOR', 'DECANO', 'GERENTE']) && (
                         <li className="nav-item dropdown">
-                          <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          <a className="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             Estadísticas
                           </a>
                           <ul className="dropdown-menu">
-                            <li className="nav-item"><Link className="nav-link" to="/estadisticasFormal">Estadísticas</Link></li>
+                            <li><Link className="dropdown-item" to="/estadisticasFormal">Estadísticas</Link></li>
                           </ul>
                         </li>
                       )}
                     </>
-                  )}                  
-
-                  {/* CRM — no confirmado si el backend la restringe por ámbito;
-                      queda visible en ambos hasta verificarlo */}
-                  <li className="nav-item dropdown">
-                    <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                      CRM
-                    </a>
-                    <ul className="dropdown-menu">
-                      {hasAnyRole(['SOPORTE', 'CINTERNO', 'CEXTERNO', 'FACULTAD']) && (
-                        <li><Link className="dropdown-item" to="/crm/entidades-externas">Entidades Externas</Link></li>
-                      )}
-                      <li><Link className="dropdown-item" to="/crm/indicadores-impacto">Indicadores de Impacto</Link></li>
-                      <li><Link className="dropdown-item" to="/crm/interacciones">Interacciones</Link></li>
-                    </ul>
-                  </li>
-
-                  {/* ================================================================ */}
-                  {/* Bloque INVESTIGACIÓN FORMATIVA — solo si sistemaActivo === 'formativa' */}
-                  {/* ================================================================ */}
+                  )}                
                   {esFormativa && (
                     <li className="nav-item dropdown">
-                      <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      <a className="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Investigación Formativa
                       </a>
                       <ul className="dropdown-menu" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
@@ -271,23 +254,21 @@ const Navbar = () => {
                         <li><Link className="dropdown-item" to="/formativa/estudiantes">Estudiantes</Link></li>
                         <li><Link className="dropdown-item" to="/formativa/participantes">Participantes de Proceso</Link></li>
                         <li><Link className="dropdown-item" to="/formativa/tutores">Tutores</Link></li>
-                        {/* Crear Usuario: acción de VinculacionViewSet (crear-estudiante/
-                            crear-jurado/crear-tutor), permission_classes=[EsFacultad].
-                            El backend no exige ambito='formativa' en este endpoint (no
-                            tiene TieneAmbitoFormal/TieneAmbitoFormativa), pero por
-                            coherencia funcional se ubica aquí y no en Participaciones. */}
                         {hasAnyRole(['FACULTAD']) && (
                           <li><Link className="dropdown-item" to="/integracion/vinculacion-facultad">Crear Usuario (Estudiante/Jurado/Tutor)</Link></li>
                         )}
                         {hasAnyRole(['FACULTAD']) && (
+                          <Link className="nav-item nav-link" to="/usuarios/admin">Administración de Usuarios</Link>
+                        )}
+                        {hasAnyRole(['FACULTAD']) && (
                           <li className="nav-item dropdown">
-                          <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Estadísticas
-                          </a>
-                          <ul className="dropdown-menu">
-                            <li className="nav-item"><Link className="nav-link" to="/estadisticasFormativa">Estadísticas</Link></li>
-                          </ul>
-                        </li>
+                            <a className="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                              Estadísticas
+                            </a>
+                            <ul className="dropdown-menu">
+                              <li><Link className="dropdown-item" to="/estadisticasFormativa">Estadísticas</Link></li>
+                            </ul>
+                          </li>
                         )}
 
                         <li><hr className="dropdown-divider" /></li>
@@ -327,88 +308,97 @@ const Navbar = () => {
                     </li>
                   )}
 
-                  {/* Documentos/Aprobaciones/Tareas — no confirmado si son exclusivas
-                      de un ámbito (apps.common suele ser compartida); visibles en ambos */}
                   {hasAnyRole(['DECANO', 'SUPERVISOR', 'GERENTE']) && (
-                    <li><Link className="dropdown-item" to="/documentos/pendientes-firma">Documentos Pendientes de Firma</Link></li>
+                    <li className="nav-item dropdown">
+                      <a className="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Documentos
+                      </a>
+                      <ul className="dropdown-menu">
+                        <li><Link className="dropdown-item" to="/firmas/pendientes">Mis Firmas Pendientes</Link></li>
+                        <li><Link className="dropdown-item" to="/documentos/pendientes-firma">Documentos Pendientes de Firma</Link></li>
+                      </ul>
+                    </li>
                   )}
                   {hasAnyRole(['DECANO', 'SUPERVISOR', 'FACULTAD', 'GRUPO', 'CINTERNO', 'CEXTERNO']) && (
-                    <li><Link className="dropdown-item" to="/aprobaciones">Aprobaciones</Link></li>
+                    <li className="nav-item"><Link className="nav-link" to="/aprobaciones">Aprobaciones</Link></li>
                   )}
-                  <li><Link className="dropdown-item" to="/firmas/pendientes">Mis Firmas Pendientes</Link></li>
-                  <li><Link className="dropdown-item" to="/documentos/por-tipo">Documentos por Tipo</Link></li>
-                  <li><Link className="dropdown-item" to="/plantillas-documento">Plantillas de Documento</Link></li>
-                  {hasAnyRole(['DECANO', 'SUPERVISOR', 'FACULTAD', 'GRUPO', 'CINTERNO', 'CEXTERNO']) && (
-                    <li><Link className="dropdown-item" to="/tareas">Tareas</Link></li>
+
+                  {hasAnyRole(['FACULTAD', 'GRUPO', 'CINTERNO', 'CEXTERNO']) && (
+                    <li className="nav-item"><Link className="nav-link" to="/tareas">Tareas</Link></li>
                   )}
                   {user?.is_staff && (
                     <li><Link className="dropdown-item" to="/notificaciones/recordatorios">Recordatorios Masivos</Link></li>
                   )}
-
-                  {/* Notificaciones — mismo patrón de dropdown Bootstrap usado en Catálogos/Convocatoria */}
-                  <li className="nav-item dropdown">
-                    <a
-                      className="nav-link dropdown-toggle position-relative"
-                      href="#"
-                      role="button"
-                      data-bs-toggle="dropdown"
-                      aria-expanded="false"
-                    >
-                      <i className="pi pi-bell" />
-                      {noLeidas > 0 && (
-                        <span
-                          className="badge bg-danger rounded-pill position-absolute"
-                          style={{ top: '2px', right: '-4px', fontSize: '0.65rem' }}
-                        >
-                          {noLeidas > 99 ? '99 ' : noLeidas}
-                        </span>
-                      )}
-                    </a>
-                    <ul className="dropdown-menu dropdown-menu-end p-0" style={{ minWidth: '320px', maxHeight: '400px', overflowY: 'auto' }}>
-                      <li className="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
-                        <strong className="small">Notificaciones</strong>
-                        {noLeidas > 0 && (
-                          <button
-                            type="button"
-                            className="btn btn-link btn-sm p-0"
-                            onClick={handleMarcarTodas}
-                          >
-                            Marcar todas como leídas
-                          </button>
-                        )}
-                      </li>
-                      {notificaciones.length === 0 ? (
-                        <li className="px-3 py-3 text-center text-muted small">
-                          No tienes notificaciones sin leer
-                        </li>
-                      ) : (
-                        notificaciones.map((notif) => (
-                          <li key={notif.id}>
-                            <button
-                              type="button"
-                              className="dropdown-item d-flex align-items-start gap-2 py-2"
-                              onClick={() => handleClickNotificacion(notif)}
-                            >
-                              <i className={iconoPorTipo(notif.tipo)} style={{ marginTop: '2px' }} />
-                              <span className="d-flex flex-column text-start">
-                                <span className="small">{notif.mensaje}</span>
-                                <span className="text-muted" style={{ fontSize: '0.7rem' }}>
-                                  {new Date(notif.fecha_creacion).toLocaleString('es-CO')}
-                                </span>
-                              </span>
-                            </button>
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                  </li>
-
-                  <Button label="Cerrar Sesión" icon="pi pi-sign-out" className="p-button-text p-button-sm nav-item nav-link" onClick={handleLogout} />
                 </>
               ) : (
                 <Link className="nav-item nav-link" to="/">Iniciar Sesión</Link>
               )}
             </div>
+
+            {/* Grupo DERECHO: ms-auto empuja este bloque al borde derecho del navbar.
+                Solo se renderiza autenticado, ya que ambos ítems dependen de sesión. */}
+            {isAuthenticated && (
+              <div className="navbar-nav ms-auto align-items-center">
+                <li className="nav-item dropdown">
+                  <a
+                    className="nav-link dropdown-toggle position-relative"
+                    
+                   role="button"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                  >
+                    <i className="pi pi-bell" />
+                    {noLeidas > 0 && (
+                      <span
+                        className="badge bg-danger rounded-pill position-absolute"
+                        style={{ top: '2px', right: '-4px', fontSize: '0.65rem' }}
+                      >
+                        {noLeidas > 99 ? '99 ' : noLeidas}
+                      </span>
+                    )}
+                  </a>
+                  <ul className="dropdown-menu dropdown-menu-end p-0" style={{ minWidth: '320px', maxHeight: '400px', overflowY: 'auto' }}>
+                    <li className="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                      <strong className="small">Notificaciones</strong>
+                      {noLeidas > 0 && (
+                        <button
+                          type="button"
+                          className="btn btn-link btn-sm p-0"
+                          onClick={handleMarcarTodas}
+                        >
+                          Marcar todas como leídas
+                        </button>
+                      )}
+                    </li>
+                    {notificaciones.length === 0 ? (
+                      <li className="px-3 py-3 text-center text-muted small">
+                        No tienes notificaciones sin leer
+                      </li>
+                    ) : (
+                      notificaciones.map((notif) => (
+                        <li key={notif.id}>
+                          <button
+                            type="button"
+                            className="dropdown-item d-flex align-items-start gap-2 py-2"
+                            onClick={() => handleClickNotificacion(notif)}
+                          >
+                            <i className={iconoPorTipo(notif.tipo)} style={{ marginTop: '2px' }} />
+                            <span className="d-flex flex-column text-start">
+                              <span className="small">{notif.mensaje}</span>
+                              <span className="text-muted" style={{ fontSize: '0.7rem' }}>
+                                {new Date(notif.fecha_creacion).toLocaleString('es-CO')}
+                              </span>
+                            </span>
+                          </button>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </li>
+
+                <Button label="Cerrar Sesión" icon="pi pi-sign-out" className="p-button-text p-button-sm nav-item nav-link" onClick={handleLogout} />
+              </div>
+            )}
           </div>
         </div>
       </nav>

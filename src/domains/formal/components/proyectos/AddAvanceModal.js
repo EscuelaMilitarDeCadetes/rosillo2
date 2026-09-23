@@ -6,12 +6,12 @@ import { Button } from 'primereact/button';
 import { Dropdown } from 'primereact/dropdown';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { InputNumber } from 'primereact/inputnumber';
-import { addAvance } from '../../features/proyectos/avanceSlice';
+import { addAvance } from '../../../../features/proyectos/avanceSlice';
 import {
   fetchObjetivoXPuntoPorObjetivo,
   limpiarObjetivoXPuntoPorObjetivo,
-} from '../../features/proyectos/objetivosSlice';
-import ConfirmationModal from '../common/ConfirmationModal';
+} from '../../../../features/proyectos/objetivosSlice';
+import ConfirmationModal from '../../../../components/common/ConfirmationModal';
 
 /**
  *  1. Ofrece un único dropdown con las filas de
@@ -76,7 +76,6 @@ const AddAvanceModal = ({ visible, onHide, proyectoId }) => {
 
   const handleShowConfirmation = () => {
     if (validateForm()) {
-      onHide();
       setIsConfirmVisible(true);
     }
   };
@@ -94,6 +93,7 @@ const AddAvanceModal = ({ visible, onHide, proyectoId }) => {
     ).then((result) => {
       if (addAvance.fulfilled.match(result)) {
         setIsConfirmVisible(false);
+        onHide();
       }
     });
   };

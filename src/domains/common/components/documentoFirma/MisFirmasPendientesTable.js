@@ -6,7 +6,7 @@ import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
 import { Message } from 'primereact/message';
-import { fetchFirmasPendientesPorUsuario } from '../../features/documentoFirmante/documentoFirmanteSlice';
+import { fetchFirmasPendientesPorUsuario } from '../../../../features/documentoFirmante/documentoFirmanteSlice';
 import FirmarDocumentoModal from './FirmarDocumentoModal';
 
 // usuarioId: si se recibe, consulta las firmas pendientes de ESE usuario en

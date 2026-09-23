@@ -6,7 +6,10 @@ import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
 import { Message } from 'primereact/message';
-import { fetchPlantillas, desactivarPlantilla } from '../../features/plantillaDocumento/plantillaDocumentoSlice';
+import { 
+  descargarPlantilla, 
+  fetchPlantillas, 
+  desactivarPlantilla } from '../../../../features/plantillaDocumento/plantillaDocumentoSlice';
 import PlantillaDocumentoModal from './PlantillaDocumentoModal';
 import ConfirmationModal from '../../../../components/common/ConfirmationModal';
 
@@ -37,6 +40,15 @@ const PlantillasDocumentoTable = ({ puedeEditar }) => {
     setPlantillaEditando(plantilla);
     setModalVisible(true);
   };
+
+  const descargarTemplate = (rowData) => (
+    <Button
+      icon="pi pi-download"
+      className="p-button-sm p-button-info"
+      tooltip="Descargar"
+      onClick={() => dispatch(descargarPlantilla(rowData.id))}
+    />
+  );
 
   const handleConfirmarDesactivar = () => {
     dispatch(desactivarPlantilla(plantillaADesactivar.id)).then((result) => {
@@ -90,6 +102,7 @@ const PlantillasDocumentoTable = ({ puedeEditar }) => {
         <Column field="tipo_documento_nombre" header="Tipo de Documento" />
         <Column field="ruta_documento" header="Archivo" />
         <Column header="Estado" body={estadoTemplate} field="estado" />
+        <Column header="Descargar" body={descargarTemplate} style={{ width: '7rem' }} />
         {puedeEditar && <Column header="Acciones" body={accionesTemplate} style={{ width: '9rem' }} />}
       </DataTable>
 

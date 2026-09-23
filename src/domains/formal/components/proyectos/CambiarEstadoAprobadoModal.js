@@ -5,8 +5,8 @@ import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Dropdown } from 'primereact/dropdown';
 import { Message } from 'primereact/message';
-import { cambiarEstadoAprobado } from '../../features/proyectos/proyectosSlice';
-import ConfirmationModal from '../common/ConfirmationModal';
+import { cambiarEstadoAprobado } from '../../../../features/proyectos/proyectosSlice';
+import ConfirmationModal from '../../../../components/common/ConfirmationModal';
 
 const OPCIONES_ESTADO = [
   { label: 'Sin Calificar', value: 'SIN_CALIFICAR' },

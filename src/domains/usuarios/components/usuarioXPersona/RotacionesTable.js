@@ -6,7 +6,7 @@ import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 import { Tag } from 'primereact/tag';
-import { fetchRotaciones } from '../../features/usuarioXPersona/usuarioXPersonaSlice';
+import { fetchRotaciones } from '../../../../features/usuarioXPersona/usuarioXPersonaSlice';
 
 
 const RotacionesTable = () => {

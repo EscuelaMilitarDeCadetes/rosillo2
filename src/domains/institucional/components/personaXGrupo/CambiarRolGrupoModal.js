@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Dropdown } from 'primereact/dropdown';
-import { cambiarRolGrupo } from '../../features/personaXGrupo/personaXGrupoSlice';
+import { cambiarRolGrupo } from '../../../../features/personaXGrupo/personaXGrupoSlice';
 
 
 const CambiarRolGrupoModal = ({ visible, onHide, vinculo, onSuccess }) => {

@@ -4,8 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { InputNumber } from 'primereact/inputnumber';
-import { editarValorAprobado } from '../../features/proyectos/montoSlice';
-import ConfirmationModal from '../common/ConfirmationModal';
+import { editarValorAprobado } from '../../../../features/proyectos/montoSlice';
+import ConfirmationModal from '../../../../components/common/ConfirmationModal';
 
 const EditMontoAprobadoModal = ({ visible, onHide, monto, proyectoId }) => {
   const dispatch = useDispatch();
@@ -35,7 +35,6 @@ const EditMontoAprobadoModal = ({ visible, onHide, monto, proyectoId }) => {
 
   const handleShowConfirmation = () => {
     if (validateForm()) {
-      onHide();
       setIsConfirmVisible(true);
     }
   };
@@ -44,6 +43,7 @@ const EditMontoAprobadoModal = ({ visible, onHide, monto, proyectoId }) => {
     dispatch(editarValorAprobado({ montoId: monto.id, aprobado, proyectoId })).then((result) => {
       if (editarValorAprobado.fulfilled.match(result)) {
         setIsConfirmVisible(false);
+        onHide();
       }
     });
   };

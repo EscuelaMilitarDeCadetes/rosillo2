@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
-import ModalContactarSoporte from '../../../components/soporte/ModalContactarSoporte';
+import ModalContactarSoporte from '../components/soporte/ModalContactarSoporte';
 
 // Datos de los videos tutoriales. Los IDs placeholder (VIDEO_ID_2, etc.) se
 // reemplazan por el ID real de YouTube cuando cada video quede publicado

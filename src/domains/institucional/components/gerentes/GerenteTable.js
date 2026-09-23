@@ -12,10 +12,11 @@ import {
   fetchHistoricoGerentes,
   finalizarGerente,
   eliminarGerente,
-} from '../../features/gerentes/gerentesSlice';
+} from '../../../../features/gerentes/gerentesSlice';
 import NewGerenteModal from './NewGerenteModal';
 import EditGerenteModal from './EditGerenteModal';
-import ConfirmationModal from '../common/ConfirmationModal';
+import { fetchCatalogosInstitucionales } from '../../../../features/metadata/metadataSlice';
+import ConfirmationModal from '../../../../components/common/ConfirmationModal';
 
 const PAGE_SIZE = 10;
 
@@ -25,7 +26,7 @@ const GerenteTable = () => {
     (state) => state.gerentes
   );
   const { roles } = useSelector((state) => state.auth);
-  const puedeGestionar = roles?.includes('SOPORTE');
+  const puedeGestionar = roles?.includes('SOPORTE') || roles?.includes('CINTERNO');
 
   const [activeTab, setActiveTab] = useState(0);
   const [page, setPage] = useState(1);
@@ -38,6 +39,7 @@ const GerenteTable = () => {
     dispatch(fetchGerenteActual());
     dispatch(fetchHistoricoGerentes());
     dispatch(fetchGerentes({ page: 1, pageSize: PAGE_SIZE }));
+    dispatch(fetchCatalogosInstitucionales());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch]);
 

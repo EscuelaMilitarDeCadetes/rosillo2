@@ -10,7 +10,7 @@ import {
   fetchMontosAprobadosCalificados,
   fetchMontosContrapartidaCalificados,
   fetchMontosTotalesCalificados,
-} from '../../features/proyectos/montoSlice';
+} from '../../../../features/proyectos/montoSlice';
 
 const OPCIONES_AMBITO = [
   { label: 'Internos', value: true },

@@ -10,8 +10,8 @@ import {
   fetchDocumentosHabilitadosParaFirma,
   marcarDocumentoRechazado,
   limpiarErrorDocumentoFirma,
-} from '../../features/documentoFirma/documentoFirmaSlice';
-import ConfirmationModal from '../common/ConfirmationModal';
+} from '../../../../features/documentoFirma/documentoFirmaSlice';
+import ConfirmationModal from '../../../../components/common/ConfirmationModal';
 
 const estadoSeverity = (estado) => {
   switch (estado) {

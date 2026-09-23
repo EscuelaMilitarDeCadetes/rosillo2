@@ -6,7 +6,7 @@ import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import CatalogPage from '../../../components/catalogos/CatalogPage';
+import CatalogPage from '../components/catalogos/CatalogPage';
 import { CATALOGOS_CONFIG } from '../../../features/catalogos/catalogosConfig';
 import { fetchMetadata } from '../../../features/metadata/metadataSlice';
 import {

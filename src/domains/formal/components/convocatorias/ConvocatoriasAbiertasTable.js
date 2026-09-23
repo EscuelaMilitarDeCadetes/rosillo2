@@ -1,22 +1,25 @@
 // src/domains/formal/components/convocatorias/ConvocatoriasAbiertasTable.js
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchOpenConvocatorias, descargarDocumentoConvocatoria } from '../../features/convocatorias/convocatoriasSlice';
+import { useNavigate } from 'react-router-dom';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
-import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
-import { useNavigate } from 'react-router-dom';
+import {
+  fetchOpenConvocatorias,
+  descargarDocumentoConvocatoria,
+} from '../../../../features/convocatorias/convocatoriasSlice';
+import useHasRole from '../../../../hooks/useHasRole';
 
-const ConvocatoriasAbiertasTable = () => {
+const ConvocatoriasAbiertasTable = ({ ocultarSiVacia = false }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const toast = useRef(null);
   const { items: convocatorias, loading, error } = useSelector((state) => state.convocatorias);
-  const [globalFilter, setGlobalFilter] = useState('');
   const [downloadingId, setDownloadingId] = useState(null);
+  // /participar/:id solo admite FACULTAD y GRUPO (ver App.js)
+  const puedeParticipar = useHasRole(['FACULTAD', 'GRUPO']);
 
   useEffect(() => {
     dispatch(fetchOpenConvocatorias());
@@ -38,21 +41,7 @@ const ConvocatoriasAbiertasTable = () => {
       .finally(() => setDownloadingId(null));
   };
 
-  const header = (
-    <div className="d-flex justify-content-between align-items-center">
-      <h5 className="m-0">Convocatorias Abiertas</h5>
-      <span className="p-input-icon-left">
-        <i className="pi pi-search" />
-        <InputText value={globalFilter} onChange={(e) => setGlobalFilter(e.target.value)} placeholder="Buscar..." />
-      </span>
-    </div>
-  );
-
-  const statusBodyTemplate = (rowData) => {
-    const severity = rowData.estado ? 'success' : 'danger';
-    const value = rowData.estado ? 'Abierta' : 'Cerrada';
-    return <Tag severity={severity} value={value}></Tag>;
-  };
+  if (ocultarSiVacia && !loading && !error && convocatorias.length === 0) return null;
 
   const documentoBodyTemplate = (rowData) => (
     <Button
@@ -65,33 +54,34 @@ const ConvocatoriasAbiertasTable = () => {
   );
 
   const actionBodyTemplate = (rowData) => (
-    <div className="d-flex gap-2">
-      <Button icon="pi pi-plus" className="p-button-rounded p-button-success p-button-sm" tooltip="Participar" onClick={() => navigate(`/participar/${rowData.id}`)} />
-    </div>
+    <Button
+      icon="pi pi-plus"
+      className="p-button-rounded p-button-success p-button-sm"
+      tooltip="Participar"
+      onClick={() => navigate(`/participar/${rowData.id}`)}
+    />
   );
 
-  return (
+  const tabla = (
     <>
       <Toast ref={toast} />
+      <h5 className="mb-3">Convocatorias internas abiertas</h5>
       <DataTable
         value={convocatorias}
-        header={header}
         loading={loading}
-        paginator
-        rows={10}
-        globalFilter={globalFilter}
         emptyMessage="No hay convocatorias abiertas en este momento."
         responsiveLayout="scroll"
       >
-        <Column field="nombre_convocatoria" header="Nombre" sortable />
-        <Column field="inicio" header="Fecha Inicio" sortable />
-        <Column field="cierre" header="Fecha Cierre" sortable />
-        <Column field="estado" header="Estado" body={statusBodyTemplate} sortable />
+        <Column field="nombre_convocatoria" header="Nombre" />
+        <Column field="inicio" header="Fecha inicio" />
+        <Column field="cierre" header="Fecha final" />
         <Column header="Documento" body={documentoBodyTemplate} />
-        <Column header="Acciones" body={actionBodyTemplate} />
+        {puedeParticipar && <Column header="Acciones" body={actionBodyTemplate} />}
       </DataTable>
     </>
   );
+
+  return ocultarSiVacia ? <div className="card card-body mb-4">{tabla}</div> : tabla;
 };
 
 export default ConvocatoriasAbiertasTable;

@@ -1,22 +1,22 @@
 // src/domains/formal/components/proyectos/DocumentosProyectoTable.js
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchDocumentosPorProyecto, deleteDocumentoProyecto, fetchTiposDocumentoProyecto } from '../../features/proyectos/documentosSlice';
-import { habilitarDocumentoParaFirma } from '../../features/documentoFirma/documentoFirmaSlice';
+import { fetchDocumentosPorProyecto, deleteDocumentoProyecto, fetchTiposDocumentoProyecto } from '../../../../features/proyectos/documentosSlice';
+import { habilitarDocumentoParaFirma } from '../../../../features/documentoFirma/documentoFirmaSlice';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
 import AddDocumentoProyectoModal from './AddDocumentProjectModal';
-import ConfirmationModal from '../common/ConfirmationModal';
+import ConfirmationModal from '../../../../components/common/ConfirmationModal';
 import GestionarFirmantesModal from '../../../common/components/documentoFirma/GestionarFirmantesModal';
 import AsignarTareaModal from '../../../common/components/tarea/AsignarTareaModal';
-import axiosInstance from '../../api/axiosInstance';
+import axiosInstance from '../../../../api/axiosInstance';
 
 // El catálogo de "documentos requeridos" se obtiene de
 // TipoDocumento filtrado por grupo='proyecto'
-const DocumentosProyectoTable = ({ proyectoId }) => {
+const DocumentosProyectoTable = ({ proyectoId, bloqueadoPorActaInicio }) => {
   const dispatch = useDispatch();
   const [globalFilter, setGlobalFilter] = useState('');
   const [isAddDocModalVisible, setIsAddDocModalVisible] = useState(false);
@@ -29,6 +29,10 @@ const DocumentosProyectoTable = ({ proyectoId }) => {
   const { documentos, tiposDocumentoProyecto, loading } = useSelector((state) => state.documentos);
   const { roles } = useSelector((state) => state.auth);
   const canModify = roles?.some((r) => ['CINTERNO', 'CEXTERNO'].includes(r));
+  // FACULTAD/GRUPO solo pueden subir los documentos presentes en el catálogo
+  // de "documentos requeridos", y solo si el acta de inicio ya fue cargada.
+  const esResponsableProyecto = roles?.some((r) => ['FACULTAD', 'GRUPO'].includes(r));
+  const puedeCargarDocumentos = esResponsableProyecto && !bloqueadoPorActaInicio;
 
   useEffect(() => {
     if (proyectoId) {
@@ -37,21 +41,41 @@ const DocumentosProyectoTable = ({ proyectoId }) => {
     }
   }, [dispatch, proyectoId]);
 
-  const combinedDocuments = (tiposDocumentoProyecto || []).map((tipoDoc) => {
-    const existingDoc = (documentos || []).find(
+  const combinedDocuments = (tiposDocumentoProyecto || []).reduce((filas, tipoDoc) => {
+    const coincidencias = (documentos || []).filter(
       (doc) => doc.tipo_documento_nombre === tipoDoc.nombre_documento
     );
-    return (
-      existingDoc || {
+    if (tipoDoc.es_informe_seguimiento) {
+      // recurrente: cada versión es un mes distinto, se listan todas.
+      coincidencias
+        .slice()
+        .sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion))
+        .forEach((doc) => filas.push(doc));
+      if (coincidencias.length === 0) {
+        filas.push({
+          id: null,
+          proyecto: proyectoId,
+          tipo_documento_nombre: tipoDoc.nombre_documento,
+          ruta_documento: null,
+          estado: null,
+          is_required: false,
+        });
+      }
+    } else if (coincidencias.length > 0) {
+      // Checklist normal: un documento por tipo (la última versión).
+      filas.push(coincidencias[0]);
+    } else if (tipoDoc.es_obligatorio) {
+      filas.push({
         id: null,
         proyecto: proyectoId,
         tipo_documento_nombre: tipoDoc.nombre_documento,
         ruta_documento: null,
-        estado: null, // sin documento cargado, no aplica un estado de firma
+        estado: null,
         is_required: true,
-      }
-    );
-  });
+      });
+    }
+    return filas;
+  }, []);
 
   const header = (
     <div className="d-flex justify-content-between align-items-center">
@@ -117,16 +141,21 @@ const DocumentosProyectoTable = ({ proyectoId }) => {
   };
 
   const statusBodyTemplate = (rowData) => {
-    if (!rowData.estado) return <Tag value="PENDIENTE" severity="warning" />;
+    if (!rowData.estado) return <Tag value="Pendiente" severity="warning" />;
     let severity;
+    let etiqueta = rowData.estado;
     switch (rowData.estado) {
-      case 'BORRADOR': severity = 'secondary'; break;
-      case 'EN_FIRMAS': severity = 'info'; break;
-      case 'FIRMADO': severity = 'success'; break;
-      case 'RECHAZADO': severity = 'danger'; break;
+      case 'BORRADOR': severity = 'secondary'; etiqueta = 'Borrador'; break;
+      case 'EN_FIRMAS': severity = 'info'; etiqueta = 'En firmas'; break;
+      // FIRMADO cubre tanto el cierre real del circuito de firmas como los
+      // documentos que el usuario que los cargó marcó como ya firmados fuera
+      // de la plataforma (checkbox "ya viene firmado" en AddDocumentProjectModal).
+      // En ambos casos, para el usuario final es simplemente "Entregado".
+      case 'FIRMADO': severity = 'success'; etiqueta = 'Entregado'; break;
+      case 'RECHAZADO': severity = 'danger'; etiqueta = 'Rechazado'; break;
       default: severity = 'secondary'; break;
     }
-    return <Tag value={rowData.estado} severity={severity} />;
+    return <Tag value={etiqueta} severity={severity} />;
   };
 
   const actionBodyTemplate = (rowData) => (
@@ -149,7 +178,11 @@ const DocumentosProyectoTable = ({ proyectoId }) => {
           onClick={() => handleEnviarAFirma(rowData)}
         />
       )}
-      {canModify && rowData.id && ['EN_FIRMAS', 'FIRMADO', 'RECHAZADO'].includes(rowData.estado) && (
+      {canModify && rowData.id && (
+        rowData.estado === 'EN_FIRMAS' ||
+        rowData.estado === 'RECHAZADO' ||
+        (rowData.estado === 'FIRMADO' && rowData.tiene_firmantes)
+      ) && (
         <Button
           icon="pi pi-users"
           className="p-button-rounded p-button-help p-button-sm"
@@ -160,9 +193,6 @@ const DocumentosProyectoTable = ({ proyectoId }) => {
       {canModify && rowData.id && ['BORRADOR', 'RECHAZADO'].includes(rowData.estado) && (
         <Button icon="pi pi-trash" className="p-button-rounded p-button-danger p-button-sm" tooltip="Borrar" onClick={() => handleDeleteClick(rowData)} />
       )}
-      {canModify && !rowData.ruta_documento && (
-        <Button icon="pi pi-upload" className="p-button-rounded p-button-secondary p-button-sm" tooltip="Subir Documento" onClick={() => setIsAddDocModalVisible(true)} />
-      )}
     </div>
   );
 
@@ -170,10 +200,17 @@ const DocumentosProyectoTable = ({ proyectoId }) => {
     <>
       <div className="d-flex justify-content-end gap-2 mb-3">
         {canModify && (
-          <>
-            <Button label="Nueva Tarea" icon="pi pi-calendar-plus" className="p-button-outlined" onClick={() => setModalTareaVisible(true)} />
-            <Button label="Agregar Documento" icon="pi pi-plus" onClick={() => setIsAddDocModalVisible(true)} />
-          </>
+          <Button label="Agregar Documento" icon="pi pi-plus" onClick={() => setIsAddDocModalVisible(true)} />
+        )}
+        {!canModify && esResponsableProyecto && (
+          <Button
+            label="Cargar Documentación"
+            icon="pi pi-plus"
+            disabled={!puedeCargarDocumentos}
+            tooltip={!puedeCargarDocumentos ? 'Se habilita cuando CINTERNO cargue el acta de inicio.' : undefined}
+            tooltipOptions={{ position: 'top' }}
+            onClick={() => setIsAddDocModalVisible(true)}
+          />
         )}
       </div>
       <DataTable
@@ -195,6 +232,7 @@ const DocumentosProyectoTable = ({ proyectoId }) => {
         visible={isAddDocModalVisible}
         onHide={() => setIsAddDocModalVisible(false)}
         proyectoId={proyectoId}
+        catalogoFacultadGrupo={!canModify && esResponsableProyecto}
       />
       <ConfirmationModal
         visible={isDeleteConfirmVisible}

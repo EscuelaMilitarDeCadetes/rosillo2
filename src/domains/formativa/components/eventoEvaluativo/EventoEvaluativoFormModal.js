@@ -86,7 +86,6 @@ const EventoEvaluativoFormModal = ({ visible, onHide }) => {
 
   const handleShowConfirmation = () => {
     if (!validar()) return;
-    onHide();
     setIsConfirmVisible(true);
   };
 
@@ -100,6 +99,7 @@ const EventoEvaluativoFormModal = ({ visible, onHide }) => {
     ).then((result) => {
       if (result.meta.requestStatus === 'fulfilled') {
         setIsConfirmVisible(false);
+        onHide();
       }
     });
   };

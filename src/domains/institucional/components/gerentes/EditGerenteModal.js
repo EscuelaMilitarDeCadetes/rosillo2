@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
-import { actualizarGerente } from '../../features/gerentes/gerentesSlice';
+import { actualizarGerente } from '../../../../features/gerentes/gerentesSlice';
 
 
 const EditGerenteModal = ({ visible, onHide, gerente }) => {

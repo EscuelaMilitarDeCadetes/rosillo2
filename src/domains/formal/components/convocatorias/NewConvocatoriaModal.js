@@ -7,8 +7,8 @@ import { InputText } from 'primereact/inputtext';
 import { Calendar } from 'primereact/calendar';
 import { FileUpload } from 'primereact/fileupload';
 import { Toast } from 'primereact/toast';
-import { createConvocatoria } from '../../features/convocatorias/convocatoriasSlice';
-import ConfirmationModal from '../common/ConfirmationModal';
+import { createConvocatoria } from '../../../../features/convocatorias/convocatoriasSlice';
+import ConfirmationModal from '../../../../components/common/ConfirmationModal';
 
 const NewConvocatoriaModal = ({ visible, onHide }) => {
   const dispatch = useDispatch();
@@ -69,7 +69,6 @@ const NewConvocatoriaModal = ({ visible, onHide }) => {
 
   const handleShowConfirmation = () => {
     if (validateForm()) {
-      onHide(); // Oculta el modal de formulario
       setIsConfirmVisible(true);
     }
   };
@@ -78,6 +77,7 @@ const NewConvocatoriaModal = ({ visible, onHide }) => {
     const nombreCreado = formData.nombre_convocatoria;
     dispatch(createConvocatoria(formData)).then((result) => {
       setIsConfirmVisible(false);
+      onHide(); // Llamar a onHide después de crear la convocatoria
       if (createConvocatoria.fulfilled.match(result)) {
         toast.current?.show({
           severity: 'success',

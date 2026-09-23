@@ -1,6 +1,6 @@
 // src/domains/institucional/pages/PersonasPage.js
 import React from 'react';
-import PersonaTable from '../../../components/personas/PersonaTable';
+import PersonaTable from '../components/personas/PersonaTable';
 
 const PersonasPage = () => (
   <div className="container-fluid mt-4">

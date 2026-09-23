@@ -6,7 +6,7 @@ import { Dropdown } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { Panel } from 'primereact/panel';
 import { ProgressSpinner } from 'primereact/progressspinner';
-import { fetchProductosPorEntidad } from '../../../../../features/estadisticas/estadisticasFormalSlice';
+import { fetchProductosPorEntidad } from '../../../../../../features/estadisticas/estadisticasFormalSlice';
 import { OPCIONES_BOOLEAN, COLOR_PALETA } from '../constants';
 
 const ProductosPorEntidadChart = ({ comunes }) => {

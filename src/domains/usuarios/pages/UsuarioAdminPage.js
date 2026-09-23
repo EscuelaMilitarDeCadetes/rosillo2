@@ -2,10 +2,10 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { TabView, TabPanel } from 'primereact/tabview';
-import UsuarioAdminTable from '../../../components/usuarioAdmin/UsuarioAdminTable';
-import UsuariosInactivosTable from '../../../components/usuarioAdmin/UsuariosInactivosTable';
-import AdminDashboardPanel from '../../../components/usuarioAdmin/AdminDashboardPanel';
-import MisUsuariosCreadosTable from '../../../components/usuarioAdmin/MisUsuariosCreadosTable';   
+import UsuarioAdminTable from '../components/usuarioAdmin/UsuarioAdminTable';
+import UsuariosInactivosTable from '../components/usuarioAdmin/UsuariosInactivosTable';
+import AdminDashboardPanel from '../components/usuarioAdmin/AdminDashboardPanel';
+import MisUsuariosCreadosTable from '../components/usuarioAdmin/MisUsuariosCreadosTable';   
 
 const UsuarioAdminPage = () => {
   const [activeTab, setActiveTab] = useState(0);

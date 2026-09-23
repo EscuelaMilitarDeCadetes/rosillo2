@@ -4,10 +4,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
-import { uploadProjectToGruplac, registrarActaCierre } from '../../features/proyectos/proyectosSlice';
+import { uploadProjectToGruplac, registrarActaCierre } from '../../../../features/proyectos/proyectosSlice';
 import EditProjectDatesModal from './EditProjectDatesModal';
 import CambiarEstadoAprobadoModal from './CambiarEstadoAprobadoModal';
-import ConfirmationModal from '../common/ConfirmationModal';
+import ConfirmationModal from '../../../../components/common/ConfirmationModal';
 
 const ESTADO_SEVERITY = { APROBADO: 'success', NO_APROBADO: 'danger', SIN_CALIFICAR: 'warning' };
 
@@ -66,17 +66,6 @@ const ProyectoInfo = ({ proyecto }) => {
                   icon="pi pi-calendar-times"
                   className="p-button-primary"
                   onClick={() => setIsEditDatesModalVisible(true)}
-                  disabled={proyecto.registro_acta_cierre}
-                />
-              </div>
-            )}
-            {hasAnyRole(['CINTERNO', 'CEXTERNO']) && (
-              <div className="col-auto">
-                <Button
-                  label="Cambiar Estado de Aprobación"
-                  icon="pi pi-flag"
-                  className="p-button-warning"
-                  onClick={() => setIsEstadoModalVisible(true)}
                   disabled={proyecto.registro_acta_cierre}
                 />
               </div>

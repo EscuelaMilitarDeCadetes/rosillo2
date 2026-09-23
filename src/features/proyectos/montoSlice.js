@@ -148,6 +148,25 @@ export const fetchAvancePresupuestalProyecto = createAsyncThunk(
   }
 );
 
+export const asignarContrapartida = createAsyncThunk(
+  "montos/asignarContrapartida",
+  async ({ montoId, contrapartida }, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.patch(
+        `${BASE}${montoId}/asignar-contrapartida/`,
+        { contrapartida }
+      );
+      return response.data;
+    } catch (error) {
+      const data = error.response?.data;
+      return rejectWithValue(
+        (data && Object.values(data).flat().join(" ")) || "Error al asignar la contrapartida."
+      );
+    }
+  }
+);
+
+
 const montoSlice = createSlice({
   name: "montos",
   initialState: {

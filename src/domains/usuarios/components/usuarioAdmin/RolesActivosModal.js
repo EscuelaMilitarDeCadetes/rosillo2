@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Dialog } from 'primereact/dialog';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { fetchRolesActivosUsuario } from '../../features/usuarioAdmin/usuarioAdminSlice';
+import { fetchRolesActivosUsuario } from '../../../../features/usuarioAdmin/usuarioAdminSlice';
 
 // GET /usuarios/usuarios/{id}/roles-activos/
 const RolesActivosModal = ({ visible, onHide, usuario }) => {

@@ -1,6 +1,6 @@
 // src/domains/institucional/pages/GerentesPage.js
 import React from 'react';
-import GerenteTable from '../../../components/gerentes/GerenteTable';
+import GerenteTable from '../components/gerentes/GerenteTable';
 
 const GerentesPage = () => (
   <div className="container-fluid mt-4">

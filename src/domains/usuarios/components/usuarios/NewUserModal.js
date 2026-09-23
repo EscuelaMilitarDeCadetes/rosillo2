@@ -4,7 +4,7 @@ import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
 import { Steps } from "primereact/steps";
 import { Message } from "primereact/message";
-import ConfirmationModal from "../common/ConfirmationModal";
+import ConfirmationModal from "../../../../components/common/ConfirmationModal.js";
 import useNewUserForm from "./newUserWizard/useNewUserForm";
 import StepTipoUsuario from "./newUserWizard/steps/StepTipoUsuario";
 import StepDatosComunes from "./newUserWizard/steps/StepDatosComunes";
@@ -63,7 +63,6 @@ const NewUserModal = ({ visible, onHide }) => {
   const irAtras = () => setPaso((p) => Math.max(p - 1, 0));
 
   const handleShowConfirmation = () => {
-    onHide();
     setIsConfirmVisible(true);
   };
 
@@ -71,6 +70,7 @@ const NewUserModal = ({ visible, onHide }) => {
     registrarUsuario().then((result) => {
       if (result.meta.requestStatus === "fulfilled") {
         setIsConfirmVisible(false);
+        onHide();
       }
     });
   };

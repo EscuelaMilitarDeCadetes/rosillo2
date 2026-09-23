@@ -42,7 +42,7 @@ const CargarDocumentoCorregidoModal = ({ visible, onHide, proyectoId }) => {
   );
 
   return (
-    <Dialog header="Cargue Corrección de Documento de Proyecto" visible={visible} style={{ width: '35vw' }} footer={footer} onHide={onHide}>
+    <Dialog header="Cargue Corrección de Propuesta del proyecto" visible={visible} style={{ width: '35vw' }} footer={footer} onHide={onHide}>
       <div className="p-fluid">
         <div className="field mb-3">
           <label htmlFor="tipoDocumento">Tipo de Documento</label>

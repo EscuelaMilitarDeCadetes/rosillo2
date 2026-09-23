@@ -1,5 +1,5 @@
 // src/hooks/useProjectFilters.js
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { fetchProjects } from "../features/proyectos/proyectosSlice";
 
@@ -25,16 +25,23 @@ export default function useProjectFilters({ calificacion, esModoExterno, rolPara
   const [filtros, setFiltros] = useState(FILTROS_INICIALES);
   const [page, setPage] = useState(1);
 
+  const recargar = useCallback(() => {
+    if (rolParam) return;
+    dispatch(fetchProjects({ ...filtros, calificacion, interno: !esModoExterno, page }));
+  }, [dispatch, filtros, calificacion, esModoExterno, page, rolParam]);
+
   useEffect(() => {
     if (rolParam) return; // el fetch por rol se maneja aparte
     const params = {
       ...filtros,
       calificacion,
-      interno: esModoExterno ? false : undefined,
+      interno: esModoExterno ? false : true,
       page,
     };
     dispatch(fetchProjects(params));
   }, [dispatch, filtros, calificacion, esModoExterno, page, rolParam]);
 
-  return { filtros, setFiltros, page, setPage };
+  useEffect(() => { recargar(); }, [recargar]);
+
+  return { filtros, setFiltros, page, setPage, recargar };
 }

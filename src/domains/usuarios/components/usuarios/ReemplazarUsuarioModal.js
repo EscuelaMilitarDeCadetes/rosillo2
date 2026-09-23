@@ -6,8 +6,8 @@ import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
 import { Message } from 'primereact/message';
-import { reemplazarUsuario } from '../../features/usuarios/usuarioLifecycleSlice';
-import ConfirmationModal from '../common/ConfirmationModal';
+import { reemplazarUsuario } from '../../../../features/usuarios/usuarioLifecycleSlice';
+import ConfirmationModal from '../../../../components/common/ConfirmationModal.js';
 
 
 const ReemplazarUsuarioModal = ({ visible, onHide, usuarioObjetivo }) => {
@@ -82,7 +82,6 @@ const ReemplazarUsuarioModal = ({ visible, onHide, usuarioObjetivo }) => {
 
   const handleShowConfirmation = () => {
     if (!validar()) return;
-    onHide();
     setIsConfirmVisible(true);
   };
 
@@ -90,6 +89,7 @@ const ReemplazarUsuarioModal = ({ visible, onHide, usuarioObjetivo }) => {
     dispatch(reemplazarUsuario(construirPayload())).then((result) => {
       if (reemplazarUsuario.fulfilled.match(result)) {
         setIsConfirmVisible(false);
+        onHide();
       }
     });
   };

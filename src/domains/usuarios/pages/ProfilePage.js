@@ -6,7 +6,7 @@ import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
 import axiosInstance from '../../../api/axiosInstance';
-import { fetchMetadata } from '../../../features/metadata/metadataSlice';
+import { fetchGrados } from '../../../features/metadata/metadataSlice';
 import { Link } from 'react-router-dom';
 
 const CAMPOS_EDITABLES = ['grado', 'nombre', 'apellido', 'celular', 'cvlac'];
@@ -44,7 +44,7 @@ const ProfilePage = () => {
 
   useEffect(() => {
     if (grados.length === 0) {
-      dispatch(fetchMetadata());
+      dispatch(fetchGrados());
     }
   }, [dispatch, grados.length]);
 

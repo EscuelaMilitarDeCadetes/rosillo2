@@ -6,7 +6,7 @@ import { Button } from 'primereact/button';
 import { Dropdown } from 'primereact/dropdown';
 import { Message } from 'primereact/message';
 import { fetchMetadata } from '../../../../features/metadata/metadataSlice';
-import { asignarVariosFirmantes, limpiarErrorDocumentoFirmante } from '../../features/documentoFirmante/documentoFirmanteSlice';
+import { asignarVariosFirmantes, limpiarErrorDocumentoFirmante } from '../../../../features/documentoFirmante/documentoFirmanteSlice';
 
 const nombreUsuario = (u) => u.persona_actual_nombre || u.username;
 

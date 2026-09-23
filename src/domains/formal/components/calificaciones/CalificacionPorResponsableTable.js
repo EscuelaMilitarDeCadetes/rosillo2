@@ -1,5 +1,5 @@
 // src/domains/formal/components/calificaciones/CalificacionPorResponsableTable.js
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useCallback, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -8,8 +8,11 @@ import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
 import { Message } from 'primereact/message';
-import { Link } from 'react-router-dom';
-import { fetchProyectosPorResponsable } from '../../features/calificaciones/calificacionResponsableSlice';
+import { fetchProyectosPorResponsable } from '../../../../features/calificaciones/calificacionResponsableSlice';
+import AddInvestigadorProyectoModal from '../proyectos/AddInvestigadorProyectoModal';
+import RegisterInvestigatorModal from '../proyectos/RegisterInvestigatorModal';
+import AddProductoProyectoModal from '../proyectos/AddProductProjectModal';
+import AddObjetivoModal from '../proyectos/AddObjetivoModal';
 
 const OPCIONES_SI_NO = [
   { label: 'Todas', value: null },
@@ -51,6 +54,12 @@ const CalificacionPorResponsableTable = ({ scope, rolRequerido }) => {
   const [filtroEstadoCalificacion, setFiltroEstadoCalificacion] = useState(null);
   const [page, setPage] = useState(1);
 
+  const [proyectoIdAccion, setProyectoIdAccion] = useState(null);
+  const [modalInvestigadorVisible, setModalInvestigadorVisible] = useState(false);
+  const [modalRegistrarInvestigadorVisible, setModalRegistrarInvestigadorVisible] = useState(false);
+  const [modalProductoVisible, setModalProductoVisible] = useState(false);
+  const [modalObjetivoVisible, setModalObjetivoVisible] = useState(false);
+
   const filtros = useMemo(
     () => ({
       titulo: filtroTitulo || undefined,
@@ -62,12 +71,14 @@ const CalificacionPorResponsableTable = ({ scope, rolRequerido }) => {
     [filtroTitulo, filtroFinanciado, filtroCalificacion, filtroInterno, filtroEstadoCalificacion]
   );
 
-  useEffect(() => {
+  const cargar = useCallback(() => {
     if (!miInstitucionId) return;
     const params =
       scope === 'facultad' ? { facultadId: miInstitucionId, filtros, page } : { grupoId: miInstitucionId, filtros, page };
     dispatch(fetchProyectosPorResponsable(params));
   }, [dispatch, scope, miInstitucionId, filtros, page]);
+
+  useEffect(() => { cargar(); }, [cargar]);
 
   if (!tieneRol) {
     return null;
@@ -87,8 +98,7 @@ const CalificacionPorResponsableTable = ({ scope, rolRequerido }) => {
   const habilitaAcciones = (row) =>
     row.calificacion_ultimo_filtro_calificacion === 'APROBADO' &&
     row.estado_finalizado_calificacion === true &&
-    row.proyecto_fecha_inicio &&
-    row.proyecto_fecha_inicio !== '2000-01-01';
+    row.proyecto_fecha_inicio;
 
   const proyectoBodyTemplate = (row) => {
     const noAprobado = row.calificacion_ultimo_filtro_calificacion === 'NO_APROBADO';
@@ -107,27 +117,41 @@ const CalificacionPorResponsableTable = ({ scope, rolRequerido }) => {
     />
   );
 
+  const abrirModal = (setVisible) => (row) => {
+    setProyectoIdAccion(row.proyecto);
+    setVisible(true);
+  };
+
   const administrarBodyTemplate = (row) => {
     if (!habilitaAcciones(row)) {
       return <strong>Opciones no habilitadas</strong>;
     }
     return (
-      <div className="d-flex gap-2 flex-wrap justify-content-center">       
-        <Link
-          className="btn btn-warning btn-sm"
-          to={`/proyectos/${row.proyecto}`}
-        >
-          CREAR INVESTIGADORES
-        </Link>
+      <div className="d-flex gap-2 flex-wrap justify-content-center">
+        <Button
+          label="CREAR INVESTIGADORES"
+          icon={row.tiene_investigadores ? 'pi pi-check-circle' : undefined}
+          tooltip={row.tiene_investigadores ? 'Ya tiene investigadores' : 'Aún sin investigadores'}
+          tooltipOptions={{ position: 'top' }}
+          className="p-button-warning p-button-sm"
+          onClick={() => abrirModal(setModalInvestigadorVisible)(row)}
+        />
         <Button
           label="ASIGNAR PRODUCTOS"
+          icon={row.tiene_productos ? 'pi pi-check-circle' : undefined}
+          tooltip={row.tiene_productos ? 'Ya tiene productos' : 'Aún sin productos'}
+          tooltipOptions={{ position: 'top' }}
           className="p-button-info p-button-sm"
-          onClick={() => {            
-          }}
+          onClick={() => abrirModal(setModalProductoVisible)(row)}
         />
-        <Link className="btn btn-dark btn-sm" to={`/proyectos/${row.proyecto}`}>
-          ASIGNAR OBJETIVOS
-        </Link>
+        <Button
+          label="ASIGNAR OBJETIVOS"
+          icon={row.tiene_objetivos ? 'pi pi-check-circle' : undefined}
+          tooltip={row.tiene_objetivos ? 'Ya tiene objetivos' : 'Aún sin objetivos'}
+          tooltipOptions={{ position: 'top' }}
+          className="p-button-help p-button-sm"
+          onClick={() => abrirModal(setModalObjetivoVisible)(row)}
+        />
       </div>
     );
   };
@@ -210,6 +234,32 @@ const CalificacionPorResponsableTable = ({ scope, rolRequerido }) => {
         <Column header="Estado de calificación" body={estadoCalificacionBodyTemplate} />
         <Column header="Administrar" body={administrarBodyTemplate} />
       </DataTable>
+      <AddInvestigadorProyectoModal
+        visible={modalInvestigadorVisible}
+        onHide={() => { setModalInvestigadorVisible(false); cargar(); }}
+        proyectoId={proyectoIdAccion}
+        mostrarAsignados
+        onRegisterNewInvestigator={() => {
+          setModalInvestigadorVisible(false);
+          setModalRegistrarInvestigadorVisible(true);
+        }}
+      />
+      <RegisterInvestigatorModal
+        visible={modalRegistrarInvestigadorVisible}
+        onHide={() => { setModalRegistrarInvestigadorVisible(false); cargar(); }}
+        proyectoId={proyectoIdAccion}
+      />
+      <AddProductoProyectoModal
+        visible={modalProductoVisible}
+        onHide={() => { setModalProductoVisible(false); cargar(); }}
+        proyectoId={proyectoIdAccion}
+        mostrarAsignados
+      />
+      <AddObjetivoModal
+        visible={modalObjetivoVisible}
+        onHide={() => { setModalObjetivoVisible(false); cargar(); }}
+        proyectoId={proyectoIdAccion}
+      />
     </div>
   );
 };

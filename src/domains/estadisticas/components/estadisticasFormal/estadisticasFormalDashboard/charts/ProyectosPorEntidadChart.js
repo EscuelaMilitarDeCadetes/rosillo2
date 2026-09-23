@@ -7,7 +7,7 @@ import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
 import { Panel } from 'primereact/panel';
 import { ProgressSpinner } from 'primereact/progressspinner';
-import { fetchProyectosPorEntidad } from '../../../../../features/estadisticas/estadisticasFormalSlice';
+import { fetchProyectosPorEntidad } from '../../../../../../features/estadisticas/estadisticasFormalSlice';
 import { OPCIONES_BOOLEAN } from '../constants';
 
 const ProyectosPorEntidadChart = ({ comunes }) => {

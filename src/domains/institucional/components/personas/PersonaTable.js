@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
-import { fetchPersonas } from '../../features/personas/personasSlice';
+import { fetchPersonas } from '../../../../features/personas/personasSlice';
 import PersonaFormModal from './PersonaFormModal';
 
 const PAGE_SIZE = 10;

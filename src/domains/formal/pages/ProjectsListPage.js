@@ -18,16 +18,15 @@ import {
   fetchOpcionesFiltroProyectos,
   updateProjectDates,
 } from "../../../features/proyectos/proyectosSlice";
-import { updateBudget } from "../../../features/proyectos/montoSlice";
+import { asignarContrapartida, updateBudget } from "../../../features/proyectos/montoSlice";
 import useHasRole from "../../../hooks/useHasRole";
 import useProjectFilters from "../../../hooks/useProjectFilters";
 import useOpcionesResponsable from "../../../hooks/useOpcionesResponsable";
 import RegisterInvestigatorModal from "../components/proyectos/RegisterInvestigatorModal";
+import AddInvestigadorProyectoModal from "../components/proyectos/AddInvestigadorProyectoModal";
 import AddProductoProyectoModal from "../components/proyectos/AddProductProjectModal";
 import AddObjetivoModal from "../components/proyectos/AddObjetivoModal";
-import InvestigadoresProyectoTable from "../components/proyectos/InvestigadoresProyectoTable";
-import ProductosProyectoTable from "../components/proyectos/ProductosProyectoTable";
-import ConfirmationModal from "../components/common/ConfirmationModal";
+import ConfirmationModal from "../../../components/common/ConfirmationModal";
 
 const ESTADO_A_CALIFICACION = {
   aprobado: "APROBADO",
@@ -43,16 +42,14 @@ const ProjectsListPage = () => {
   const rolParam = searchParams.get("rol"); // 'supervisor' | 'facultad' | 'grupo' | null
   const esModoExterno = tipoParam === "externo";
 
-  const [modalInvVisible, setModalInvVisible] = useState(false);
-  const [modalProdVisible, setModalProdVisible] = useState(false);
-  const [proyectoIdModal, setProyectoIdModal] = useState(null);
-
   const calificacion = esModoExterno
     ? "APROBADO"
     : ESTADO_A_CALIFICACION[estadoParam] || null;
 
   const puedeGestionar = useHasRole(
-    esModoExterno ? ["CEXTERNO"] : ["CINTERNO", "CEXTERNO"]
+    esModoExterno
+      ? ["CEXTERNO"]
+      : ["CINTERNO", "CEXTERNO", "FACULTAD", "GRUPO"]
   );
 
   const { filteredProjects, totalProjects, loading, proyectosPorRol, loadingProyectosPorRol, opcionesFiltro } = useSelector(
@@ -60,12 +57,13 @@ const ProjectsListPage = () => {
   );
   const { facultadId, grupoId } = useSelector((state) => state.auth);
 
-  const { filtros, setFiltros, page, setPage } = useProjectFilters({ calificacion, esModoExterno, rolParam });
+  const { filtros, setFiltros, page, setPage, recargar } = useProjectFilters({ calificacion, esModoExterno, rolParam });
   const { opcionesResponsableAgrupadas } = useOpcionesResponsable();
 
   const [modalMontoVisible, setModalMontoVisible] = useState(false);
   const [modalFechasVisible, setModalFechasVisible] = useState(false);
   const [modalInvestigadorVisible, setModalInvestigadorVisible] = useState(false);
+  const [modalRegistrarInvestigadorVisible, setModalRegistrarInvestigadorVisible] = useState(false);
   const [modalProductoVisible, setModalProductoVisible] = useState(false);
   const [modalObjetivoVisible, setModalObjetivoVisible] = useState(false);
   const [proyectoSeleccionado, setProyectoSeleccionado] = useState(null);
@@ -76,9 +74,17 @@ const ProjectsListPage = () => {
   const [fechaFin, setFechaFin] = useState(null);
   const [fechasError, setFechasError] = useState("");
   const [isConfirmFechasVisible, setIsConfirmFechasVisible] = useState(false);
+  const [modalContrapartidaVisible, setModalContrapartidaVisible] = useState(false);
 
   const datosTabla = rolParam ? proyectosPorRol : filteredProjects;
   const cargandoTabla = rolParam ? loadingProyectosPorRol : loading;
+
+  const recargarLista = () => {
+    if (rolParam === "supervisor") dispatch(fetchMisProyectos());
+    else if (rolParam === "facultad" && facultadId) dispatch(fetchProyectosPorFacultad(facultadId));
+    else if (rolParam === "grupo" && grupoId) dispatch(fetchProyectosPorGrupo(grupoId));
+    else recargar();
+  };
 
   useEffect(() => {
     if (rolParam === "supervisor") {
@@ -101,6 +107,12 @@ const ProjectsListPage = () => {
     setModalMontoVisible(true);
   };
 
+  const abrirModalContrapartida = (row) => {
+    setProyectoSeleccionado(row);
+    setContrapartida(row.monto_contrapartida ?? 0);
+    setModalContrapartidaVisible(true);
+  };
+
   const abrirModalFechas = (rowData) => {
     setProyectoSeleccionado(rowData);
     setFechaInicio(null);
@@ -112,6 +124,11 @@ const ProjectsListPage = () => {
   const abrirModalInvestigador = (rowData) => {
     setProyectoIdAccion(rowData.proyecto);
     setModalInvestigadorVisible(true);
+  };
+
+  const abrirModalRegistrarNuevoInvestigador = () => {
+    setModalInvestigadorVisible(false);
+    setModalRegistrarInvestigadorVisible(true);
   };
 
   const abrirModalProducto = (rowData) => {
@@ -135,6 +152,7 @@ const ProjectsListPage = () => {
       .then(() => {
         toast.current?.show({ severity: "success", summary: "Monto asignado" });
         setModalMontoVisible(false);
+        recargarLista();
       })
       .catch((err) =>
         toast.current?.show({ severity: "error", summary: "Error", detail: err })
@@ -171,11 +189,23 @@ const ProjectsListPage = () => {
       .then(() => {
         toast.current?.show({ severity: "success", summary: "Fechas asignadas" });
         setIsConfirmFechasVisible(false);
+        recargarLista();
       })
       .catch((err) => {
         toast.current?.show({ severity: "error", summary: "Error", detail: err });
         setIsConfirmFechasVisible(false);
       });
+  };
+
+  const confirmarContrapartida = () => {
+    dispatch(asignarContrapartida({ montoId: proyectoSeleccionado.monto_id, contrapartida: contrapartida ?? 0 }))
+      .unwrap()
+      .then(() => {
+        toast.current?.show({ severity: "success", summary: "Contrapartida asignada" });
+        setModalContrapartidaVisible(false);
+        recargarLista();
+      })
+      .catch((err) => toast.current?.show({ severity: "error", summary: "Error", detail: err }));
   };
 
   const montoFormateado = (valor) =>
@@ -198,11 +228,18 @@ const ProjectsListPage = () => {
     if (!puedeGestionar) return null;
     return (
       <div className="d-flex flex-wrap gap-2">
-        {row.proyecto_fecha_inicio === "2000-01-01" && (
+        {!row.proyecto_fecha_inicio && (
           <Button
             label="Asignar Tiempos"
             className="p-button-sm p-button-secondary"
             onClick={() => abrirModalFechas(row)}
+          />
+        )}
+        {row.monto_id && (
+          <Button
+            label={row.monto_contrapartida != null ? "Editar Contrapartida" : "Asignar Contrapartida"}
+            className="p-button-sm p-button-success"
+            onClick={() => abrirModalContrapartida(row)}
           />
         )}
         <Button
@@ -225,42 +262,48 @@ const ProjectsListPage = () => {
   };
 
   const accionesTemplate = (row) => {
-    if (!puedeGestionar || calificacion !== "APROBADO") return null;
+    if (!puedeGestionar) return null;
+    const timelineAsignado = !!row.proyecto_fecha_inicio;
+    const esVistaFacultadOGrupo = rolParam === "facultad" || rolParam === "grupo";
+
     return (
-      <div className="d-flex gap-2">
-        {row.monto_solicitado && !row.monto_aprobado && (
+      <div className="d-flex flex-wrap gap-2">
+        {calificacion === "APROBADO" && row.monto_solicitado && !row.monto_aprobado && (
           <Button
             label="Asignar Monto"
             className="p-button-sm p-button-info"
             onClick={() => abrirModalMonto(row)}
           />
         )}
-        {row.proyecto_fecha_inicio === "2000-01-01" && (
+        {calificacion === "APROBADO" && !timelineAsignado && (
           <Button
             label="Asignar Tiempos"
             className="p-button-sm p-button-secondary"
             onClick={() => abrirModalFechas(row)}
           />
         )}
+        {esVistaFacultadOGrupo && timelineAsignado && (
+          <>
+            <Button
+              label="Crear Investigadores"
+              className="p-button-sm p-button-warning"
+              onClick={() => abrirModalInvestigador(row)}
+            />
+            <Button
+              label="Asignar Productos"
+              className="p-button-sm p-button-info"
+              onClick={() => abrirModalProducto(row)}
+            />
+            <Button
+              label="Asignar Objetivos"
+              className="p-button-sm p-button-help"
+              onClick={() => abrirModalObjetivo(row)}
+            />
+          </>
+        )}
       </div>
     );
   };
-
-  const investigadoresTemplate = (row) =>
-    row.tiene_investigadores ? (
-      <Button label="VER MÁS" className="p-button-text p-button-sm"
-        onClick={() => { setProyectoIdModal(row.proyecto); setModalInvVisible(true); }} />
-    ) : (
-      <span style={{ color: "gray" }}>Sin investigadores</span>
-    );
-
-  const productosTemplate = (row) =>
-    row.tiene_productos ? (
-      <Button label="VER MÁS" className="p-button-text p-button-sm"
-        onClick={() => { setProyectoIdModal(row.proyecto); setModalProdVisible(true); }} />
-    ) : (
-      <span style={{ color: "gray" }}>Sin productos</span>
-    );
 
   const titulo = esModoExterno
     ? "Proyectos Externos Aprobados"
@@ -390,12 +433,10 @@ const ProjectsListPage = () => {
         {esModoExterno ? (
           <Column header="Acciones" body={accionesTemplateExterno} />
         ) : (
-          calificacion === "APROBADO" && (
+          (calificacion === "APROBADO" || rolParam === "facultad" || rolParam === "grupo") && (
             <Column header="Acciones" body={accionesTemplate} />
           )
         )}
-        <Column header="Investigadores" body={investigadoresTemplate} />
-        <Column header="Productos" body={productosTemplate} />
       </DataTable>
       <Dialog
         header="Gestión del monto"
@@ -425,6 +466,20 @@ const ProjectsListPage = () => {
           />
         </div>
         <Button label="Asignar Monto" className="p-button-success" onClick={confirmarMonto} />
+      </Dialog>
+      <Dialog 
+        header="Valor de contrapartida" 
+        visible={modalContrapartidaVisible}
+        onHide={() => setModalContrapartidaVisible(false)} 
+        style={{ width: "30rem" }}
+      >
+        <p className="mb-3">Monto aprobado: <strong>{montoFormateado(proyectoSeleccionado?.monto_aprobado)}</strong></p>
+        <div className="mb-3">
+          <label>Valor contrapartida</label>
+          <InputNumber value={contrapartida} onValueChange={(e) => setContrapartida(e.value ?? 0)}
+            mode="currency" currency="COP" locale="es-CO" minFractionDigits={0} className="w-100" />
+        </div>
+        <Button label="Guardar" className="p-button-success" onClick={confirmarContrapartida} />
       </Dialog>
       <Dialog
         header="Línea de Tiempo"
@@ -465,25 +520,23 @@ const ProjectsListPage = () => {
           <li><strong>Fecha de finalización:</strong> {fechaFin ? fechaFin.toLocaleDateString("es-CO") : "Vacío"}</li>
         </ul>
       </ConfirmationModal>
-      <Dialog header="Investigadores del proyecto" visible={modalInvVisible} style={{ width: "60vw" }} onHide={() => setModalInvVisible(false)}>
-        {proyectoIdModal && (
-          <InvestigadoresProyectoTable proyectoId={proyectoIdModal} readOnly={esModoExterno} />
-        )}
-      </Dialog>
-      <Dialog header="Productos del proyecto" visible={modalProdVisible} style={{ width: "60vw" }} onHide={() => setModalProdVisible(false)}>
-        {proyectoIdModal && (
-          <ProductosProyectoTable proyectoId={proyectoIdModal} readOnly={esModoExterno} />
-        )}
-      </Dialog>
-      <RegisterInvestigatorModal
+      <AddInvestigadorProyectoModal
         visible={modalInvestigadorVisible}
         onHide={() => setModalInvestigadorVisible(false)}
+        proyectoId={proyectoIdAccion}
+        onRegisterNewInvestigator={abrirModalRegistrarNuevoInvestigador}
+        mostrarAsignados
+      />
+      <RegisterInvestigatorModal
+        visible={modalRegistrarInvestigadorVisible}
+        onHide={() => setModalRegistrarInvestigadorVisible(false)}
         proyectoId={proyectoIdAccion}
       />
       <AddProductoProyectoModal
         visible={modalProductoVisible}
         onHide={() => setModalProductoVisible(false)}
         proyectoId={proyectoIdAccion}
+        mostrarAsignados
       />
       <AddObjetivoModal
         visible={modalObjetivoVisible}

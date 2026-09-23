@@ -4,19 +4,23 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Dropdown } from 'primereact/dropdown';
-import { addInvestigadorProyecto } from '../../../../features/proyectos/investigadoresSlice'; // Necesitas crear esta acción
+import { addInvestigadorProyecto, fetchInvestigadoresPorProyecto } from '../../../../features/proyectos/investigadoresSlice';
+import ListaAsignados from './ListaAsignados';
+import { fetchMetadata } from '../../../../features/metadata/metadataSlice';
 import ConfirmationModal from '../../../../components/common/ConfirmationModal';
 
 
-const AddInvestigadorProyectoModal = ({ visible, onHide, proyectoId, onRegisterNewInvestigator }) => {
+const AddInvestigadorProyectoModal = ({ visible, onHide, proyectoId, onRegisterNewInvestigator, mostrarAsignados = false }) => {
   const dispatch = useDispatch();
-  const { usuarios, rolesInvestigador, personasXGrupo } = useSelector((state) => state.metadata); // Asumiendo que metadataSlice carga personasXGrupo
-  const { loading, error } = useSelector((state) => state.investigadores);
+  const { rolesInvestigador, personasXGrupo } = useSelector((state) => state.metadata); // Asumiendo que metadataSlice carga personasXGrupo
+  const { investigadores, loading, error } = useSelector((state) => state.investigadores);
+  const [asignadosListos, setAsignadosListos] = useState(false);
 
   const [selectedPersonaXGrupo, setSelectedPersonaXGrupo] = useState(null);
   const [selectedRolInvestigador, setSelectedRolInvestigador] = useState(null);
   const [validationError, setValidationError] = useState('');
   const [isConfirmVisible, setIsConfirmVisible] = useState(false);
+  
 
   useEffect(() => {
     if (!visible) {
@@ -25,6 +29,24 @@ const AddInvestigadorProyectoModal = ({ visible, onHide, proyectoId, onRegisterN
       setValidationError('');
     }
   }, [visible]);
+
+  useEffect(() => {
+    if (visible && rolesInvestigador.length === 0) {
+      dispatch(fetchMetadata());
+    }
+  }, [visible, dispatch, rolesInvestigador.length]);
+
+  useEffect(() => {
+    if (!visible) { 
+      setAsignadosListos(false); return; 
+    }
+    if (!mostrarAsignados || !proyectoId) return;
+    let cancelado = false;
+    dispatch(fetchInvestigadoresPorProyecto(proyectoId)).finally(() => {
+      if (!cancelado) setAsignadosListos(true);
+    });
+    return () => { cancelado = true; };
+  }, [visible, mostrarAsignados, proyectoId, dispatch]);
 
   const validateForm = () => {
     if (!selectedPersonaXGrupo || !selectedRolInvestigador) {
@@ -37,7 +59,6 @@ const AddInvestigadorProyectoModal = ({ visible, onHide, proyectoId, onRegisterN
 
   const handleShowConfirmation = () => {
     if (validateForm()) {
-      onHide();
       setIsConfirmVisible(true);
     }
   };
@@ -52,6 +73,7 @@ const AddInvestigadorProyectoModal = ({ visible, onHide, proyectoId, onRegisterN
     dispatch(addInvestigadorProyecto(payload)).then((result) => {
       if (addInvestigadorProyecto.fulfilled.match(result)) {
         setIsConfirmVisible(false);
+        onHide();
       }
     });
   };
@@ -64,15 +86,26 @@ const AddInvestigadorProyectoModal = ({ visible, onHide, proyectoId, onRegisterN
   );
 
   // Opciones para el dropdown de investigadores (PersonaXGrupo)
-  const investigatorOptions = personasXGrupo.map(pxg => ({
-    label: `${pxg.persona_details.nombre} ${pxg.persona_details.apellido} (${pxg.grupo_details?.nombre_grupo || pxg.facultad_details?.nombre_facultad})`,
-    value: pxg.id,
+  const investigatorOptions = personasXGrupo
+    .filter((pxg) => pxg.persona_nombre && pxg.estado !== false)
+    .map((pxg) => ({
+      label: `${pxg.persona_nombre} (${pxg.grupo_nombre || pxg.facultad_nombre || 'N/A'})`,
+      value: pxg.id,
   }));
 
   return (
     <>
       <Dialog header="Agregar Investigador al Proyecto" visible={visible} style={{ width: '50vw' }} footer={renderFooter} onHide={onHide}>
         <div className="p-fluid">
+          {mostrarAsignados && (
+            <ListaAsignados
+              titulo="Investigadores ya asignados a este proyecto"
+              cargando={!asignadosListos}
+              items={investigadores.filter((i) => i.estado !== false)}
+              vacio="Este proyecto aún no tiene investigadores."
+              renderItem={(i) => <><strong>{i.persona_nombre_completo}</strong> – {i.rol_nombre}</>}
+            />
+          )}
           <div className="field mb-3">
             <label htmlFor="investigador">Escoger Investigador</label>
             <Dropdown inputId="investigador" value={selectedPersonaXGrupo} options={investigatorOptions} onChange={(e) => setSelectedPersonaXGrupo(e.value)} optionLabel="label" optionValue="value" filter placeholder="Buscar investigador por nombre" />
@@ -99,7 +132,7 @@ const AddInvestigadorProyectoModal = ({ visible, onHide, proyectoId, onRegisterN
       >
         <h6>Resumen del investigador a agregar:</h6>
         <ul>
-          <li><strong>Investigador:</strong> {personasXGrupo.find(pxg => pxg.id === selectedPersonaXGrupo)?.persona_details?.nombre || 'N/A'} {personasXGrupo.find(pxg => pxg.id === selectedPersonaXGrupo)?.persona_details?.apellido || ''}</li>
+          <li><strong>Investigador:</strong> {personasXGrupo.find(pxg => pxg.id === selectedPersonaXGrupo)?.persona_nombre || 'N/A'}</li>
           <li><strong>Rol:</strong> {rolesInvestigador.find(ri => ri.id === selectedRolInvestigador)?.nombre_rol_investigador || 'N/A'}</li>
         </ul>
       </ConfirmationModal>

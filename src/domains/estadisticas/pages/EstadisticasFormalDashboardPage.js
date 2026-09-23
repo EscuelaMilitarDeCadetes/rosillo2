@@ -1,6 +1,6 @@
 // src/domains/estadisticas/pages/EstadisticasFormalDashboardPage.js
 import React from 'react';
-import EstadisticasDashboard from '../../../components/estadisticasFormal/EstadisticasFormalDashboard';
+import EstadisticasFormalDashboard from '../components/estadisticasFormal/EstadisticasFormalDashboard';
 
 const EstadisticasFormalDashboardPage = () => {
   return (

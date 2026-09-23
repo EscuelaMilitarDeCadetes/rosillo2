@@ -7,6 +7,7 @@ import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
 import { Calendar } from 'primereact/calendar';
 import { createInvestigadorCompleto } from '../../../../features/proyectos/investigadoresSlice';
+import { fetchMetadata } from '../../../../features/metadata/metadataSlice';
 import ConfirmationModal from '../../../../components/common/ConfirmationModal';
 
 const CAMPOS_OBLIGATORIOS = [
@@ -29,6 +30,12 @@ const RegisterInvestigatorModal = ({ visible, onHide, proyectoId }) => {
     }
   }, [visible]);
 
+  useEffect(() => {
+    if (visible && grados.length === 0) {
+      dispatch(fetchMetadata());
+    }
+  }, [visible, dispatch, grados.length]);
+
   const handleInputChange = (e, name) => {
     const val = e.target.value;
     setFormData((prev) => ({ ...prev, [name]: val }));
@@ -46,7 +53,6 @@ const RegisterInvestigatorModal = ({ visible, onHide, proyectoId }) => {
 
   const handleShowConfirmation = () => {
     if (validateForm()) {
-      onHide();
       setIsConfirmVisible(true);
     }
   };
@@ -69,6 +75,7 @@ const RegisterInvestigatorModal = ({ visible, onHide, proyectoId }) => {
     dispatch(createInvestigadorCompleto(payload)).then((result) => {
       if (createInvestigadorCompleto.fulfilled.match(result)) {
         setIsConfirmVisible(false);
+        onHide();
       }
     });
   };

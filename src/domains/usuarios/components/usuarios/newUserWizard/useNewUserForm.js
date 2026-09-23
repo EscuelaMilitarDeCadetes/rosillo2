@@ -1,9 +1,9 @@
 // src/domains/usuarios/components/usuarios/newUserWizard/useNewUserForm.js
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchMetadata } from "../../../features/metadata/metadataSlice";
-import { createUser } from "../../../features/usuarios/usuarioLifecycleSlice";
-import { TIPOS_USUARIO_SOPORTE, resolverRolPlataforma } from "../../../features/usuarios/tipos_usuario_soporte";
+import { fetchMetadata } from "../../../../../features/metadata/metadataSlice";
+import { createUser } from "../../../../../features/usuarios/usuarioLifecycleSlice";
+import { TIPOS_USUARIO_SOPORTE, resolverRolPlataforma } from "../../../../../features/usuarios/tipos_usuario_soporte";
 
 /**
  * Encapsula todo el estado y la lógica de negocio del formulario de creación

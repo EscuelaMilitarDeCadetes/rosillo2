@@ -82,12 +82,13 @@ export const updateProjectDates = createAsyncThunk(
 
 export const editarFechaCierre = createAsyncThunk(
   "proyectos/editarFechaCierre",
-  async ({ proyectoId, fechaFin }, { rejectWithValue }) => {
+  async ({ proyectoId, fechaFin }, { dispatch, rejectWithValue }) => {
     try {
       const response = await axiosInstance.patch(
         `investigacion-formal/proyectos/${proyectoId}/editar-fecha-cierre/`,
         { fecha_fin: fechaFin }
       );
+      dispatch(fetchProyecto(proyectoId));
       return response.data;
     } catch (error) {
       const data = error.response?.data;

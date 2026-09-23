@@ -1,11 +1,12 @@
 // src/domains/formal/components/proyectos/ProductosProyectoTable.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
+import { Toast } from 'primereact/toast';
 import ConfirmationModal from '../../../../components/common/ConfirmationModal';
 import { SelectButton } from 'primereact/selectbutton';
 import {
@@ -14,6 +15,7 @@ import {
   fetchProductosEntregadosPorProyecto,
   deleteProductoProyecto,
   uploadProductoToGruplac,
+  descargarDocumentoEntregaProducto,
 } from '../../../../features/proyectos/productosSlice';
 import AddProductoProyectoModal from "./AddProductProjectModal";
 import RegistrarEntregaProductoModal from "./RegistrarEntregaProductoModal";
@@ -29,8 +31,9 @@ const OPCIONES_VISTA = [
 
 const ProductosProyectoTable = ({ proyectoId, readOnly = false }) => {
   const dispatch = useDispatch();
+  const toast = useRef(null);
   const { roles } = useSelector((state) => state.auth);
-  const { productos, loading } = useSelector((state) => state.productos);
+  const { productos, loading, descargandoDocumentoId } = useSelector((state) => state.productos);
   const [globalFilter, setGlobalFilter] = useState('');
   const [isAddProductModalVisible, setIsAddProductModalVisible] = useState(false);
   const [isDeleteConfirmVisible, setIsDeleteConfirmVisible] = useState(false);
@@ -94,9 +97,16 @@ const ProductosProyectoTable = ({ proyectoId, readOnly = false }) => {
   };
 
   const handleDownload = (rowData) => {
-    if (rowData.documento) {
-      window.open(rowData.documento, '_blank', 'noopener,noreferrer');
-    }
+    dispatch(descargarDocumentoEntregaProducto(rowData.id)).then((result) => {
+      if (!descargarDocumentoEntregaProducto.fulfilled.match(result)) {
+        toast.current?.show({
+          severity: 'warn',
+          summary: 'No se pudo descargar',
+          detail: result.payload || 'Este producto no tiene un documento de entrega registrado.',
+          life: 5000,
+        });
+      }
+    });
   };
 
   const entregadoBodyTemplate = (rowData) => (
@@ -111,11 +121,12 @@ const ProductosProyectoTable = ({ proyectoId, readOnly = false }) => {
     const canModify = hasAnyRole(ROLES_PUEDEN_GESTIONAR);
     return (
       <div className="d-flex gap-2">
-        {rowData.entregado && rowData.documento && (
+        {rowData.entregado && (
           <Button
             icon="pi pi-download"
             className="p-button-rounded p-button-info p-button-sm"
             tooltip="Descargar / Ver documento"
+            loading={descargandoDocumentoId === rowData.id}
             onClick={() => handleDownload(rowData)}
           />
         )}
@@ -146,10 +157,11 @@ const ProductosProyectoTable = ({ proyectoId, readOnly = false }) => {
   };
 
   const linkReadOnlyBodyTemplate = (rowData) =>
-    rowData.entregado && rowData.documento ? (
+    rowData.entregado ? (
       <Button
         label="Descargar / Ver"
         className="p-button-text p-button-sm"
+        loading={descargandoDocumentoId === rowData.id}
         onClick={() => handleDownload(rowData)}
       />
     ) : (
@@ -175,6 +187,7 @@ const ProductosProyectoTable = ({ proyectoId, readOnly = false }) => {
 
   return (
     <>
+      <Toast ref={toast} />
       {!readOnly && (
         <div className="d-flex justify-content-end mb-3">
           {hasAnyRole(ROLES_PUEDEN_GESTIONAR) && (

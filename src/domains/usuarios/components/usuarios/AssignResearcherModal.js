@@ -6,8 +6,8 @@ import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
 import { Calendar } from "primereact/calendar";
 import { Message } from "primereact/message";
-import { assignResearcher } from "../../features/usuarios/personaGrupoSlice.js";
-import ConfirmationModal from "../common/ConfirmationModal";
+import { assignResearcher } from "../../../../features/usuarios/personaGrupoSlice.js";
+import ConfirmationModal from "../../../../components/common/ConfirmationModal.js";
 
 /**
  * Modal para vincular una Persona a un Grupo de Investigación
@@ -49,7 +49,6 @@ const AssignResearcherModal = ({ visible, onHide }) => {
 
   const handleShowConfirmation = () => {
     if (!validarFormulario()) return;
-    onHide();
     setIsConfirmVisible(true);
   };
 
@@ -66,6 +65,7 @@ const AssignResearcherModal = ({ visible, onHide }) => {
     dispatch(assignResearcher(payload)).then((result) => {
       if (assignResearcher.fulfilled.match(result)) {
         setIsConfirmVisible(false);
+        onHide();
       }
     });
   };

@@ -78,7 +78,7 @@ const AddControlCambioModal = ({ visible, onHide, proyectoId }) => {
           <InputText id="tipoCambio" value={tipoCambio} onChange={(e) => setTipoCambio(e.target.value)} maxLength={255} />
         </div>
         <div className="field mb-3">
-          <label htmlFor="fechaCambio">Fecha del Cambio</label>
+          <label htmlFor="fechaCambio">Fecha de aceptación del Cambio</label>
           <Calendar id="fechaCambio" value={fechaCambio} onChange={(e) => setFechaCambio(e.value)} dateFormat="yy-mm-dd" showIcon />
         </div>
         <div className="field mb-3">

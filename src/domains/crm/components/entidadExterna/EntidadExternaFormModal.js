@@ -76,7 +76,6 @@ const EntidadExternaFormModal = ({ visible, onHide, item }) => {
 
   const handleShowConfirmation = () => {
     if (!validar()) return;
-    onHide();
     setIsConfirmVisible(true);
   };
 
@@ -88,6 +87,7 @@ const EntidadExternaFormModal = ({ visible, onHide, item }) => {
     dispatch(accion).then((result) => {
       if (result.meta.requestStatus === 'fulfilled') {
         setIsConfirmVisible(false);
+        onHide();
       }
     });
   };

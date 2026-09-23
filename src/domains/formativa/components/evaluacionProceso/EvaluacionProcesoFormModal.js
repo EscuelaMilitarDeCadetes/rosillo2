@@ -148,7 +148,6 @@ const EvaluacionProcesoFormModal = ({ visible, onHide }) => {
 
   const handleShowConfirmation = () => {
     if (!validar()) return;
-    onHide();
     setIsConfirmVisible(true);
   };
 
@@ -165,6 +164,7 @@ const EvaluacionProcesoFormModal = ({ visible, onHide }) => {
     ).then((result) => {
       if (result.meta.requestStatus === 'fulfilled') {
         setIsConfirmVisible(false);
+        onHide();
       }
     });
   };

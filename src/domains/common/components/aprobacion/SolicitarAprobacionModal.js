@@ -8,7 +8,7 @@ import { InputNumber } from 'primereact/inputnumber';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Message } from 'primereact/message';
 import { fetchMetadata } from '../../../../features/metadata/metadataSlice';
-import { crearAprobacion, fetchAprobaciones, limpiarErrorAprobacion } from '../../features/aprobacion/aprobacionSlice';
+import { crearAprobacion, fetchAprobaciones, limpiarErrorAprobacion } from '../../../../features/aprobacion/aprobacionSlice';
 
 const nombreUsuario = (u) => u.persona_actual_nombre || u.username;
 

@@ -1,6 +1,6 @@
 // src/domains/common/pages/DocumentosPendientesFirmaPage.js
 import React from 'react';
-import DocumentosPendientesFirmaTable from '../../../components/documentoFirma/DocumentosPendientesFirmaTable';
+import DocumentosPendientesFirmaTable from '../components/documentoFirma/DocumentosPendientesFirmaTable';
 
 const DocumentosPendientesFirmaPage = () => (
   <div className="container-fluid mt-4">

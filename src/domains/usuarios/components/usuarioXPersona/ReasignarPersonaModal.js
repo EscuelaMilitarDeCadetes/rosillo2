@@ -24,13 +24,15 @@ const ReasignarPersonaModal = ({ visible, onHide, usuario }) => {
 
   const handleShowConfirmation = () => {
     if (!personaId) return;
-    onHide();
     setIsConfirmVisible(true);
   };
 
   const handleConfirmar = () => {
     dispatch(reasignarPersona({ usuario_id: usuario.usuario_id, persona_id: personaId })).then((result) => {
-      if (reasignarPersona.fulfilled.match(result)) setIsConfirmVisible(false);
+      if (reasignarPersona.fulfilled.match(result)) {
+        setIsConfirmVisible(false);
+        onHide();
+      }
     });
   };
 

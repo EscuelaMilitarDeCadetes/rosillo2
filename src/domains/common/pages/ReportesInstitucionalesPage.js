@@ -1,6 +1,6 @@
 // src/domains/common/pages/ReportesInstitucionalesPage.js
 import React from 'react';
-import ReportesInstitucionalesPanel from '../../../components/reportesInstitucionales/ReportesInstitucionalesPanel';
+import ReportesInstitucionalesPanel from '../components/reportesInstitucionales/ReportesInstitucionalesPanel';
 
 const ReportesInstitucionalesPage = () => (
   <div className="container-fluid mt-4">

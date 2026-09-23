@@ -7,6 +7,7 @@ import { fetchInvestigadoresPorProyecto } from "../../../features/proyectos/inve
 import { fetchObjetivosPorProyecto } from "../../../features/proyectos/objetivosSlice";
 import { fetchProductosPorProyecto } from "../../../features/proyectos/productosSlice";
 import { fetchDocumentosPorProyecto } from "../../../features/proyectos/documentosSlice";
+import useHasRole from "../../../hooks/useHasRole";
 import { TabView, TabPanel } from "primereact/tabview";
 import ProyectoInfo from "../components/proyectos/ProyectoInfo";
 import InvestigadoresProyectoTable from "../components/proyectos/InvestigadoresProyectoTable";
@@ -24,6 +25,9 @@ const AllInfoProyectPage = () => {
   const { proyectoActual, loading, error } = useSelector(
     (state) => state.proyectos
   );
+  const puedeGestionar = useHasRole(["CINTERNO", "CEXTERNO"]);
+  const esResponsableProyecto = useHasRole(["FACULTAD", "GRUPO"]);
+  const bloqueadoPorActaInicio = esResponsableProyecto && !proyectoActual?.tiene_acta_inicio;
 
   useEffect(() => {
     dispatch(fetchProyecto(id));
@@ -54,23 +58,30 @@ const AllInfoProyectPage = () => {
     <>
       <ProyectoInfo proyecto={proyectoActual} />
       <div className="card mt-4">
+        {bloqueadoPorActaInicio && (
+          <div className="alert alert-warning mt-3">
+            CINTERNO aún no ha cargado el <strong>Acta de inicio</strong> del proyecto.
+            Las acciones de investigadores, objetivos, productos, avance e informe de
+            seguimiento se habilitan cuando ese documento quede registrado.
+          </div>
+        )}
         <TabView scrollable>
           {" "}
           {/* Añadimos scrollable para muchas pestañas */}
           <TabPanel header="Investigadores">
-            <InvestigadoresProyectoTable proyectoId={id} />
+            <InvestigadoresProyectoTable proyectoId={id} readOnly={!puedeGestionar || bloqueadoPorActaInicio} />
           </TabPanel>
           <TabPanel header="Objetivos">
-            <ObjetivosProyectoTable proyectoId={id} />
+            <ObjetivosProyectoTable proyectoId={id} readOnly={!puedeGestionar || bloqueadoPorActaInicio} />
           </TabPanel>
           <TabPanel header="Control de Cambios">
-            <ControlCambiosTable proyectoId={id} />
+            <ControlCambiosTable proyectoId={id} readOnly={!puedeGestionar || bloqueadoPorActaInicio} />
           </TabPanel>
           <TabPanel header="Productos">
-            <ProductosProyectoTable proyectoId={id} />
+            <ProductosProyectoTable proyectoId={id} readOnly={!puedeGestionar || bloqueadoPorActaInicio} />
           </TabPanel>
           <TabPanel header="Documentos">
-            <DocumentosProyectoTable proyectoId={id} />
+            <DocumentosProyectoTable proyectoId={id} bloqueadoPorActaInicio={bloqueadoPorActaInicio}/>
           </TabPanel>
           {proyectoActual?.financiado && (
             <TabPanel header="Gastos y Presupuesto">

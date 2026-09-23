@@ -7,7 +7,7 @@ import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
 import { Dropdown } from 'primereact/dropdown';
 import { Dialog } from 'primereact/dialog';
-import { completarTarea, reasignarTarea, eliminarTarea } from '../../features/tarea/tareaSlice';
+import { completarTarea, reasignarTarea, eliminarTarea } from '../../../../features/tarea/tareaSlice';
 import ConfirmationModal from '../../../../components/common/ConfirmationModal';
 
 const objetoTemplate = (rowData) =>

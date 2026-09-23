@@ -6,7 +6,7 @@ import { Column } from 'primereact/column';
 import { Tag } from 'primereact/tag';
 import { Button } from 'primereact/button';
 import { Message } from 'primereact/message';
-import { fetchAprobaciones } from '../../features/aprobacion/aprobacionSlice';
+import { fetchAprobaciones } from '../../../../features/aprobacion/aprobacionSlice';
 
 const severidadPorEstado = { PENDIENTE: 'warning', APROBADO: 'success', RECHAZADO: 'danger' };
 

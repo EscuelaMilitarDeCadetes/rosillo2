@@ -8,6 +8,7 @@ import AddRoleModal from '../components/usuarios/AddRoleModal';
 import AssignResearcherModal from '../components/usuarios/AssignResearcherModal';
 import DeleteRoleModal from '../components/usuarios/DeleteRoleModal';
 import EditRoleModal from '../components/usuarios/EditRoleModal';
+import BuscarRolXUsuarioPanel from '../components/usuarios/BuscarRolXUsuarioPanel';
 import { useSelector } from 'react-redux';
 
 const UsersPage = () => {
@@ -16,7 +17,6 @@ const UsersPage = () => {
   const [isAssignModalVisible, setIsAssignModalVisible] = useState(false);
   const [isDeleteRoleModalVisible, setIsDeleteRoleModalVisible] = useState(false);
   const [isEditRoleModalVisible, setIsEditRoleModalVisible] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
   const { roles } = useSelector((state) => state.metadata);
 
   return (

@@ -6,8 +6,8 @@ import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
 import { Message } from "primereact/message";
-import { updateRole } from "../../features/usuarios/rolesUsuarioSlice.js";
-import ConfirmationModal from "../common/ConfirmationModal";
+import { updateRole } from "../../../../features/usuarios/rolesUsuarioSlice.js";
+import ConfirmationModal from "../../../../components/common/ConfirmationModal.js";
 
 /**
  * Modal para editar nombre_rol/descripcion de un RolPlataforma existente.
@@ -55,7 +55,6 @@ const EditRoleModal = ({ visible, onHide }) => {
 
   const handleShowConfirmation = () => {
     if (!validarFormulario()) return;
-    onHide();
     setIsConfirmVisible(true);
   };
 
@@ -65,6 +64,7 @@ const EditRoleModal = ({ visible, onHide }) => {
     ).then((result) => {
       if (updateRole.fulfilled.match(result)) {
         setIsConfirmVisible(false);
+        onHide();
       }
     });
   };

@@ -5,7 +5,7 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Dropdown } from 'primereact/dropdown';
-import { fetchConGrupo } from '../../features/personaXGrupo/personaXGrupoSlice';
+import { fetchConGrupo } from '../../../../features/personaXGrupo/personaXGrupoSlice';
 import TrasladarGrupoModal from './TrasladarGrupoModal';
 import TrasladarFacultadModal from './TrasladarFacultadModal';
 import CambiarRolGrupoModal from './CambiarRolGrupoModal';

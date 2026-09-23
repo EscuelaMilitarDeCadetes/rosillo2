@@ -5,7 +5,7 @@ import { Dialog } from 'primereact/dialog';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Tag } from 'primereact/tag';
-import { fetchHistoricoRoles } from '../../features/usuarios/rolesUsuarioSlice';
+import { fetchHistoricoRoles } from '../../../../features/usuarios/rolesUsuarioSlice';
 
 
 const HistoricoRolesModal = ({ visible, onHide, usuario }) => {

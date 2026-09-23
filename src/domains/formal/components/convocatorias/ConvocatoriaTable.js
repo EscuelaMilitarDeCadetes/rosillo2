@@ -9,7 +9,19 @@ import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
 import { Tooltip } from 'primereact/tooltip';
 import { Toast } from 'primereact/toast';
-import { fetchAllConvocatorias, descargarDocumentoConvocatoria } from '../../features/convocatorias/convocatoriasSlice';
+import {
+  fetchAllConvocatorias,
+  descargarDocumentoConvocatoria,
+  toggleConvocatoriaStatus,
+} from '../../../../features/convocatorias/convocatoriasSlice';
+import ConfirmationModal from '../../../../components/common/ConfirmationModal';
+
+// Roles que pueden participar en una convocatoria (crear proyecto) —
+// debe reflejar ROLES_CREACION_PROYECTO en apps/investigacion_formal/permissions.py
+const ROLES_PARTICIPAR = ['FACULTAD', 'GRUPO'];
+// Rol que puede habilitar/deshabilitar convocatorias — debe reflejar
+// el permiso EsCInterno de la acción cambiar_estado en convocatoria_viewset.py
+const ROLES_CAMBIAR_ESTADO = ['CINTERNO'];
 
 const ConvocatoriaTable = ({ onViewProjects }) => {
   const dispatch = useDispatch();
@@ -18,8 +30,13 @@ const ConvocatoriaTable = ({ onViewProjects }) => {
   const { roles } = useSelector((state) => state.auth);
   const [globalFilter, setGlobalFilter] = useState('');
   const [downloadingId, setDownloadingId] = useState(null);
+  const [cambiandoEstadoId, setCambiandoEstadoId] = useState(null);
+  const [convocatoriaATransicion, setConvocatoriaATransicion] = useState(null);
   const [first, setFirst] = useState(0);
   const toast = useRef(null);
+
+  const puedeParticipar = ROLES_PARTICIPAR.some((r) => roles?.includes(r));
+  const puedeCambiarEstado = ROLES_CAMBIAR_ESTADO.some((r) => roles?.includes(r));
 
   useEffect(() => {
     dispatch(fetchAllConvocatorias({ page: 1, rows: adminRows }));
@@ -40,6 +57,30 @@ const ConvocatoriaTable = ({ onViewProjects }) => {
         }
       })
       .finally(() => setDownloadingId(null));
+  };
+
+  const handleHabilitar = (rowData) => {
+    setCambiandoEstadoId(rowData.id);
+    dispatch(toggleConvocatoriaStatus({ id: rowData.id, estado: true }))
+      .then((result) => {
+        if (!toggleConvocatoriaStatus.fulfilled.match(result)) {
+          toast.current?.show({ severity: 'error', summary: 'No se pudo habilitar', detail: result.payload, life: 6000 });
+        }
+      })
+      .finally(() => setCambiandoEstadoId(null));
+  };
+
+  const handleConfirmarDeshabilitar = () => {
+    setCambiandoEstadoId(convocatoriaATransicion.id);
+    dispatch(toggleConvocatoriaStatus({ id: convocatoriaATransicion.id, estado: false }))
+      .then((result) => {
+        if (toggleConvocatoriaStatus.fulfilled.match(result)) {
+          setConvocatoriaATransicion(null);
+        } else {
+          toast.current?.show({ severity: 'error', summary: 'No se pudo deshabilitar', detail: result.payload, life: 6000 });
+        }
+      })
+      .finally(() => setCambiandoEstadoId(null));
   };
 
   const header = (
@@ -84,10 +125,35 @@ const ConvocatoriaTable = ({ onViewProjects }) => {
         loading={downloadingId === rowData.id}
         onClick={() => handleDownload(rowData)}
       />
-      <Button icon="pi pi-plus" className="p-button-rounded p-button-success p-button-sm" tooltip="Participar" onClick={() => navigate(`/participar/${rowData.id}`)} />
+      {puedeParticipar && (
+        <Button
+          icon="pi pi-plus"
+          className="p-button-rounded p-button-success p-button-sm"
+          tooltip="Participar"
+          onClick={() => navigate(`/participar/${rowData.id}`)}
+        />
+      )}
+      {puedeCambiarEstado && (
+        rowData.estado ? (
+          <Button
+            icon="pi pi-ban"
+            className="p-button-rounded p-button-danger p-button-sm"
+            tooltip="Deshabilitar"
+            loading={cambiandoEstadoId === rowData.id}
+            onClick={() => setConvocatoriaATransicion(rowData)}
+          />
+        ) : (
+          <Button
+            icon="pi pi-check-circle"
+            className="p-button-rounded p-button-sm"
+            tooltip="Habilitar"
+            loading={cambiandoEstadoId === rowData.id}
+            onClick={() => handleHabilitar(rowData)}
+          />
+        )
+      )}
     </div>
   );
-
 
   return (
     <>
@@ -115,6 +181,15 @@ const ConvocatoriaTable = ({ onViewProjects }) => {
         <Column field="estado" header="Estado" body={statusBodyTemplate} sortable />
         <Column header="Acciones" body={actionBodyTemplate} />
       </DataTable>
+      <ConfirmationModal
+        visible={Boolean(convocatoriaATransicion)}
+        onHide={() => setConvocatoriaATransicion(null)}
+        onConfirm={handleConfirmarDeshabilitar}
+        header="¿Deshabilitar esta convocatoria?"
+        loading={cambiandoEstadoId === convocatoriaATransicion?.id}
+      >
+        Nadie podrá participar en <strong>{convocatoriaATransicion?.nombre_convocatoria}</strong> mientras esté deshabilitada.
+      </ConfirmationModal>
     </>
   );
 };

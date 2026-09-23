@@ -16,8 +16,8 @@ import {
   fetchHistorialPorRangoFechas,
   fetchAccionesSistema,
   limpiarFiltro,
-} from '../../features/historial/historialSlice';
-import { fetchPlatformUsers } from '../../features/usuarios/rolesUsuarioSlice';
+} from '../../../../features/historial/historialSlice';
+import { fetchPlatformUsers } from '../../../../features/usuarios/rolesUsuarioSlice';
 
 const PAGE_SIZE = 10;
 

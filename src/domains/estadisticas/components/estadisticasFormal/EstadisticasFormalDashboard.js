@@ -1,7 +1,7 @@
 // src/domains/estadisticas/components/estadisticasFormal/EstadisticasFormalDashboard.js
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchOpcionesFiltro } from '../../features/estadisticas/estadisticasFormalSlice';
+import { fetchOpcionesFiltro } from '../../../../features/estadisticas/estadisticasFormalSlice';
 import FiltrosComunes from './estadisticasFormalDashboard/FiltrosComunes';
 import ProyectosPorEntidadChart from './estadisticasFormalDashboard/charts/ProyectosPorEntidadChart';
 import ProductosPorEntidadChart from './estadisticasFormalDashboard/charts/ProductosPorEntidadChart';

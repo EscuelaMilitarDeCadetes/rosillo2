@@ -2,9 +2,9 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Button } from 'primereact/button';
-import ConvocatoriaTable from '../../../components/convocatorias/ConvocatoriaTable';
-import NewConvocatoriaModal from '../../../components/convocatorias/NewConvocatoriaModal';
-import ProjectsByConvocatoriaModal from '../../../components/convocatorias/ProjectsByConvocatoriaModal';
+import ConvocatoriaTable from '../components/convocatorias/ConvocatoriaTable';
+import NewConvocatoriaModal from '../components/convocatorias/NewConvocatoriaModal';
+import ProjectsByConvocatoriaModal from '../components/convocatorias/ProjectsByConvocatoriaModal';
 
 const AdminConvocatoriasPage = () => {
   const [isNewConvocatoriaModalVisible, setIsNewConvocatoriaModalVisible] = useState(false);

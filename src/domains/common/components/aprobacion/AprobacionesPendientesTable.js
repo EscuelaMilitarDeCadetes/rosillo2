@@ -12,7 +12,7 @@ import {
   aprobarSolicitud,
   rechazarSolicitud,
   limpiarErrorAprobacion,
-} from '../../features/aprobacion/aprobacionSlice';
+} from '../../../../features/aprobacion/aprobacionSlice';
 
 
 const AprobacionesPendientesTable = ({

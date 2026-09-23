@@ -1,8 +1,8 @@
 // src/domains/formal/components/proyectos/GastosProyectoTable.js
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchGastosPorProyecto, deleteDocumentoPresupuesto, deleteEjecucion } from '../../features/proyectos/gastoSlice';
-import { fetchMontoPorProyecto } from '../../features/proyectos/montoSlice'
+import { deleteDocumentoPresupuesto, deleteEjecucion } from '../../../../features/proyectos/gastoSlice';
+import { fetchMontoPorProyecto } from '../../../../features/proyectos/montoSlice'
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
@@ -10,13 +10,13 @@ import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
 import AddGastoModal from './AddGastoModal';
 import EditMontoAprobadoModal from './EditMontoAprobadoModal';
-import ConfirmationModal from '../common/ConfirmationModal';
+import ConfirmationModal from '../../../../components/common/ConfirmationModal';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8082/api/';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api/';
 
 const GastosProyectoTable = ({ proyectoId }) => {
   const dispatch = useDispatch();
-  const { gastos, loading, error } = useSelector((state) => state.gastos);
+  const { gastos, loading } = useSelector((state) => state.gastos);
   const { montoProyecto } = useSelector((state) => state.montos)
   const { roles } = useSelector((state) => state.auth);
   const [globalFilter, setGlobalFilter] = useState('');

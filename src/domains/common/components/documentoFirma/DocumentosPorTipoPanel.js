@@ -11,7 +11,7 @@ import {
   fetchDocumentosPorTipoDocumento,
   fetchUltimaVersionDocumento,
   limpiarPorTipoDocumento,
-} from '../../features/documentoFirma/documentoFirmaSlice';
+} from '../../../../features/documentoFirma/documentoFirmaSlice';
 
 const estadoSeverity = (estado) => {
   switch (estado) {

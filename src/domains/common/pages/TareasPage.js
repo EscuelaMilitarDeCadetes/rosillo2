@@ -1,5 +1,5 @@
 // src/domains/common/pages/TareasPage.js
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { TabView, TabPanel } from 'primereact/tabview';
 import { Button } from 'primereact/button';
@@ -25,25 +25,29 @@ const TareasPage = () => {
   const dispatch = useDispatch();
   const { user, roles } = useSelector((state) => state.auth);
   const {
-    items, total, loading,
+    items, loading,
     porUsuario, loadingPorUsuario,
     vencidas, loadingVencidas,
     proximasAVencer, loadingProximas,
   } = useSelector((state) => state.tarea);
 
-  const [page, setPage] = useState(1);
+  const [page] = useState(1);
   const [modalVisible, setModalVisible] = useState(false);
 
   const tieneAcceso = roles?.some((r) => ROLES_MODULO.includes(r));
   const puedeCrear = roles?.some((r) => ROLES_CREACION.includes(r));
 
-  useEffect(() => {
-    if (!tieneAcceso) return;
+  const recargar = useCallback(() => {
     dispatch(fetchTareas({ page }));
     dispatch(fetchTareasPorUsuario({ usuarioId: user.id }));
     dispatch(fetchTareasVencidas());
     dispatch(fetchTareasProximasAVencer(3));
-  }, [dispatch, page, tieneAcceso, user?.id]);
+  }, [dispatch, page, user?.id]);
+
+  useEffect(() => {
+    if (!tieneAcceso) return;
+    recargar();
+  }, [tieneAcceso, recargar]);
 
   if (!tieneAcceso) {
     return (
@@ -59,7 +63,7 @@ const TareasPage = () => {
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h5 className="m-0">Tareas</h5>
           {puedeCrear && (
-            <Button label="Nueva Tarea (genérica)" icon="pi pi-plus" className="p-button-sm" onClick={() => setModalVisible(true)} />
+            <Button label="Nueva Tarea" icon="pi pi-plus" className="p-button-sm" onClick={() => setModalVisible(true)} />
           )}
         </div>
         <TabView>
@@ -80,7 +84,7 @@ const TareasPage = () => {
 
       {/* Modal en modo genérico: pide manualmente el objeto relacionado,
           ya que esta página no tiene un contexto de objeto fijo. */}
-      <AsignarTareaModal visible={modalVisible} onHide={() => setModalVisible(false)} />
+      <AsignarTareaModal visible={modalVisible} onHide={() => setModalVisible(false)} onCreada={recargar} />
     </div>
   );
 };

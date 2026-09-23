@@ -41,8 +41,7 @@ const NewGerenteModal = ({ visible, onHide, gerenteActual }) => {
       setValidationError('Debe seleccionar la persona y la fecha de ingreso.');
       return;
     }
-    setValidationError('');
-    onHide();
+    setValidationError('');    
     setIsConfirmVisible(true);
   };
 
@@ -50,6 +49,7 @@ const NewGerenteModal = ({ visible, onHide, gerenteActual }) => {
     dispatch(crearGerente({ persona: personaId, fecha_ingreso: formatDate(fechaIngreso) })).then((result) => {
       if (crearGerente.fulfilled.match(result)) {
         setIsConfirmVisible(false);
+        onHide();
       }
     });
   };

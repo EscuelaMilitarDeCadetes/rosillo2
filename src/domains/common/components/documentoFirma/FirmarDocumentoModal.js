@@ -7,7 +7,7 @@ import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Message } from 'primereact/message';
 import { TabView, TabPanel } from 'primereact/tabview';
-import { firmarDocumento, rechazarFirma, limpiarErrorDocumentoFirmante } from '../../features/documentoFirmante/documentoFirmanteSlice';
+import { firmarDocumento, rechazarFirma, limpiarErrorDocumentoFirmante } from '../../../../features/documentoFirmante/documentoFirmanteSlice';
 
 // Autoservicio del firmante: recibió el código de verificación por
 // notificación/correo (lo generó el dueño del documento vía

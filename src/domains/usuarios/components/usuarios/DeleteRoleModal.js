@@ -5,8 +5,8 @@ import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
 import { Message } from "primereact/message";
-import { fetchRolesForUser, deleteRoleFromUser } from "../../features/usuarios/rolesUsuarioSlice.js";
-import ConfirmationModal from "../common/ConfirmationModal";
+import { fetchRolesForUser, deleteRoleFromUser } from "../../../../features/usuarios/rolesUsuarioSlice.js";
+import ConfirmationModal from "../../../../components/common/ConfirmationModal.js";
 
 /**
  * Modal para quitarle un rol de plataforma a un usuario.
@@ -36,7 +36,6 @@ const DeleteRoleModal = ({ visible, onHide }) => {
 
   const handleShowConfirmation = () => {
     if (!selectedUser || !selectedRolId) return;
-    onHide();
     setIsConfirmVisible(true);
   };
 
@@ -44,6 +43,7 @@ const DeleteRoleModal = ({ visible, onHide }) => {
     dispatch(deleteRoleFromUser({ usuario_id: selectedUser, rol_id: selectedRolId })).then((result) => {
       if (deleteRoleFromUser.fulfilled.match(result)) {
         setIsConfirmVisible(false);
+        onHide();
       }
     });
   };

@@ -73,10 +73,6 @@ const ProyectosUsuarioTable = () => {
     return <span className="text-color-secondary" style={{ fontSize: '0.85rem' }}>No habilitado para actualización</span>;
   };
 
-  const estadoBodyTemplate = (rowData) => (
-    <Tag severity={rowData.estado ? 'success' : 'danger'} value={rowData.estado ? 'Activo' : 'Inactivo'} />
-  );
-
   return (
     <>
       <DataTable

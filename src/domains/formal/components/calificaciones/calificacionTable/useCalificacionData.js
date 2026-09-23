@@ -8,8 +8,8 @@ import {
   deshabilitarCorreccionDocumento,
   fetchDocumentosParticipacion,
   limpiarDocumentosParticipacion,
-} from '../../../features/calificaciones/calificacionSlice';
-import { habilitarDocumentoParaFirma } from '../../../features/documentoFirma/documentoFirmaSlice';
+} from '../../../../../features/calificaciones/calificacionSlice';
+import { habilitarDocumentoParaFirma } from '../../../../../features/documentoFirma/documentoFirmaSlice';
 
 /**
  * Encapsula el estado de filtros, la carga de datos (Redux) y las acciones

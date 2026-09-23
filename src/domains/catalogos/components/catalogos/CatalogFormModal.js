@@ -8,9 +8,9 @@ import { InputNumber } from 'primereact/inputnumber';
 import { Checkbox } from 'primereact/checkbox';
 import { Dropdown } from 'primereact/dropdown';
 import { Message } from 'primereact/message';
-import { crearCatalogoItem, actualizarCatalogoItem } from '../../features/catalogos/catalogosSlice';
-import { fetchMetadata } from '../../features/metadata/metadataSlice';
-import ConfirmationModal from '../common/ConfirmationModal';
+import { crearCatalogoItem, actualizarCatalogoItem } from '../../../../features/catalogos/catalogosSlice';
+import { fetchMetadata } from '../../../../features/metadata/metadataSlice';
+import ConfirmationModal from '../../../../components/common/ConfirmationModal';
 
 /**
  * Modal de alta/edición genérico para cualquier catálogo de
@@ -68,7 +68,6 @@ const CatalogFormModal = ({ visible, onHide, config, item }) => {
 
   const handleShowConfirmation = () => {
     if (!validar()) return;
-    onHide();
     setIsConfirmVisible(true);
   };
 
@@ -80,6 +79,7 @@ const CatalogFormModal = ({ visible, onHide, config, item }) => {
     dispatch(accion).then((result) => {
       if (result.meta.requestStatus === 'fulfilled') {
         setIsConfirmVisible(false);
+        onHide();
       }
     });
   };

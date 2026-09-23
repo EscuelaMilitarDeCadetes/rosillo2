@@ -5,9 +5,9 @@ import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
 import { Message } from "primereact/message";
-import { addRoleToUser } from "../../features/usuarios/rolesUsuarioSlice.js";
-import { asignarRolExistente } from "../../features/usuarios/usuarioLifecycleSlice.js";
-import ConfirmationModal from "../common/ConfirmationModal";
+import { addRoleToUser } from "../../../../features/usuarios/rolesUsuarioSlice.js";
+import { asignarRolExistente } from "../../../../features/usuarios/usuarioLifecycleSlice.js";
+import ConfirmationModal from "../../../../components/common/ConfirmationModal.js";
 
 
 /**
@@ -80,7 +80,6 @@ const AddRoleModal = ({ visible, onHide }) => {
 
   const handleShowConfirmation = () => {
     if (!validateForm()) return;
-    onHide();
     setIsConfirmVisible(true);
   };
 
@@ -98,6 +97,7 @@ const AddRoleModal = ({ visible, onHide }) => {
     dispatch(accion).then((result) => {
       if (thunkActionCreator.fulfilled.match(result)) {
         setIsConfirmVisible(false);
+        onHide();
       }
     });
   };

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
-import CatalogPage from '../../../components/catalogos/CatalogPage';
+import CatalogPage from '../components/catalogos/CatalogPage';
 import { CATALOGOS_CONFIG } from '../../../features/catalogos/catalogosConfig';
 import axiosInstance from '../../../api/axiosInstance';
 

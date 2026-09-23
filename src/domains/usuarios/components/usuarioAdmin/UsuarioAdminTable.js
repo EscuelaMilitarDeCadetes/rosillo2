@@ -5,7 +5,7 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
-import { fetchUsuarios } from '../../features/usuarioAdmin/usuarioAdminSlice';
+import { fetchUsuarios } from '../../../../features/usuarioAdmin/usuarioAdminSlice';
 import RolesActivosModal from './RolesActivosModal';
 
 const PAGE_SIZE = 10;

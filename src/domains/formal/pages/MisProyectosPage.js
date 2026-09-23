@@ -1,6 +1,6 @@
 // src/domains/formal/pages/MisProyectosPage.js
 import React from 'react';
-import ProyectosUsuarioTable from '../../../components/convocatorias/ProyectosUsuarioTable';
+import ProyectosUsuarioTable from '../components/convocatorias/ProyectosUsuarioTable';
 
 const MisProyectosPage = () => {
   return (
